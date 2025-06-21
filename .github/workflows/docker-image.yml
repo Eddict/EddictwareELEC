@@ -147,6 +147,7 @@ jobs:
       run: |
         echo $PWD
         echo $(ls -al)
+        ls -al > debug_ls.log
 
     - 
       name: Copy built ${{ env.EE_Distro }} image to artifacts
