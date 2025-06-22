@@ -152,16 +152,22 @@ jobs:
     - 
       name: Copy built ${{ env.EE_Distro }} image to artifacts
       run: |
-        if [ -d /build/target ]; then
-          lines=$(find /build/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+        if [ -d $PWD/target ]; then
+          lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
           if [ $lines -ne 0 ]; then
-            filename=$(ls -t "/build/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" | tail --lines=1)
+            filename=$(ls -t "$PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" | tail --lines=1)
             echo $filename
-            if [ ! -d /build/target_archive ]; then
-              mkdir --parents "/build/target_archive"
+            if [ ! -d $PWD/target_archive ]; then
+              mkdir --parents "$PWD/target_archive"
+            else
+              echo "Target archive directory already exists."
             fi
-            cp --update=none "$filename" "/build/target_archive"
+            cp --update=none "$filename" "$PWD/target_archive"
+          else
+            echo "No built image found in target directory, skipping copy."
           fi
+        else
+          echo "No target directory found, skipping copy of built image."
         fi
 
     - 
