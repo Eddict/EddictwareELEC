@@ -1,10 +1,10 @@
 ### DISTRO INFORMATION ###
 
 # Distro name (full name, without special characters)
-  DISTRONAME="EddictwareELEC"
+  DISTRONAME="EddictwareELEC™"
 
 # Short distro description
-  DESCRIPTION="EddictwareELEC is an Entware enabled fast and user-friendly Kodi Entertainment Center distribution."
+  DESCRIPTION="EddictwareELEC™ is an Entware enabled fast and user-friendly Kodi Entertainment Center distribution."
 
 # Distribution Source location
   DISTRO_MIRROR="https://sources.libreelec.tv/mirror"
@@ -15,7 +15,7 @@
 
 # Welcome Message for SSH Server (up to 5 Lines)
   GREETING0="##############################################"
-  GREETING1="#              EddictwareELEC                #"
+  GREETING1="#              EddictwareELEC™               #"
   GREETING2="#   https://github.com/Eddict/LibreELEC.tv   #"
   GREETING3="##############################################"
   GREETING4=""
