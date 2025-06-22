@@ -149,7 +149,7 @@ jobs:
         ls -alR > debug_ls.log
 
     - 
-      name: Copy built ${{ env.EE_Distro }} image to artifacts
+      name: Copy built ${{ env.EE_Distro }} image to archive
       run: |
         echo "pwd: $PWD"
         if [ -d $PWD/target ]; then
@@ -158,12 +158,12 @@ jobs:
           if [ $lines -ne 0 ]; then
             filename=$(ls -t "$PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" | tail --lines=1)
             echo "filename: $filename"
-            if [ ! -d $PWD/target_archive ]; then
-              mkdir --parents "$PWD/target_archive"
+            if [ ! -d /root/target_archive ]; then
+              mkdir --parents "/root/target_archive"
             else
               echo "Target archive directory already exists."
             fi
-            cp --update=none "$filename" "$PWD/target_archive"
+            cp --update=none "$filename" "/root/target_archive"
           else
             echo "No built image found in target directory, skipping copy."
           fi
