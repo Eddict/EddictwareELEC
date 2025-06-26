@@ -13,6 +13,7 @@ env:
   EE_Project: RPi
   EE_Device: RPi4
   EE_Arch: aarch64
+  EE_image:
 
 jobs:
   build:
@@ -152,6 +153,7 @@ jobs:
 
     - 
       name: Copy built ${{ env.EE_Distro }} image to archive
+      id: image-path
       run: |
         echo "pwd: $PWD"
         if [ -d $PWD/target ]; then
@@ -159,6 +161,7 @@ jobs:
           echo "lines: $lines"
           if [ $lines -ne 0 ]; then
             filename=$(ls -t "$PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" | tail --lines=1)
+            echo "EE_image=$filename" >> $GITHUB_OUTPUT
             echo "filename: $filename"
             if [ ! -d /root/target_archive ]; then
               mkdir --parents "/root/target_archive"
@@ -173,6 +176,13 @@ jobs:
           echo "No target directory found, skipping copy of built image."
         fi
 
+    - name: Upload built ${{ env.EE_Distro }} image
+      if: steps.image-path.outputs.EE_image != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{ env.EE_Distro }}-image"
+        path: "${{ steps.image-path.outputs.EE_image }}"
+        
     - 
       name: Build and push to (local/private) registry
       uses: docker/build-push-action@v6
