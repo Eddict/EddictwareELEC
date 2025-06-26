@@ -1,7 +1,7 @@
 ### DISTRO INFORMATION ###
 
 # Distro name (full name, without special characters)
-  DISTRONAME="EddictwareELEC™"
+  DISTRONAME="EddictwareELEC"
 
 # Short distro description
   DESCRIPTION="EddictwareELEC™ is an Entware enabled fast and user-friendly Kodi Entertainment Center distribution."
