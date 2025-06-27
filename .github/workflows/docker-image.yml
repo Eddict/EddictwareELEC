@@ -160,7 +160,7 @@ jobs:
           lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
           echo "lines: $lines"
           if [ $lines -ne 0 ]; then
-            filename=$(ls -t "$PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" | tail --lines=1)
+            filename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | tail --lines=1)
             echo "EE_image=$filename" >> $GITHUB_OUTPUT
             echo "filename: $filename"
             if [ ! -d /root/target_archive ]; then
