@@ -51,15 +51,6 @@ jobs:
         ref: 'master-entw'
 
     - 
-      name: Cache Docker layers
-      uses: jpribyl/action-docker-layer-caching@v0.1.1
-      # Ignore the failure of a step and avoid terminating the job.
-      continue-on-error: true
-      with:
-        key: ${{ github.repository }}-docker-cache-{hash}
-        restore-keys: ${{ github.repository }}-docker-cache-
-
-    - 
       name: Cache dependencies
       uses: actions/cache@v4
       with:
