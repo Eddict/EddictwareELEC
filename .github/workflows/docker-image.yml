@@ -17,8 +17,8 @@ env:
 
 jobs:
   build:
-#    runs-on: github
-    runs-on: self-hosted
+    runs-on: github
+#    runs-on: self-hosted
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
