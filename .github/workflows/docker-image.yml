@@ -13,7 +13,8 @@ env:
   EE_Project: RPi
   EE_Device: RPi4
   EE_Arch: aarch64
-  EE_image:
+  EE_image_pathfilename:
+  EE_image_filename:
 
 jobs:
   build:
@@ -49,9 +50,6 @@ jobs:
       with:
         ref: 'master-entw'
 
-    # In this step, this action saves a list of existing images,
-    # the cache is created without them in the post run.
-    # It also restores the cache if it exists.
     - 
       name: Cache Docker layers
       uses: jpribyl/action-docker-layer-caching@v0.1.1
@@ -106,24 +104,17 @@ jobs:
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
 
-    # - name: Ccache for gh actions
-    #   uses: hendrikmuhs/ccache-action@v1.2
-    #   with:
-    #     max-size: 10G
-
     - 
       name: Build ${{ env.EE_Distro }} image
       env: 
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo $PWD
         chown -R docker:docker $PWD
         docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
             # cleanup
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         fi
-        #exit 0
         # run the container
         docker run --rm \
           --log-driver none \
@@ -145,30 +136,20 @@ jobs:
           "${{ secrets.REGISTRY_FQDN }}/${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make image
 
     - 
-      name: Debug information for next step
-      run: |
-        echo $PWD
-        echo $(ls -al)
-        ls -alR > debug_ls.log
-
-    - 
       name: Copy built ${{ env.EE_Distro }} image to archive
       id: image-path
       run: |
-        echo "pwd: $PWD"
         if [ -d $PWD/target ]; then
           lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
-          echo "lines: $lines"
           if [ $lines -ne 0 ]; then
-            filename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | tail --lines=1)
-            echo "EE_image=$filename" >> $GITHUB_OUTPUT
-            echo "filename: $filename"
+            pathfilename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | tail --lines=1)
+            echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
+            filename="${pathfilename##*/}"
+            echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
             if [ ! -d /root/target_archive ]; then
               mkdir --parents "/root/target_archive"
-            else
-              echo "Target archive directory already exists."
             fi
-            cp --update=none "$filename" "/root/target_archive"
+            cp --update=none "$pathfilename" "/root/target_archive"
           else
             echo "No built image found in target directory, skipping copy."
           fi
@@ -177,19 +158,8 @@ jobs:
         fi
 
     - name: Upload built ${{ env.EE_Distro }} image
-      if: steps.image-path.outputs.EE_image != ''
+      if: steps.image-path.outputs.EE_image_pathfilename != ''
       uses: actions/upload-artifact@v4
       with:
-        name: "${{ env.EE_Distro }}-image"
-        path: "${{ steps.image-path.outputs.EE_image }}"
-        
-    - 
-      name: Build and push to (local/private) registry
-      uses: docker/build-push-action@v6
-      with:
-        file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
-        push: true
-        tags: "${{ secrets.REGISTRY_FQDN }}/${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
-        no-cache: false
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
+        name: "${{ steps.image-path.outputs.EE_image_filename }}"
+        path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
