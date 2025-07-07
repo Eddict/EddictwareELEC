@@ -1,4 +1,5 @@
-FROM ubuntu:noble
+# ---- Base Stage ----
+FROM ubuntu:noble AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -34,6 +35,9 @@ fi
 useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shell /bin/bash
 echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 EOF
+
+# ---- Build Stage ----
+FROM base AS build
 
 RUN apt-get update
 
