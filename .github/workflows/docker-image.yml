@@ -29,8 +29,12 @@ jobs:
         STRATEGY_CONTEXT: ${{ toJson(strategy) }}
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
         LAST_COMMIT_USER: ${{ github.event.pull_request.head.user.login }}
+        LAST_COMMIT_MSG: ${{ github.event.head_commit.message }}
+        LAST_WFR_COMMIT_MSG: ${{ github.event.workflow_run.head_commit.message }}
       run: |
-        echo "$LAST_COMMIT_USER"
+        echo "LAST_COMMIT_USER: $LAST_COMMIT_USER"
+        echo "LAST_COMMIT_MSG: $LAST_COMMIT_MSG"
+        echo "LAST_WFR_COMMIT_MSG: $LAST_WFR_COMMIT_MSG"
         exit 1
   build:
 #    runs-on: github
