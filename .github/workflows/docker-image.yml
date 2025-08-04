@@ -42,9 +42,7 @@ jobs:
   build:
 #    runs-on: github
     runs-on: self-hosted
-    # https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request
-    # Note that GITHUB_SHA for this event is the last merge commit of the pull request merge branch. If you want to get the commit ID for the last commit to the head branch of the pull request, use github.event.pull_request.head.sha instead.
-    if: github.event.head_commit.author.username != 'Eddict'
+    if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
