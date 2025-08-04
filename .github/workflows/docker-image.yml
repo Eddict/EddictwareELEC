@@ -22,9 +22,16 @@ jobs:
     steps:
     - 
       name: Show github.event.pull_request.head.user.login
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+        JOB_CONTEXT: ${{ toJson(job) }}
+        RUNNER_CONTEXT: ${{ toJson(runner) }}
+        STRATEGY_CONTEXT: ${{ toJson(strategy) }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+        LAST_COMMIT_USER: ${{ github.event.pull_request.head.user.login }}
       run: |
-        echo "::error ${{ github.event.pull_request.head.user.login }}"
-        # exit 1
+        echo "$LAST_COMMIT_USER"
+        exit 1
   build:
 #    runs-on: github
     runs-on: self-hosted
