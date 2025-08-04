@@ -17,9 +17,21 @@ env:
   EE_image_filename:
 
 jobs:
+  info:
+    runs-on: github
+    steps:
+    - 
+      name: Show github.event.pull_request.head.user.login
+      run: |
+        echo "::error ${{ github.event.pull_request.head.user.login }}"
+        exit 1
   build:
 #    runs-on: github
     runs-on: self-hosted
+    # https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request
+    # Note that GITHUB_SHA for this event is the last merge commit of the pull request merge branch. If you want to get the commit ID for the last commit to the head branch of the pull request, use github.event.pull_request.head.sha instead.
+    if: ${{ github.event.pull_request.head.user.login }} != 'Eddict'
+      # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
