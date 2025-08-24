@@ -133,7 +133,7 @@ jobs:
       env: 
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        chown -R docker:docker $pwd
+        chown -R docker:docker $PWD
         docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
             # cleanup
@@ -143,7 +143,7 @@ jobs:
         docker run --rm \
           --log-driver none \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
-          -v $pwd:/build \
+          -v $PWD:/build \
           -w /build \
           -e DISABLE_COLORS=yes \
           -e LOGCOMBINE=fail \
@@ -163,12 +163,12 @@ jobs:
       name: Copy built ${{ env.EE_Distro }} image to archive
       id: image-path
       run: |
-        echo "[pwd]: $pwd"
-        if [ -d $pwd/target ]; then
-          lines=$(find $pwd/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+        echo "[pwd]: $PWD"
+        if [ -d $PWD/target ]; then
+          lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
           echo "[lines]: $lines"
           if [ $lines -ne 0 ]; then
-            pathfilename=$(ls -t $pwd/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | tail --lines=1)
+            pathfilename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | tail --lines=1)
             echo "[EE_image_pathfilename]: $pathfilename"
             echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
             filename="${pathfilename##*/}"
