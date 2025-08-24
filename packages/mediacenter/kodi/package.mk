@@ -3,8 +3,8 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="kodi"
-PKG_VERSION="805b5f0e28f46199f77b49ca428ace8f1143c680"
-PKG_SHA256="7104b8cca7b8d3018ea8f793dbfb2ecfd3a07f571e27c00f58185186bfa5f8fc"
+PKG_VERSION="66218443726d2839365d55e3b2ac20877ff270ed"
+PKG_SHA256="74ba6cc48d611105a8a01450e992e872a69f8960b7dfe55e254b018d020d4950"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/xbmc/xbmc/archive/${PKG_VERSION}.tar.gz"
@@ -75,7 +75,7 @@ configure_package() {
       PKG_APPLIANCE_XML="${PKG_DIR}/config/appliance-gbm-generic.xml"
     else
       PKG_APPLIANCE_XML="${PKG_DIR}/config/appliance-gbm.xml"
-    fi 
+    fi
   fi
 
   if [ ! "${OPENGL}" = "no" ]; then
@@ -155,11 +155,11 @@ configure_package() {
 
   case "${KODI_MYSQL_SUPPORT}" in
     mysql)
-      PKG_DEPENDS_TARGET="${PKG_DEPENDS_TARGET} mysql"
+      PKG_DEPENDS_TARGET+=" mysql"
       KODI_MYSQL="-DENABLE_MYSQLCLIENT=ON -DENABLE_MARIADBCLIENT=OFF"
       ;;
     mariadb)
-      PKG_DEPENDS_TARGET="${PKG_DEPENDS_TARGET} mariadb-connector-c"
+      PKG_DEPENDS_TARGET+=" mariadb-connector-c"
       KODI_MYSQL="-DENABLE_MARIADBCLIENT=ON -DENABLE_MYSQLCLIENT=OFF"
       ;;
     *)
