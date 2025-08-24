@@ -163,7 +163,7 @@ jobs:
       name: Copy built ${{ env.EE_Distro }} image to archive
       id: image-path
       run: |
-        echo "EE_image_pathfilename=$PWD" >> $GITHUB_OUTPUT
+        echo "[PWD]: $PWD"
         if [ -d $PWD/target ]; then
           lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
           if [ $lines -ne 0 ]; then
