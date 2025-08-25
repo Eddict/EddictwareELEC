@@ -177,7 +177,12 @@ jobs:
             if [ ! -d /root/target_archive ]; then
               mkdir --parents "/root/target_archive"
             fi
-            cp --update=older "$pathfilename" "/root/target_archive"
+            # cp --update=older "$pathfilename" "/root/target_archive"
+            if [ "$(cp --update=older \"$pathfilename\" \"/root/target_archive\")" ]; then
+              echo "Copied built image to /root/target_archive"
+            else
+              echo "No newer built image to copy to /root/target_archive"
+            fi
           else
             echo "No built image found in target directory, skipping copy."
           fi
