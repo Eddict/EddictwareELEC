@@ -179,7 +179,7 @@ jobs:
             if [ ! -d /root/target_archive ]; then
               mkdir --parents "/root/target_archive"
             fi
-            if [ "$(cp --update=older "$pathfilename" "/root/target_archive")" ]; then
+            if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older 
               echo "Copied built image to /root/target_archive"
             else
               echo "No newer built image to copy to /root/target_archive"
