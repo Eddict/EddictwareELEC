@@ -101,7 +101,7 @@ jobs:
       with:
         path: /tmp/.buildx-cache
         key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}-${{ github.sha }}
-        restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
+        # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
     -
       name: Build and export to (local/private) registry
       uses: docker/build-push-action@v6
