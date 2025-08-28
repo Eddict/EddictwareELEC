@@ -87,7 +87,7 @@ jobs:
       with:
         name: builder-eddictwareelec
         version: latest
-        keep-state: true
+        # keep-state: true
         cleanup: true
         # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
         buildkitd-config-inline: |
