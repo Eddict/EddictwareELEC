@@ -101,7 +101,7 @@ jobs:
       with:
         path: /tmp/.buildx-cache
         key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}-${{ github.sha }}
-        # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
+        restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
     -
       name: Build and export to (local/private) registry
       uses: docker/build-push-action@v6
@@ -112,7 +112,7 @@ jobs:
           USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
 #          --progress=plain
 #          DOCKER_BUILDKIT=0
-        no-cache: true
+        no-cache: false
         # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
         # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
         cache-from: type=local,src=/tmp/.buildx-cache
