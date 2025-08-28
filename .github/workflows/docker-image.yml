@@ -67,11 +67,11 @@ jobs:
         echo "EE_Distro_tag=eddict/${EE_Distro@L}.${DistroCodeName}" >> $GITHUB_OUTPUT
       shell: bash
 
-    # -
-    #   name: Build Docker image
-    #   uses: actions/checkout@v4
-    #   with:
-    #     ref: 'master-entw'
+    -
+      name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
 
     # - 
     #   name: Log in to (local/private) registry
