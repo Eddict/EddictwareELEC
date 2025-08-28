@@ -87,7 +87,7 @@ jobs:
       with:
         name: builder-eddictwareelec
         version: latest
-        # keep-state: true
+        keep-state: true
         cleanup: true
         # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
         # buildkitd-config-inline: |
@@ -95,39 +95,42 @@ jobs:
         #   [registry."${{ secrets.REGISTRY_FQDN }}"]
         #     http = false
 #        buildkitd-flags: '"--progress ''plain''"'
-    # - 
-    #   name: Cache Docker layers
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: /tmp/.buildx-cache
-    #     key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}-${{ github.sha }}
-        # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
-#     -
-#       name: Build and export to (local/private) registry
-#       uses: docker/build-push-action@v6
-#       with:
-#         file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
-#         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-#         build-args: |
-#           USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
-# #          --progress=plain
-# #          DOCKER_BUILDKIT=0
-#         no-cache: true
-#         # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
-#         # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
-#         cache-from: type=local,src=/tmp/.buildx-cache
-#         cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
-#         # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
-#         # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
 
-    # - # Temp fix to prevent cache size keeps growing
-    #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
-    #   name: Move cache
-    #   run: |
-    #     rm -rf /tmp/.buildx-cache
-    #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-    #     # rm -rf ${{ runner.temp }}/.buildx-cache
-    #     # mv ${{ runner.temp }}/.buildx-cache-new ${{ runner.temp }}/.buildx-cache
+    - 
+      name: Cache Docker layers
+      uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
+
+    -
+      name: Build and export to (local/private) registry
+      uses: docker/build-push-action@v6
+      with:
+        file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
+        outputs: type=cacheonly # build without pushing
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        build-args: |
+          USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
+#          --progress=plain
+#          DOCKER_BUILDKIT=0
+        no-cache: false
+        # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
+        # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+        # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
+        # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+
+    - # Temp fix to prevent cache size keeps growing
+      # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
+      name: Move cache
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+        # rm -rf ${{ runner.temp }}/.buildx-cache
+        # mv ${{ runner.temp }}/.buildx-cache-new ${{ runner.temp }}/.buildx-cache
 
     - 
       name: Build ${{ env.EE_Distro }} image
