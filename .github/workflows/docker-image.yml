@@ -73,13 +73,13 @@ jobs:
     #   with:
     #     ref: 'master-entw'
 
-    - 
-      name: Log in to (local/private) registry
-      uses: docker/login-action@v3
-      with:
-        registry: "${{ secrets.REGISTRY_FQDN }}"
-        username: ${{ secrets.REGISTRY_USER }}
-        password: ${{ secrets.REGISTRY_PWD }}
+    # - 
+    #   name: Log in to (local/private) registry
+    #   uses: docker/login-action@v3
+    #   with:
+    #     registry: "${{ secrets.REGISTRY_FQDN }}"
+    #     username: ${{ secrets.REGISTRY_USER }}
+    #     password: ${{ secrets.REGISTRY_PWD }}
 
     -
       name: Set up Docker Buildx
@@ -90,10 +90,10 @@ jobs:
         # keep-state: true
         cleanup: true
         # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
-        buildkitd-config-inline: |
-          debug = false
-          [registry."${{ secrets.REGISTRY_FQDN }}"]
-            http = false
+        # buildkitd-config-inline: |
+        #   debug = false
+        #   [registry."${{ secrets.REGISTRY_FQDN }}"]
+        #     http = false
 #        buildkitd-flags: '"--progress ''plain''"'
     - 
       name: Cache Docker layers
@@ -158,7 +158,8 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "${{ secrets.REGISTRY_FQDN }}/${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make image
+          "${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make image
+          # "${{ secrets.REGISTRY_FQDN }}/${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make image
 
     - 
       name: Copy built ${{ env.EE_Distro }} image to archive
