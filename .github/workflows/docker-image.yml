@@ -95,12 +95,12 @@ jobs:
         #   [registry."${{ secrets.REGISTRY_FQDN }}"]
         #     http = false
 #        buildkitd-flags: '"--progress ''plain''"'
-    - 
-      name: Cache Docker layers
-      uses: actions/cache@v4
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}-${{ github.sha }}
+    # - 
+    #   name: Cache Docker layers
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: /tmp/.buildx-cache
+    #     key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}-${{ github.sha }}
         # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
 #     -
 #       name: Build and export to (local/private) registry
