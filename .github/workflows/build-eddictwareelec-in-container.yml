@@ -44,7 +44,7 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        echo "EE_Distro_tag=eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
       shell: bash
 
     -
@@ -65,7 +65,7 @@ jobs:
 #    runs-on: github
     runs-on: self-hosted
     container:
-      image: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      image: ${{ secrets.REGISTRY_FQDN }}/${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
@@ -74,7 +74,7 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        echo "EE_Distro_tag=eddict/${EE_Distro@L}.${DistroCodeName}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${EE_Distro@L}.${DistroCodeName}" >> $GITHUB_OUTPUT
       shell: bash
 
     - 
