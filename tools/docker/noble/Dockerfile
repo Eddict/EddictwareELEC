@@ -13,6 +13,9 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+# ---- EF: Custom Stage ----
+FROM base AS custom
+
 ARG USER_UID
 ENV USER_UID=${USER_UID:-1234}
 # make sure any user/group in image do not use the UUID/GUID of the host docker user/group
@@ -37,7 +40,7 @@ echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 EOF
 
 # ---- Build Stage ----
-FROM base AS build
+FROM custom AS build
 
 RUN apt-get update \
  && apt-get install -y \
