@@ -65,7 +65,7 @@ jobs:
 #    runs-on: github
     runs-on: self-hosted
     container:
-      image: ${{ secrets.REGISTRY_FQDN }}/${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      image: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
