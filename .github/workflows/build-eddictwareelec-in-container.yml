@@ -24,6 +24,9 @@ jobs:
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
+    # Expose step outputs as job outputs
+    outputs:
+      output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
     steps:
     - 
       name: Get Date
@@ -64,8 +67,9 @@ jobs:
   build:
 #    runs-on: github
     runs-on: self-hosted
+    needs: init
     container:
-      image: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      image: ${{needs.init.outputs.output_ee_distro_tag}}
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
