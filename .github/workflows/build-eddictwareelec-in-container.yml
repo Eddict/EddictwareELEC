@@ -44,7 +44,7 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        echo "EE_Distro_tag=eddict/${DistroCodeName}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_tag=eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
       shell: bash
 
     -
