@@ -93,14 +93,16 @@ jobs:
         file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
         # outputs: type=cacheonly # build without pushing
         push: true
-        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
         build-args: |
           USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
 #          --progress=plain
 #          DOCKER_BUILDKIT=0
         no-cache: false
-        cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
-        cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
+        cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
+        cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
+        # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
+        # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
         # cache-from: type=local,src=/tmp/.buildx-cache
         # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
         # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
