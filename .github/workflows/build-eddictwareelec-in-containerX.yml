@@ -60,6 +60,7 @@ jobs:
       run: |
         # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_tag=$EE_Distro_tag"
       shell: bash
 
     -
@@ -88,9 +89,17 @@ jobs:
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
 
-  build:
-    runs-on: self-hosted
+  test:
     needs: pre-build
+    runs-on: self-hosted
+    steps:
+      - name: Test step
+        run: |
+          echo "test: ${{ needs.pre-build.outputs.output_ee_distro_tag }}"
+
+  build:
+    needs: pre-build
+    runs-on: self-hosted
     container:
       image: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
       credentials:
