@@ -33,20 +33,6 @@ jobs:
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
-    -
-      name: Get Date
-      id: get-date
-      run: |
-        # echo "[date]: $(/bin/date -u "+%Y%m%d")"
-        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-      shell: bash
-
-    -
-      name: Get docker guid
-      id: get-docker-guid
-      run: |
-        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
-      shell: bash
 
     -
       name: Compose image tag
@@ -78,13 +64,13 @@ jobs:
             http = false
 #        buildkitd-flags: '"--progress ''plain''"'
 
-    -
-      name: Cache Docker layers
-      uses: actions/cache@v4
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-${{ env.DistroCodeName }}
-        # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
+    # -
+    #   name: Cache Docker layers
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: /tmp/.buildx-cache
+    #     key: ${{ runner.os }}-${{ env.DistroCodeName }}
+    #     # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
 
     -
       name: Build and export to (local/private) registry
@@ -94,10 +80,6 @@ jobs:
         # outputs: type=cacheonly # build without pushing
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
-        build-args: |
-          USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
-#          --progress=plain
-#          DOCKER_BUILDKIT=0
         no-cache: false
         cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
         cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
@@ -107,3 +89,10 @@ jobs:
         # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
         # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
         # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+
+    # - # Temp fix to prevent cache size keeps growing
+    #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
+    #   name: Move cache
+    #   run: |
+    #     rm -rf /tmp/.buildx-cache
+    #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
