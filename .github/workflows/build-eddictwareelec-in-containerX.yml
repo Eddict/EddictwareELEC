@@ -60,7 +60,17 @@ jobs:
       run: |
         # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
-        echo "EE_Distro_tag=$EE_Distro_tag"
+      shell: bash
+
+    -
+      name: Show image tag
+      id: show-image-tag
+      env:
+        TEST_ENV_VAR: ${{ vars.EE_Distro_tag }}
+        TEST_ENV_VAR2: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
+      run: |
+        echo "EE_Distro_tag1=$TEST_ENV_VAR"
+        echo "EE_Distro_tag2=$TEST_ENV_VAR2"
       shell: bash
 
     -
