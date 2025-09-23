@@ -94,12 +94,16 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        debug=true
         chown -R docker:docker $PWD
         docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
             # cleanup
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         fi
+        # set some build performance flags
+        NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
+        [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
         # run the container
         docker run --rm \
           --log-driver none \
@@ -118,7 +122,7 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make image
+          "${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
