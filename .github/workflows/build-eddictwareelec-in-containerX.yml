@@ -138,17 +138,21 @@ jobs:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build
       options: --log-driver none --workdir /build
     steps:
-    # -
-    #   name: Build ${{ env.EE_Distro }} image
-      - run: node --version
-      - run: npm --version
-      - run: |
-          NB_CORES="${{ needs.pre-build.outputs.output_get_cpu_info }}""
-          echo "NB_CORES=$(NB_CORES)""
-          echo "whoami=$(whoami)""
-          echo "hostname=$(hostname)"
-          echo "pwd=$(pwd)"
-          # run the build
+    - name: node
+      continue-on-error: true
+      run: node --version
+    - name: npm
+      continue-on-error: true
+      run: npm --version
+    -
+      name: Build ${{ env.EE_Distro }} image
+      run: |
+        NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
+        echo "NB_CORES=$NB_CORES"
+        echo "whoami=$(whoami)"
+        echo "hostname=$(hostname)"
+        echo "pwd=$(pwd)"
+        # run the build
         #   make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
