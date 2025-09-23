@@ -1,0 +1,11 @@
+repos:
+- repo: https://github.com/mpalmer/action-validator
+  rev: v0.8.0
+  hooks:
+    - id: action-validator
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+  -   id: check-yaml
+  -   id: end-of-file-fixer
+  -   id: trailing-whitespace
