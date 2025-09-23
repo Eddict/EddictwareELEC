@@ -3,8 +3,8 @@ repos:
   rev: v0.8.0
   hooks:
   - id: action-validator
-# - repo: https://github.com/pre-commit/pre-commit-hooks
-#   rev: v6.0.0
-#   hooks:
-#   - id: check-yaml
-#     args: [--allow_duplicate_keys] 
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+  - id: check-yaml
+    # args: [--unsafe] 

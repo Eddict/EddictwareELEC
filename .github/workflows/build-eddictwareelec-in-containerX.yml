@@ -52,6 +52,7 @@ jobs:
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
       shell: bash
 
+    -
       name: Get CPU info
       id: get-cpu-info
       run: |
