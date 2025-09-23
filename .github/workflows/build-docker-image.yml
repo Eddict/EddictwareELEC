@@ -35,6 +35,13 @@ jobs:
     steps:
 
     -
+      name: Get docker guid
+      id: get-docker-guid
+      run: |
+        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
       name: Compose image tag
       id: compose-image-tag
       run: |
@@ -89,6 +96,10 @@ jobs:
         # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
         # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
         # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+        build-args: |
+          USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
+#          --progress=plain
+#          DOCKER_BUILDKIT=0
 
     # - # Temp fix to prevent cache size keeps growing
     #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
