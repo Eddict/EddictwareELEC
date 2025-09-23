@@ -13,8 +13,8 @@ env:
   EE_Project: RPi
   EE_Device: RPi4
   EE_Arch: aarch64
-  EE_image_pathfilename:
-  EE_image_filename:
+  EE_image_pathfilename: ""
+  EE_image_filename: ""
 
 jobs:
   init:
@@ -28,7 +28,7 @@ jobs:
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
     steps:
-    - 
+    -
       name: Get Date
       id: get-date
       run: |
@@ -36,14 +36,14 @@ jobs:
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
       shell: bash
 
-    - 
+    -
       name: Get docker guid
       id: get-docker-guid
       run: |
         echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
       shell: bash
 
-    - 
+    -
       name: Compose image tag
       id: compose-image-tag
       run: |
@@ -56,7 +56,7 @@ jobs:
       with:
         ref: 'master-entw'
 
-    - 
+    -
       name: Log in to (local/private) registry
       uses: docker/login-action@v3
       with:
@@ -74,16 +74,16 @@ jobs:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
     steps:
-    - 
+    -
       name: Compose image tag
       id: compose-image-tag
       run: |
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${EE_Distro@L}.${DistroCodeName}" >> $GITHUB_OUTPUT
       shell: bash
 
-    - 
+    -
       name: Build ${{ env.EE_Distro }} image
-      env: 
+      env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         chown -R docker:docker $PWD
@@ -113,7 +113,7 @@ jobs:
           "${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make image
           # "${{ secrets.REGISTRY_FQDN }}/${{ steps.compose-image-tag.outputs.EE_Distro_tag }}" make image
 
-    - 
+    -
       name: Copy built ${{ env.EE_Distro }} image to archive
       id: image-path
       run: |
@@ -132,7 +132,7 @@ jobs:
             if [ ! -d /root/target_archive ]; then
               mkdir --parents "/root/target_archive"
             fi
-            if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older 
+            if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older
               echo "Copied built image to /root/target_archive"
             else
               echo "No newer built image to copy to /root/target_archive"
