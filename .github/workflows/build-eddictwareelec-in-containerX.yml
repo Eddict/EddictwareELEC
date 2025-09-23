@@ -30,7 +30,7 @@ jobs:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     # Expose step outputs as job outputs
     outputs:
-      output_get-pwd: ${{ steps.get-pwd.outputs.PWD }}
+      output_get-pwd: ${{ steps.get-pwd.outputs.curdir }}
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
     steps:
@@ -38,7 +38,7 @@ jobs:
       name: Get current directory
       id: get-pwd
       run: |
-        echo "PWD=$(pwd)" >> $GITHUB_OUTPUT
+        echo "curdir=$(pwd)" >> $GITHUB_OUTPUT
       shell: bash
 
     -
@@ -89,8 +89,8 @@ jobs:
       name: Prepare build directory
       id: prepare-build-dir
       run: |
-        echo "pwd=$(pwd)"
-        chown -R docker:docker $PWD
+        echo "curdir=$(pwd)"
+        chown -R docker:docker $curdir
 
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -109,6 +109,9 @@ jobs:
         run: |
           echo "test: ${{ needs.pre-build.outputs.output_ee_distro_tag }}"
           echo "test2: $TEST_ENV_VAR"
+          NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
+          echo "NB_CORES=$NB_CORES"
+          echo "curdir=$(pwd)"
 
   build:
     name: Build
@@ -151,7 +154,7 @@ jobs:
         echo "NB_CORES=$NB_CORES"
         echo "whoami=$(whoami)"
         echo "hostname=$(hostname)"
-        echo "pwd=$(pwd)"
+        echo "curdir=$(pwd)"
         # run the build
         #   make -j$((NB_CORES+1)) -l${NB_CORES} image
 
