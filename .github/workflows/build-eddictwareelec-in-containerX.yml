@@ -48,14 +48,6 @@ jobs:
       shell: bash
 
     -
-      name: Get Date
-      id: get-date
-      run: |
-        # echo "[date]: $(/bin/date -u "+%Y%m%d")"
-        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-      shell: bash
-
-    -
       name: Get docker guid
       id: get-docker-guid
       run: |
