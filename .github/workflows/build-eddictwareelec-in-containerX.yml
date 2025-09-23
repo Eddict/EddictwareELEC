@@ -94,12 +94,16 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Test step
+        env:
+          TEST_ENV_VAR: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
         run: |
-          echo "test: ${{ needs.pre-build.outputs.output_ee_distro_tag }}"
+          echo "test: $TEST_ENV_VAR"
 
   build:
-    needs: pre-build
     runs-on: self-hosted
+    needs: pre-build
+    env:
+      TEST_ENV_VAR: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
     container:
       image: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
       credentials:
