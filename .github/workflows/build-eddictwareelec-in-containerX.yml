@@ -13,11 +13,11 @@ env:
   EE_Project: RPi
   EE_Device: RPi4
   EE_Arch: aarch64
-  EE_Distro_tag: ""
+  # EE_Distro_tag: ""
   EE_image_pathfilename: ""
   EE_image_filename: ""
   NB_CORES: 1
-  PWD: ""
+  # PWD: ""
 
 jobs:
   pre-build:
@@ -66,12 +66,9 @@ jobs:
     -
       name: Show image tag
       id: show-image-tag
-      env:
-        TEST_ENV_VAR: ${{ vars.EE_Distro_tag }}
-        TEST_ENV_VAR2: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
       run: |
-        echo "EE_Distro_tag1=$TEST_ENV_VAR"
-        echo "EE_Distro_tag2=$TEST_ENV_VAR2"
+        echo "EE_Distro_tag1=${{ vars.EE_Distro_tag }}"
+        echo "EE_Distro_tag2=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
       shell: bash
 
     -
@@ -108,7 +105,8 @@ jobs:
         env:
           TEST_ENV_VAR: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
         run: |
-          echo "test: $TEST_ENV_VAR"
+          echo "test: ${{ needs.pre-build.outputs.output_ee_distro_tag }}"
+          echo "test2: $TEST_ENV_VAR"
 
   build:
     runs-on: self-hosted
@@ -185,7 +183,7 @@ jobs:
         fi
 
     - name: Upload built ${{ env.EE_Distro }} image
-      if: steps.image-path.outputs.EE_image_pathfilename != ''
+      if: ${{ steps.image-path.outputs.EE_image_pathfilename }} != ''
       uses: actions/upload-artifact@v4
       with:
         name: "${{ steps.image-path.outputs.EE_image_filename }}"
