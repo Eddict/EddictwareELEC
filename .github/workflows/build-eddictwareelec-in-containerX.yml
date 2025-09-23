@@ -15,6 +15,7 @@ env:
   EE_Arch: aarch64
   EE_image_pathfilename: ""
   EE_image_filename: ""
+  NB_CORES: 1
 
 jobs:
   pre-build:
