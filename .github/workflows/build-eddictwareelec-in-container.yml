@@ -2,10 +2,10 @@ name: Build EddictwareELEC image in container
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "master-entw" ]
-  pull_request:
-    branches: [ "master-entw" ]
+  # push:
+  #   branches: [ "master-entw" ]
+  # pull_request:
+  #   branches: [ "master-entw" ]
 
 env:
   DistroCodeName: noble

@@ -28,7 +28,7 @@ jobs:
     # Expose step outputs as job outputs
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-      output_get-cpu-info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+      output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
     steps:
     -
       name: Get Date
@@ -105,11 +105,9 @@ jobs:
     steps:
     -
       name: Build ${{ env.EE_Distro }} image
-      # env:
-      #   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # run the build
-        NB_CORES={{ needs.pre-build.outputs.output_get-cpu-info }}
+        NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
