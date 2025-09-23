@@ -16,6 +16,7 @@ env:
   EE_image_pathfilename: ""
   EE_image_filename: ""
   NB_CORES: 1
+  PWD: ""
 
 jobs:
   pre-build:
@@ -27,9 +28,25 @@ jobs:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     # Expose step outputs as job outputs
     outputs:
+      output_get-pwd: ${{ steps.get-pwd.outputs.PWD }}
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
     steps:
+    -
+      name: Get current directory
+      id: get-pwd
+      run: |
+        echo "PWD=$(PWD)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Get Date
+      id: get-date
+      run: |
+        # echo "[date]: $(/bin/date -u "+%Y%m%d")"
+        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+      shell: bash
+
     -
       name: Get Date
       id: get-date
@@ -70,6 +87,7 @@ jobs:
       name: Prepare build directory
       id: prepare-build-dir
       run: |
+        echo "pwd=$(PWD)"
         chown -R docker:docker $PWD
 
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
@@ -100,7 +118,7 @@ jobs:
         BUILDER_NAME: Eddict
         BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
       volumes:
-        - $PWD:/build
+        - ${{ needs.pre-build.outputs.output_get_pwd }}:/build
       options: --log-driver none --workdir /build
     steps:
     -
@@ -108,6 +126,9 @@ jobs:
       run: |
         # run the build
         NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
+        echo "whoami=$(whoami)"
+        echo "hostname=$(hostname)"
+        echo "pwd=$(PWD)"
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
