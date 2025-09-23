@@ -21,6 +21,7 @@ env:
 
 jobs:
   pre-build:
+    name: Pre-build
 #    runs-on: github
     runs-on: self-hosted
     if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
@@ -98,6 +99,7 @@ jobs:
         # fi
 
   test:
+    name: Test
     needs: pre-build
     runs-on: self-hosted
     steps:
@@ -109,6 +111,7 @@ jobs:
           echo "test2: $TEST_ENV_VAR"
 
   build:
+    name: Build
     runs-on: self-hosted
     needs: pre-build
     env:
@@ -139,21 +142,23 @@ jobs:
     #   name: Build ${{ env.EE_Distro }} image
       - run: node --version
       - run: npm --version
-      # run: |
-      #   # run the build
-      #   NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
-      #   echo "whoami=$(whoami)"
-      #   echo "hostname=$(hostname)"
-      #   echo "pwd=$(PWD)"
-      #   make -j$((NB_CORES+1)) -l${NB_CORES} image
+      - run: |
+          NB_CORES="${{ needs.pre-build.outputs.output_get_cpu_info }}""
+          echo "NB_CORES=$(NB_CORES)""
+          echo "whoami=$(whoami)""
+          echo "hostname=$(hostname)"
+          echo "pwd=$(pwd)"
+          # run the build
+        #   make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
+    name: Post-build
     runs-on: self-hosted
     needs: build
     steps:
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
-      id: image-path
+      id: archive-image
       run: |
         debug=true
         [ "$debug" = true ] && echo "[pwd]: $PWD"
@@ -182,7 +187,9 @@ jobs:
           echo "No target directory found, skipping copy of built image."
         fi
 
-    - name: Upload built ${{ env.EE_Distro }} image
+    - 
+      name: Upload built ${{ env.EE_Distro }} image
+      id: upload-image
       if: ${{ steps.image-path.outputs.EE_image_pathfilename }} != ''
       uses: actions/upload-artifact@v4
       with:
