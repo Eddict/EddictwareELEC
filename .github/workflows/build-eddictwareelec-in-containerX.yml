@@ -17,7 +17,6 @@ env:
   EE_image_pathfilename: ""
   EE_image_filename: ""
   NB_CORES: 1
-  # PWD: ""
 
 jobs:
   pre-build:
@@ -38,7 +37,7 @@ jobs:
       name: Get current directory
       id: get-pwd
       run: |
-        echo "curdir=$(pwd)" >> $GITHUB_OUTPUT
+        echo "curdir=$PWD" >> $GITHUB_OUTPUT
       shell: bash
 
     -
@@ -47,13 +46,6 @@ jobs:
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-      shell: bash
-
-    -
-      name: Get docker guid
-      id: get-docker-guid
-      run: |
-        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
       shell: bash
 
     -
@@ -68,8 +60,7 @@ jobs:
       name: Show image tag
       id: show-image-tag
       run: |
-        echo "EE_Distro_tag1=${{ vars.EE_Distro_tag }}"
-        echo "EE_Distro_tag2=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
+        echo "EE_Distro_tag=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
       shell: bash
 
     -
@@ -89,8 +80,8 @@ jobs:
       name: Prepare build directory
       id: prepare-build-dir
       run: |
-        curdir=$(pwd) && echo "curdir: $curdir"
-        chown -R docker:docker $curdir
+        echo "curdir: $PWD"
+        chown -R docker:docker $PWD
 
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
