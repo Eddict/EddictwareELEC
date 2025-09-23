@@ -81,13 +81,13 @@ jobs:
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${EE_Distro@L}.${DistroCodeName}" >> $GITHUB_OUTPUT
       shell: bash
 
-    -
-      name: Cache Docker layers
-      uses: actions/cache@v4
-      with:
-        path: /tmp/.buildx-cache-2
-        key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}--${{ github.ref_sha }}
-        restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
+    # -
+    #   name: Cache Docker layers
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: /tmp/.buildx-cache-2
+    #     key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}--${{ github.ref_sha }}
+    #     restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
 
     -
       name: Build ${{ env.EE_Distro }} image
@@ -162,10 +162,10 @@ jobs:
         name: "${{ steps.image-path.outputs.EE_image_filename }}"
         path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
 
-    - # Temp fix to prevent cache size keeps growing
-      # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
-      name: Move cache
-      run: |
-        rm -rf /tmp/.buildx-cache-2
-        mv /tmp/.buildx-cache-2-new /tmp/.buildx-cache-2
+    # - # Temp fix to prevent cache size keeps growing
+    #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
+    #   name: Move cache
+    #   run: |
+    #     rm -rf /tmp/.buildx-cache-2
+    #     mv /tmp/.buildx-cache-2-new /tmp/.buildx-cache-2
  
