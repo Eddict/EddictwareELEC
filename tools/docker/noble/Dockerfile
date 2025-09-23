@@ -3,16 +3,6 @@ FROM ubuntu:noble AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update \
- && apt-get dist-upgrade -y \
- && apt-get install -y locales sudo
-
-RUN locale-gen en_US.UTF-8 \
- && update-locale LANG=en_US.UTF-8 LANGUAGE=en_US:en
-ENV LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
-
 # ---- EF: Custom Stage ----
 FROM base AS custom
 
@@ -39,8 +29,22 @@ useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shel
 echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 EOF
 
+
+# ---- Update OS Stage ----
+FROM custom AS update
+
+RUN apt-get update \
+ && apt-get dist-upgrade -y \
+ && apt-get install -y locales sudo
+
+RUN locale-gen en_US.UTF-8 \
+ && update-locale LANG=en_US.UTF-8 LANGUAGE=en_US:en
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
+
 # ---- Build Stage ----
-FROM custom AS build
+FROM update AS build
 
 RUN apt-get update \
  && apt-get install -y \

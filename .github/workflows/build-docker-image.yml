@@ -87,6 +87,7 @@ jobs:
         # outputs: type=cacheonly # build without pushing
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        # target: custom
         no-cache: true
         # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
         cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
