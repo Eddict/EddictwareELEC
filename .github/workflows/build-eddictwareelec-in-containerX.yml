@@ -1,0 +1,162 @@
+name: Build EddictwareELEC image in containerX
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "master-entw" ]
+  pull_request:
+    branches: [ "master-entw" ]
+
+env:
+  DistroCodeName: noble
+  EE_Distro: EddictwareELEC
+  EE_Project: RPi
+  EE_Device: RPi4
+  EE_Arch: aarch64
+  EE_image_pathfilename: ""
+  EE_image_filename: ""
+
+jobs:
+  pre-build:
+#    runs-on: github
+    runs-on: self-hosted
+    if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
+      # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
+    env:
+      BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
+    # Expose step outputs as job outputs
+    outputs:
+      output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      output_prepare-build-dir_NB_CORES: ${{ steps.prepare-build-dir.outputs.NB_CORES }}
+    steps:
+    -
+      name: Get Date
+      id: get-date
+      run: |
+        # echo "[date]: $(/bin/date -u "+%Y%m%d")"
+        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Get docker guid
+      id: get-docker-guid
+      run: |
+        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Compose image tag
+      id: compose-image-tag
+      run: |
+        # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
+
+    -
+      name: Prepare build directory
+      id: prepare-build-dir
+      run: |
+        chown -R docker:docker $PWD
+
+        # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
+        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        #     # cleanup
+        #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
+        # fi
+
+        # set some build performance flags
+        NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
+        [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
+        echo "NB_CORES=$NB_CORES" >> $GITHUB_OUTPUT
+
+  build:
+    runs-on: self-hosted
+    needs: pre-build
+    container:
+      image: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
+      credentials:
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PWD }}
+      env:
+        DISABLE_COLORS: yes
+        LOGCOMBINE: fail
+        MTIMMEDIATE: no
+        MTDEBUG: no
+        MTVERBOSE: no
+        MTPROGRESS: yes
+        DISTRO: ${{ env.EE_Distro }}
+        PROJECT: ${{ env.EE_Project }}
+        DEVICE: ${{ env.EE_Device }}
+        ARCH: ${{ env.EE_Arch }}
+        BUILDER_NAME: Eddict
+        BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
+      volumes:
+        - $PWD:/build
+      options: --log-driver none --workdir /build
+    steps:
+    -
+      name: Build ${{ env.EE_Distro }} image
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # run the build
+        make \
+          -j(({{ needs.pre-build.outputs.output_prepare-build-dir_NB_CORES }}+1)) \
+          -l{{ needs.pre-build.outputs.output_prepare-build-dir_NB_CORES }} \
+          image
+
+  post-build:
+    runs-on: self-hosted
+    needs: build
+    steps:
+    -
+      name: Copy built ${{ env.EE_Distro }} image to archive
+      id: image-path
+      run: |
+        debug=true
+        [ "$debug" = true ] && echo "[pwd]: $PWD"
+        if [ -d $PWD/target ]; then
+          lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+          [ "$debug" = true ] && echo "[lines]: $lines"
+          if [ $lines -ne 0 ]; then
+            pathfilename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
+            [ "$debug" = true ] && echo "[EE_image_pathfilename]: $pathfilename"
+            echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
+            filename="${pathfilename##*/}"
+            [ "$debug" = true ] && echo "[EE_image_filename]: $filename"
+            echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
+            if [ ! -d /root/target_archive ]; then
+              mkdir --parents "/root/target_archive"
+            fi
+            if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older
+              echo "Copied built image to /root/target_archive"
+            else
+              echo "No newer built image to copy to /root/target_archive"
+            fi
+          else
+            echo "No built image found in target directory, skipping copy."
+          fi
+        else
+          echo "No target directory found, skipping copy of built image."
+        fi
+
+    - name: Upload built ${{ env.EE_Distro }} image
+      if: steps.image-path.outputs.EE_image_pathfilename != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{ steps.image-path.outputs.EE_image_filename }}"
+        path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
+
+    # - # Temp fix to prevent cache size keeps growing
+    #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
+    #   name: Move cache
+    #   run: |
+    #     rm -rf /tmp/.buildx-cache-2
+    #     mv /tmp/.buildx-cache-2-new /tmp/.buildx-cache-2
+ 
