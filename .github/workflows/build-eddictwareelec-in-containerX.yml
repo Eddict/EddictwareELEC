@@ -27,7 +27,7 @@ jobs:
     # Expose step outputs as job outputs
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-      output_prepare-build-dir_NB_CORES: ${{ steps.prepare-build-dir.outputs.NB_CORES }}
+      output_get-cpu-info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
     steps:
     -
       name: Get Date
@@ -52,6 +52,12 @@ jobs:
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
       shell: bash
 
+      name: Get CPU info
+      id: get-cpu-info
+      run: |
+        echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
+      shell: bash
+
     -
       name: Checkout repository
       uses: actions/checkout@v5
@@ -69,11 +75,6 @@ jobs:
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
-
-        # set some build performance flags
-        NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
-        [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
-        echo "NB_CORES=$NB_CORES" >> $GITHUB_OUTPUT
 
   build:
     runs-on: self-hosted
@@ -102,14 +103,12 @@ jobs:
     steps:
     -
       name: Build ${{ env.EE_Distro }} image
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # env:
+      #   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # run the build
-        make \
-          -j(({{ needs.pre-build.outputs.output_prepare-build-dir_NB_CORES }}+1)) \
-          -l{{ needs.pre-build.outputs.output_prepare-build-dir_NB_CORES }} \
-          image
+        NB_CORES={{ needs.pre-build.outputs.output_get-cpu-info }}
+        make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
     runs-on: self-hosted
