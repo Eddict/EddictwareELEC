@@ -102,6 +102,8 @@ jobs:
           echo "test2: $TEST_ENV_VAR"
           NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
           echo "NB_CORES=$NB_CORES"
+          xNB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
+          echo "xNB_CORES=$xNB_CORES"
           curdir=$(pwd) && echo "curdir: $curdir"
 
   build:
