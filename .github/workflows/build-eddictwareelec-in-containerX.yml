@@ -64,13 +64,6 @@ jobs:
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
       shell: bash
 
-    # -
-    #   name: Compose image tag
-    #   id: compose-image-tag
-    #   run: |
-    #     # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
-    #     echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
-
     -
       name: Get CPU info
       id: get-cpu-info
@@ -102,24 +95,6 @@ jobs:
       output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
      
-  test:
-    name: Test
-    needs: pre-build
-    runs-on: self-hosted
-    steps:
-      - name: Test step
-        run: |
-          # steps.compose-image-tag.outputs.EE_Distro_tag
-          xEEDT=${{ needs.pre-build.outputs.output_ee_distro_tag }}
-          echo "xEEDT=$xEEDT"
-          NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
-          echo "NB_CORES=$NB_CORES"
-          xNB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
-          echo "xNB_CORES=$xNB_CORES"
-          curdir=$(pwd) && echo "curdir: $curdir"
-          encEEDT=${{ steps.decode-ee-distro-tag.outputs.out }}
-          echo "encEEDT=$encEEDT"
-
   ghcli:
     name: Run gh cli
     runs-on: self-hosted
@@ -127,35 +102,15 @@ jobs:
       actions: write
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
-      # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # GH_WSPACE: ${{ github.workspace }}
     steps:
-      # -
-      #   name: Log in to (local/private) registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: "${{ secrets.REGISTRY_FQDN }}"
-      #     username: ${{ secrets.REGISTRY_USER }}
-      #     password: ${{ secrets.REGISTRY_PWD }}
-
       - 
         name: gh-variable-list
         run: |
           homedir=~
           eval homedir=$homedir
           export HOME="$homedir"
-          # GIT_LOCAL="$PWD/.git/config"
-          # GIT_GLOBAL="$homedir/.gitconfig"
-          # echo "GIT_LOCAL: $GIT_LOCAL"
-          # echo "GIT_GLOBAL: $GIT_GLOBAL"
-          # echo "GH_WSPACE: $GH_WSPACE"
-          # echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          # GIT_CONFIG_GLOBAL=$homedir/.gitconfig
           git config --global --add safe.directory "${{ github.workspace }}"
-          # git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
-          # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
-          # alias gh="env -u GITHUB_TOKEN -u GH_TOKEN gh $1"
-          gh auth status
+          # gh auth status
           # gh auth login
           # gh variable list
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
@@ -167,7 +122,6 @@ jobs:
     needs: pre-build
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     container:
       image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       credentials:
@@ -190,20 +144,14 @@ jobs:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build
       options: --log-driver none --workdir /build
     steps:
-    - name: node
-      continue-on-error: true
-      run: node --version
-    - name: npm
-      continue-on-error: true
-      run: npm --version
     -
       name: Build ${{ env.EE_Distro }} image
       run: |
         NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
-        echo "NB_CORES=$NB_CORES"
-        echo "whoami=$(whoami)"
-        echo "hostname=$(hostname)"
-        curdir=$(pwd) && echo "curdir: $curdir"
+        # echo "NB_CORES=$NB_CORES"
+        # echo "whoami=$(whoami)"
+        # echo "hostname=$(hostname)"
+        # curdir=$(pwd) && echo "curdir: $curdir"
         # run the build
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 
