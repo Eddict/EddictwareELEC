@@ -124,7 +124,7 @@ jobs:
     name: Run gh cli
     runs-on: self-hosted
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_WSPACE: ${{ github.workspace }}
     steps:
       -
@@ -151,6 +151,7 @@ jobs:
           git config --global --add safe.directory "$GH_WSPACE"
           # git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
           # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
+          alias gh="env -u GITHUB_TOKEN -u GH_TOKEN gh $1"
           gh auth login
           gh variable list
 
