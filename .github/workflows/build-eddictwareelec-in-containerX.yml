@@ -153,7 +153,7 @@ jobs:
           # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
           # alias gh="env -u GITHUB_TOKEN -u GH_TOKEN gh $1"
           gh auth status
-          gh auth login
+          # gh auth login
           # gh variable list
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
           # gh variable list
