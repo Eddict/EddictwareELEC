@@ -100,8 +100,8 @@ jobs:
       output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
      
-  ghcli:
-    name: Run gh cli
+  repo-vars:
+    name: Repo-vars
     needs: pre-build
     runs-on: self-hosted
     permissions:
@@ -124,7 +124,7 @@ jobs:
     runs-on: self-hosted
     needs:
       - pre-build 
-      - ghcli
+      - repo-vars
     permissions:
       actions: write
     env:
@@ -157,6 +157,8 @@ jobs:
     -
       name: Build ${{ env.EE_Distro }} image
       run: |
+        echo "GH_TOKEN=$GH_TOKEN"
+        echo "DISABLE_COLORS=$DISABLE_COLORS"
         # delete gh variable set in gh-variable-set step
         gh auth status
         gh variable list
