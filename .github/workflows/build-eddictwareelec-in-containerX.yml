@@ -158,8 +158,8 @@ jobs:
         # echo "hostname=$(hostname)"
         # curdir=$(pwd) && echo "curdir: $curdir"
         # set permissions for autoconf cache files
-        sudo chmod +rx /usr/share/config.site
-        sudo chmod +wx /usr/share/config.cache
+        #sudo chmod u=rw,g=r,o=r /usr/share/config.site
+        #sudo chmod u=rw,g=rw,o=rw /usr/share/config.cache
         # run the build
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 

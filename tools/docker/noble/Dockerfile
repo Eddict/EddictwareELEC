@@ -41,8 +41,8 @@ echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 # these files will be mounted from host in the build container
 touch /usr/share/config.site
 touch /usr/share/config.cache
-chmod +r /usr/share/config.site
-chmod +w /usr/share/config.cache
+chmod u=rw,g=r,o=r /usr/share/config.site
+chmod u=rw,g=rw,o=rw /usr/share/config.cache
 EOF
 
 # ---- Update OS Stage ----
