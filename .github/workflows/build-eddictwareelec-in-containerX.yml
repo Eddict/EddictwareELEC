@@ -115,6 +115,7 @@ jobs:
           homedir=~
           eval homedir=$homedir
           export HOME="$homedir"
+          git config --global --unset safe.directory "${{ github.workspace }}"
           git config --global --add safe.directory "${{ github.workspace }}"
           # gh auth status
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
@@ -150,21 +151,35 @@ jobs:
       options: --log-driver none --workdir /build
     steps:
     -
-      name: Build ${{ env.EE_Distro }} image
+      name: Echo environment
       run: |
+        echo "whoami=$(whoami)"
+        echo "hostname=$(hostname)"
+        curdir=$(pwd) && echo "curdir: $curdir"
+    -
+      name: Remove gh variable
+      run: |
+        homedir=~
+        eval homedir=$homedir
+        export HOME="$homedir"
+        echo "HOME=$(HOME)"
+        git config --global --list
         # delete gh variable set in gh-variable-set step
         echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
         gh auth status
         gh variable list
         gh variable delete REGISTRY_FQDN
-        NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
-        # echo "NB_CORES=$NB_CORES"
-        # echo "whoami=$(whoami)"
-        # echo "hostname=$(hostname)"
-        # curdir=$(pwd) && echo "curdir: $curdir"
+    -
+      name: Set autoconf permissions
+      run: |
         # set permissions for autoconf cache files
         sudo chmod u=rw,g=r,o=r /usr/share/config.site
         sudo chmod u=rw,g=rw,o=rw /usr/share/config.cache
+    -
+      name: Build ${{ env.EE_Distro }} image
+      run: |
+        NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
+        # echo "NB_CORES=$NB_CORES"
         # run the build
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 
