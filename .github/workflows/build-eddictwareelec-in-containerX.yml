@@ -158,6 +158,7 @@ jobs:
       name: Build ${{ env.EE_Distro }} image
       run: |
         # delete gh variable set in gh-variable-set step
+        gh auth status
         gh variable delete REGISTRY_FQDN
         NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
         # echo "NB_CORES=$NB_CORES"
