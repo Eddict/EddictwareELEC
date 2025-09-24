@@ -36,14 +36,27 @@ fi
 #useradd docker --uid ${USER_UID} --no-user-group --groups docker,sudo --create-home --shell /bin/bash
 useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shell /bin/bash
 echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+EOF
 
 # add autoconf cache files
 # these files will be mounted from host in the build container
-touch /usr/share/config.site
-touch /usr/share/config.cache
-chmod u=rw,g=r,o=r /usr/share/config.site
-chmod u=rw,g=rw,o=rw /usr/share/config.cache
+RUN <<EOF
+sudo touch /usr/share/config.site
+sudo touch /usr/share/config.cache
+sudo chmod go+r /usr/share/config.site
+sudo chmod go+rw /usr/share/config.cache
 EOF
+
+# install gh cli
+RUN (type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
+	&& sudo mkdir -p -m 755 /etc/apt/keyrings \
+	&& out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+	&& cat $out | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+	&& sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+	&& sudo mkdir -p -m 755 /etc/apt/sources.list.d \
+	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+	&& sudo apt update \
+	&& sudo apt install gh -y
 
 # ---- Update OS Stage ----
 FROM custom AS update
