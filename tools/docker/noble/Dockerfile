@@ -36,6 +36,13 @@ fi
 #useradd docker --uid ${USER_UID} --no-user-group --groups docker,sudo --create-home --shell /bin/bash
 useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shell /bin/bash
 echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# add autoconf cache files
+# these files will be mounted from host in the build container
+touch /usr/share/config.site
+touch /usr/share/config.cache
+chmod +r /usr/share/config.site
+chmod +w /usr/share/config.cache
 EOF
 
 # ---- Update OS Stage ----
