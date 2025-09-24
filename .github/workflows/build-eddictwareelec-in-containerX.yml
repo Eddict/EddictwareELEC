@@ -131,7 +131,6 @@ jobs:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
       env:
-        GHR_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
         DISABLE_COLORS: yes
         LOGCOMBINE: fail
         MTIMMEDIATE: no
@@ -153,10 +152,8 @@ jobs:
     -
       name: Build ${{ env.EE_Distro }} image
       run: |
-        echo "GHR_TOKEN=$GHR_TOKEN"
-        echo "DISABLE_COLORS=$DISABLE_COLORS"
         # delete gh variable set in gh-variable-set step
-        gh auth login --with-token <<< "$GHR_TOKEN"
+        echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
         gh auth status
         gh variable list
         gh variable delete REGISTRY_FQDN
