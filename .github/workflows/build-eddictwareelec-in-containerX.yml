@@ -104,23 +104,20 @@ jobs:
     name: Run gh cli
     needs: pre-build
     runs-on: self-hosted
-    permissions:
-      actions: write
+    # permissions:
+    #   actions: write
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
     steps:
       - 
-        name: gh-variable-list
+        name: gh-variable-set
         run: |
           homedir=~
           eval homedir=$homedir
           export HOME="$homedir"
           git config --global --add safe.directory "${{ github.workspace }}"
           # gh auth status
-          # gh auth login
-          # gh variable list
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
-          # gh variable list
 
   build:
     name: Build
@@ -157,14 +154,16 @@ jobs:
     -
       name: Build ${{ env.EE_Distro }} image
       run: |
+        # delete gh variable set in gh-variable-set step
+        gh variable delete REGISTRY_FQDN
         NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
         # echo "NB_CORES=$NB_CORES"
         # echo "whoami=$(whoami)"
         # echo "hostname=$(hostname)"
         # curdir=$(pwd) && echo "curdir: $curdir"
         # set permissions for autoconf cache files
-        #sudo chmod u=rw,g=r,o=r /usr/share/config.site
-        #sudo chmod u=rw,g=rw,o=rw /usr/share/config.cache
+        sudo chmod u=rw,g=r,o=r /usr/share/config.site
+        sudo chmod u=rw,g=rw,o=rw /usr/share/config.cache
         # run the build
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 
