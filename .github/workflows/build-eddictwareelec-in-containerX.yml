@@ -95,11 +95,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Test step
-        env:
-          TEST_ENV_VAR: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
         run: |
-          echo "test: ${{ needs.pre-build.outputs.output_ee_distro_tag }}"
-          echo "test2: $TEST_ENV_VAR"
+          xEEDT=${{ needs.pre-build.outputs.output_ee_distro_tag }}
+          echo "xEEDT=$xEEDT"
           NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
           echo "NB_CORES=$NB_CORES"
           xNB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
