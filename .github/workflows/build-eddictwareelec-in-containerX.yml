@@ -64,26 +64,12 @@ jobs:
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
       shell: bash
 
-    -
-      name: Compose image tag
-      id: compose-image-tag
-      run: |
-        # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
-        echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
-
-    - 
-      name: Encode REGISTRY_FQDN
-      id: encode-registry-fqdn
-      env:
-        REGISTRY_FQDN: ${{ secrets.REGISTRY_FQDN }}
-      run: |
-        echo "REGISTRY_FQDN=$(echo $REGISTRY_FQDN | base64 -w0 | base64 -w0)" >> $GITHUB_OUTPUT
-
-    -
-      name: Show image tag
-      id: show-image-tag
-      run: |
-        echo "EE_Distro_tag=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
+    # -
+    #   name: Compose image tag
+    #   id: compose-image-tag
+    #   run: |
+    #     # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+    #     echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
 
     -
       name: Get CPU info
@@ -114,19 +100,8 @@ jobs:
     # Expose step outputs as job outputs
     outputs:
       output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
-      output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-      REGISTRY_FQDN: ${{ steps.encode-registry-fqdn.outputs.REGISTRY_FQDN }}
-
-  wrap-secrets:
-    name: Call wrap-secrets
-    needs: pre-build
-    uses: ./.github/workflows/wrap-secrets.yml
-    secrets:
-      env_vars: |
-        REGISTRY_FQDN=${{ needs.pre-build.outputs.REGISTRY_FQDN }}
-
-      
+     
   test:
     name: Test
     needs: pre-build
@@ -145,15 +120,23 @@ jobs:
           encEEDT=${{ steps.decode-ee-distro-tag.outputs.out }}
           echo "encEEDT=$encEEDT"
 
+  ghcli:
+    runs-on: self-hosted
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - run: gh variable list
+
   build:
     name: Build
     runs-on: self-hosted
     needs: pre-build
     env:
-      TEST_ENV_VAR: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_FQDN: ${{ secrets.REGISTRY_FQDN }}
+      DISTRO: noble
     container:
-      image: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
+      image: ${{ vars.REGISTRY_FQDN }}/eddict/${{ env.DISTRO }}
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
