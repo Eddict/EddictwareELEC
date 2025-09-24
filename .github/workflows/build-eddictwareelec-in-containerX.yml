@@ -151,6 +151,7 @@ jobs:
           git config --global --add safe.directory "$GH_WSPACE"
           # git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
           # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
+          gh auth login
           gh variable list
 
   build:
