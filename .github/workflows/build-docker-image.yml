@@ -2,6 +2,10 @@ name: Build Container for building EddictwareELEC images
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ "master-entw" ]
+    paths: &include_paths
+      - 'tools/docker/noble/Dockerfile'
 
 env:
   DistroCodeName: noble
