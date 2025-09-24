@@ -97,6 +97,7 @@ jobs:
      
   ghcli:
     name: Run gh cli
+    needs: pre-build
     runs-on: self-hosted
     permissions:
       actions: write
@@ -119,7 +120,7 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
-    needs: pre-build
+    needs: ghcli
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     container:
