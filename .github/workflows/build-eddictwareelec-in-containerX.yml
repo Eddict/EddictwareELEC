@@ -133,10 +133,8 @@ jobs:
     needs: pre-build
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      REGISTRY_FQDN: ${{ secrets.REGISTRY_FQDN }}
-      DISTRO: noble
     container:
-      image: ${{ vars.REGISTRY_FQDN }}/eddict/${{ env.DISTRO }}
+      image: abc
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
