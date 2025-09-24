@@ -125,11 +125,16 @@ jobs:
     runs-on: self-hosted
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_WSPACE: ${{ github.workspace }}
     steps:
       - name: gh-variable-list
         run: |
           GIT_LOCAL="$PWD/.git/config"
           GIT_GLOBAL="$HOME/.gitconfig"
+          echo "GIT_LOCAL: $GIT_LOCAL"
+          echo "GIT_GLOBAL: $GIT_GLOBAL"
+          echo "GH_WSPACE: $GH_WSPACE"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
           git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
           # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
           gh variable list
