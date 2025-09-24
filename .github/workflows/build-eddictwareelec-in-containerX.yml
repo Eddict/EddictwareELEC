@@ -144,9 +144,9 @@ jobs:
         BUILDER_NAME: Eddict
         BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
       volumes:
-        - ${{ needs.pre-build.outputs.output_get_pwd }}:/build,rw
-        - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site,ro
-        - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache,rw
+        - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
+        - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site:ro
+        - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
       options: --log-driver none --workdir /build
     steps:
     -
