@@ -138,16 +138,17 @@ jobs:
       - 
         name: gh-variable-list
         run: |
+          homedir=~
+          eval homedir=$homedir
+          export HOME="$homedir"
           GIT_LOCAL="$PWD/.git/config"
-          GIT_GLOBAL="~/.gitconfig"
+          GIT_GLOBAL="$homedir/.gitconfig"
           echo "GIT_LOCAL: $GIT_LOCAL"
           echo "GIT_GLOBAL: $GIT_GLOBAL"
           echo "GH_WSPACE: $GH_WSPACE"
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          # GIT_CONFIG_GLOBAL=~/.gitconfig
-          homedir=~
-          eval homedir=$homedir
-          HOME="$homedir" git config --global --add safe.directory "$GH_WSPACE"
+          GIT_CONFIG_GLOBAL=$homedir/.gitconfig
+          git config --global --add safe.directory "$GH_WSPACE"
           # git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
           # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
           gh variable list
