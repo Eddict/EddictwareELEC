@@ -19,6 +19,27 @@ env:
   NB_CORES: 1
 
 jobs:
+  info:
+    runs-on: self-hosted
+    if: 0 == 1
+    steps:
+    -
+      name: Show github.event.pull_request.head.user.login
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+        JOB_CONTEXT: ${{ toJson(job) }}
+        RUNNER_CONTEXT: ${{ toJson(runner) }}
+        # STRATEGY_CONTEXT: ${{ toJson(strategy) }}
+        # MATRIX_CONTEXT: ${{ toJson(matrix) }}
+        LAST_COMMIT_USER: ${{ github.event.pull_request.head.user.login }}
+        LAST_HEAD_COMMIT_AUTHOR: ${{ github.event.head_commit.author.username }}
+        LAST_HEAD_COMMIT_COMMITTER: ${{ github.event.head_commit.committer.username }}
+      run: |
+        echo "LAST_COMMIT_USER: $LAST_COMMIT_USER"
+        echo "LAST_HEAD_COMMIT_AUTHOR: $LAST_HEAD_COMMIT_AUTHOR"
+        echo "LAST_HEAD_COMMIT_COMMITTER: $LAST_HEAD_COMMIT_COMMITTER"
+        # exit 1
+
   pre-build:
     name: Pre-build
 #    runs-on: github
@@ -49,24 +70,20 @@ jobs:
       run: |
         # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
-      shell: bash
 
-    - name: Encode EE_Distro_tag
-      uses: cloudposse/github-action-secret-outputs@main
-      id: encode-ee-distro-tag
-      with:
-        secret: "${{ secrets.REGISTRY_PWD }}"
-        op: encode
-        in: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+    - 
+      name: Encode EREGISTRY_FQDN
+      id: encode-registry-fqdn
+      env:
+        REGISTRY_FQDN: ${{ secrets.REGISTRY_FQDN }}
+      run: |
+        echo "REGISTRY_FQDN=$(echo $REGISTRY_FQDN | base64 -w0 | base64 -w0)" >> $GITHUB_OUTPUT
 
     -
       name: Show image tag
       id: show-image-tag
       run: |
         echo "EE_Distro_tag=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
-        API_TOKEN_BASE64=`echo -n <my_secret> | base64 -w 0`
-        echo -n "API_TOKEN=$API_TOKEN_BASE64" >> $GITHUB_OUTPUT
-      shell: bash
 
     -
       name: Get CPU info
@@ -96,24 +113,24 @@ jobs:
 
     # Expose step outputs as job outputs
     outputs:
-      output_get-pwd: ${{ steps.get-pwd.outputs.curdir }}
+      output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-      output_ee_distro_tag_enc: ${{ steps.compose-image-tag.outputs.out }}
+      REGISTRY_FQDN: ${{ steps.encode-registry-fqdn.outputs.REGISTRY_FQDN }}
 
+  wrap-secrets:
+    needs: pre-build
+    uses: ./.github/workflows/wrap-secrets.yml
+    secrets:
+      env_vars: |
+        REGISTRY_FQDN=${{ needs.pre-build.outputs.REGISTRY_FQDN }}
+
+      
   test:
     name: Test
     needs: pre-build
     runs-on: self-hosted
     steps:
-      - uses: cloudposse/github-action-secret-outputs@main
-        id: decode-ee-distro-tag
-        with:
-          ## PASSWORD is a gpg passphrase stored in Github Secrets.          
-          secret: ${{ secrets.REGISTRY_PWD }}
-          op: decode
-          in: ${{ needs.pre-build.outputs.output_ee_distro_tag_enc }}
-
       - name: Test step
         run: |
           # steps.compose-image-tag.outputs.EE_Distro_tag
@@ -133,6 +150,7 @@ jobs:
     needs: pre-build
     env:
       TEST_ENV_VAR: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     container:
       image: ${{ needs.pre-build.outputs.output_ee_distro_tag }}
       credentials:
