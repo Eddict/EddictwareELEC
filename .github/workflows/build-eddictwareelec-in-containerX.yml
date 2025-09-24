@@ -115,7 +115,7 @@ jobs:
           homedir=~
           eval homedir=$homedir
           export HOME="$homedir"
-          git config --global --unset safe.directory "${{ github.workspace }}"
+          git config --global --unset-all safe.directory "${{ github.workspace }}"
           git config --global --add safe.directory "${{ github.workspace }}"
           # gh auth status
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
