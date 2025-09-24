@@ -127,7 +127,16 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_WSPACE: ${{ github.workspace }}
     steps:
-      - name: gh-variable-list
+      -
+        name: Log in to (local/private) registry
+        uses: docker/login-action@v3
+        with:
+          registry: "${{ secrets.REGISTRY_FQDN }}"
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PWD }}
+
+      - 
+        name: gh-variable-list
         run: |
           GIT_LOCAL="$PWD/.git/config"
           GIT_GLOBAL="$HOME/.gitconfig"
