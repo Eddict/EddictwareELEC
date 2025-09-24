@@ -205,7 +205,7 @@ jobs:
         echo "hostname=$(hostname)"
         curdir=$(pwd) && echo "curdir: $curdir"
         # run the build
-        #   make -j$((NB_CORES+1)) -l${NB_CORES} image
+        make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
     name: Post-build
@@ -246,13 +246,13 @@ jobs:
     - 
       name: Upload built ${{ env.EE_Distro }} image
       id: upload-image
-      if: ${{ steps.image-path.outputs.EE_image_pathfilename }} != ''
+      if: ${{ steps.archive-image.outputs.EE_image_pathfilename }} != ''
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       uses: actions/upload-artifact@v4
       with:
-        name: "${{ steps.image-path.outputs.EE_image_filename }}"
-        path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
+        name: "${{ steps.archive-image.outputs.EE_image_filename }}"
+        path: "${{ steps.archive-image.outputs.EE_image_pathfilename }}"
 
     # - # Temp fix to prevent cache size keeps growing
     #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
