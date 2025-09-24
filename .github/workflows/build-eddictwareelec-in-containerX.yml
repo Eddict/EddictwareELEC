@@ -72,7 +72,7 @@ jobs:
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
 
     - 
-      name: Encode EREGISTRY_FQDN
+      name: Encode REGISTRY_FQDN
       id: encode-registry-fqdn
       env:
         REGISTRY_FQDN: ${{ secrets.REGISTRY_FQDN }}
@@ -119,6 +119,7 @@ jobs:
       REGISTRY_FQDN: ${{ steps.encode-registry-fqdn.outputs.REGISTRY_FQDN }}
 
   wrap-secrets:
+    name: Call wrap-secrets
     needs: pre-build
     uses: ./.github/workflows/wrap-secrets.yml
     secrets:
