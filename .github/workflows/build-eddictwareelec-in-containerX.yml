@@ -123,17 +123,17 @@ jobs:
   ghcli:
     name: Run gh cli
     runs-on: self-hosted
-    env:
+    # env:
       # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_WSPACE: ${{ github.workspace }}
+      # GH_WSPACE: ${{ github.workspace }}
     steps:
-      -
-        name: Log in to (local/private) registry
-        uses: docker/login-action@v3
-        with:
-          registry: "${{ secrets.REGISTRY_FQDN }}"
-          username: ${{ secrets.REGISTRY_USER }}
-          password: ${{ secrets.REGISTRY_PWD }}
+      # -
+      #   name: Log in to (local/private) registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: "${{ secrets.REGISTRY_FQDN }}"
+      #     username: ${{ secrets.REGISTRY_USER }}
+      #     password: ${{ secrets.REGISTRY_PWD }}
 
       - 
         name: gh-variable-list
@@ -141,21 +141,21 @@ jobs:
           homedir=~
           eval homedir=$homedir
           export HOME="$homedir"
-          GIT_LOCAL="$PWD/.git/config"
-          GIT_GLOBAL="$homedir/.gitconfig"
-          echo "GIT_LOCAL: $GIT_LOCAL"
-          echo "GIT_GLOBAL: $GIT_GLOBAL"
-          echo "GH_WSPACE: $GH_WSPACE"
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          GIT_CONFIG_GLOBAL=$homedir/.gitconfig
-          git config --global --add safe.directory "$GH_WSPACE"
+          # GIT_LOCAL="$PWD/.git/config"
+          # GIT_GLOBAL="$homedir/.gitconfig"
+          # echo "GIT_LOCAL: $GIT_LOCAL"
+          # echo "GIT_GLOBAL: $GIT_GLOBAL"
+          # echo "GH_WSPACE: $GH_WSPACE"
+          # echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          # GIT_CONFIG_GLOBAL=$homedir/.gitconfig
+          git config --global --add safe.directory "${{ github.workspace }}"
           # git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
           # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
           alias gh="env -u GITHUB_TOKEN -u GH_TOKEN gh $1"
           gh auth login
-          gh variable list
+          # gh variable list
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
-          gh variable list
+          # gh variable list
 
   build:
     name: Build
@@ -164,7 +164,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     container:
-      image: abc
+      image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
