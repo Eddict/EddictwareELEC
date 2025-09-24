@@ -13,7 +13,7 @@ env:
   EE_Project: RPi
   EE_Device: RPi4
   EE_Arch: aarch64
-  # EE_Distro_tag: ""
+  EE_Distro_tag: ""
   EE_image_pathfilename: ""
   EE_image_filename: ""
   NB_CORES: 1
@@ -96,6 +96,7 @@ jobs:
     steps:
       - name: Test step
         run: |
+          # steps.compose-image-tag.outputs.EE_Distro_tag
           xEEDT=${{ needs.pre-build.outputs.output_ee_distro_tag }}
           echo "xEEDT=$xEEDT"
           NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
