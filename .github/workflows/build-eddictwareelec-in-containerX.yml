@@ -27,11 +27,6 @@ jobs:
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
-    # Expose step outputs as job outputs
-    outputs:
-      output_get-pwd: ${{ steps.get-pwd.outputs.curdir }}
-      output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-      output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
     steps:
     -
       name: Get current directory
@@ -56,11 +51,21 @@ jobs:
         echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
       shell: bash
 
+    - name: Encode EE_Distro_tag
+      uses: cloudposse/github-action-secret-outputs@main
+      id: encode-ee-distro-tag
+      with:
+        secret: "${{ secrets.REGISTRY_PWD }}"
+        op: encode
+        in: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+
     -
       name: Show image tag
       id: show-image-tag
       run: |
         echo "EE_Distro_tag=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
+        API_TOKEN_BASE64=`echo -n <my_secret> | base64 -w 0`
+        echo -n "API_TOKEN=$API_TOKEN_BASE64" >> $GITHUB_OUTPUT
       shell: bash
 
     -
@@ -89,11 +94,26 @@ jobs:
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
 
+    # Expose step outputs as job outputs
+    outputs:
+      output_get-pwd: ${{ steps.get-pwd.outputs.curdir }}
+      output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+      output_ee_distro_tag_enc: ${{ steps.compose-image-tag.outputs.out }}
+
   test:
     name: Test
     needs: pre-build
     runs-on: self-hosted
     steps:
+      - uses: cloudposse/github-action-secret-outputs@main
+        id: decode-ee-distro-tag
+        with:
+          ## PASSWORD is a gpg passphrase stored in Github Secrets.          
+          secret: ${{ secrets.REGISTRY_PWD }}
+          op: decode
+          in: ${{ needs.pre-build.outputs.output_ee_distro_tag_enc }}
+
       - name: Test step
         run: |
           # steps.compose-image-tag.outputs.EE_Distro_tag
@@ -104,6 +124,8 @@ jobs:
           xNB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
           echo "xNB_CORES=$xNB_CORES"
           curdir=$(pwd) && echo "curdir: $curdir"
+          encEEDT=${{ steps.decode-ee-distro-tag.outputs.out }}
+          echo "encEEDT=$encEEDT"
 
   build:
     name: Build
