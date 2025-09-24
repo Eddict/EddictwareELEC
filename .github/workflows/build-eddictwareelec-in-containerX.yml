@@ -126,8 +126,8 @@ jobs:
     permissions:
       actions: write
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
+      # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # GH_WSPACE: ${{ github.workspace }}
     steps:
       # -
