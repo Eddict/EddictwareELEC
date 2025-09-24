@@ -135,7 +135,8 @@ jobs:
           echo "GIT_GLOBAL: $GIT_GLOBAL"
           echo "GH_WSPACE: $GH_WSPACE"
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
+          git config --global --add safe.directory "$GH_WSPACE"
+          # git config --file "$GIT_GLOBAL" --add safe.directory ${{ github.workspace }}
           # git config --file "$GIT_GLOBAL" --add safe.directory "$GITHUB_WORKSPACE"
           gh variable list
 
