@@ -133,6 +133,7 @@ jobs:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
       env:
+        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
         DISABLE_COLORS: yes
         LOGCOMBINE: fail
         MTIMMEDIATE: no
