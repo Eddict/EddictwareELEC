@@ -134,6 +134,13 @@ jobs:
           # gh auth status
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
           sleep 3s # wait for variable to be set
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY_FQDN }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PWD }}
 
   build:
     name: Build
@@ -191,7 +198,8 @@ jobs:
       run: |
         # set permissions for .ccache folder
         ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
-        sudo chmod go+rw ${{ needs.pre-build.outputs.output_ccache_folder }}
+        sudo chmod -R go+rw ${{ needs.pre-build.outputs.output_ccache_folder }}
+        ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
     -
       name: Download and cache package sources
       run: |
