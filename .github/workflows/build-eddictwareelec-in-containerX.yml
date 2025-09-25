@@ -64,7 +64,7 @@ jobs:
         ref: 'master-entw'
 
     - name: Init environment variables
-      uses: ./.github/actions/composite-actions/init-env-vars
+      uses: ${{ github.action_path }}/composite-actions/init-env-vars
 
       # Expose step outputs as job outputs
   # outputs:
@@ -141,6 +141,7 @@ jobs:
       - repo-vars
       - repo-login
     container:
+      options: --user root
       image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
@@ -166,11 +167,6 @@ jobs:
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
       options: --log-driver none --workdir /build
     steps:
-    - uses: actions/checkout@v5
-      with:
-        ref: 'master-entw'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - uses: ./.github/actions/composite-actions/init-env-vars
       id: get-env-vars

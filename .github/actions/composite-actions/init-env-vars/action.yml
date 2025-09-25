@@ -12,13 +12,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Set GitHub Path
-      id: set-github-path
-      shell: bash
-      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
-      env:
-        GITHUB_ACTION_PATH: ${{ github.action_path }}
-
     - name: Set BUILDER_VERSION
       id: set-builder-version
       shell: bash
