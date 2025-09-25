@@ -246,10 +246,10 @@ jobs:
         # ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
         # sudo chmod -R go+rw ${{ needs.pre-build.outputs.output_ccache_folder }}
         # ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
-    -
-      name: Download and cache package sources
-      run: |
-        tools/download-tool
+    # -
+    #   name: Download and cache package sources
+    #   run: |
+    #     tools/download-tool
     -
       name: Build ${{ env.EE_Distro }} image
       run: |
