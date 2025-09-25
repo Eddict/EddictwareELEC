@@ -14,6 +14,8 @@ on:
 
 env:
   DistroCodeName: noble
+  BUILDER_NAME: Eddict
+  BUILDER_VERSION: ""
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
@@ -54,6 +56,13 @@ jobs:
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
+    -
+      name: Set BUILDER_VERSION
+      id: set-builder-version
+      run: |
+        echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+      shell: bash
+
     -
       name: Get current directory
       id: get-pwd
@@ -189,8 +198,8 @@ jobs:
         PROJECT: ${{ env.EE_Project }}
         DEVICE: ${{ env.EE_Device }}
         ARCH: ${{ env.EE_Arch }}
-        BUILDER_NAME: Eddict
-        BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
+        BUILDER_NAME: ${{ env.BUILDER_NAME }}
+        BUILDER_VERSION: ${{ env.BUILDER_VERSION }}
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
         # - ${{ needs.pre-build.outputs.output_build_dir }}
