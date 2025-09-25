@@ -38,15 +38,6 @@ useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shel
 echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 EOF
 
-# add autoconf cache files
-# these files will be mounted from host in the build container
-RUN <<EOF
-sudo touch /usr/share/config.site
-sudo touch /usr/share/config.cache
-sudo chmod go+rx /usr/share/config.site
-sudo chmod go+rw /usr/share/config.cache
-EOF
-
 # install gh cli
 RUN (type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
 	&& sudo mkdir -p -m 755 /etc/apt/keyrings \

@@ -119,6 +119,7 @@ jobs:
           git config --global --add safe.directory "${{ github.workspace }}"
           # gh auth status
           gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
+          sleep 3s # wait for variable to be set
 
   build:
     name: Build
@@ -132,14 +133,6 @@ jobs:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
       env:
-        INIT_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
-        HOST_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
-        TARGET_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
-        BOOTSTRAP_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
-        PKG_CONFIGURE_OPTS_INIT: "--cache_file=/usr/share/config.cache"
-        PKG_CONFIGURE_OPTS_HOST: "--cache_file=/usr/share/config.cache"
-        PKG_CONFIGURE_OPTS_TARGET: "--cache_file=/usr/share/config.cache"
-        PKG_CONFIGURE_OPTS_BOOTSTRAP: "--cache_file=/usr/share/config.cache"
         DISABLE_COLORS: yes
         LOGCOMBINE: fail
         MTIMMEDIATE: no
@@ -154,8 +147,8 @@ jobs:
         BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
-        - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site:rw
-        - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
+        # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site:rw
+        # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
       options: --log-driver none --workdir /build
     steps:
     -
@@ -178,12 +171,6 @@ jobs:
         gh auth status
         gh variable list
         gh variable delete REGISTRY_FQDN
-    -
-      name: Set autoconf permissions
-      run: |
-        # set permissions for autoconf cache files
-        sudo chmod go+rx /usr/share/config.site
-        sudo chmod go+rw /usr/share/config.cache
     -
       name: Build ${{ env.EE_Distro }} image
       run: |
