@@ -101,6 +101,7 @@ jobs:
       run: |
         BUILD_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel
         CCACHE_DIR=$BUILD_DIR/.ccache
+        echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_OUTPUT
         echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_OUTPUT
         # if [ "${DISTRO_VERSION}" = "devel" ] ; then
         #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
@@ -112,6 +113,7 @@ jobs:
     outputs:
       output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+      output_build_dir: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
       output_ccache_folder: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
 
   repo-vars:
@@ -196,6 +198,7 @@ jobs:
     -
       name: Set .ccache permissions
       run: |
+        ls -ld ${{ needs.pre-build.outputs.output_build_dir }}
         # set permissions for .ccache folder
         ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
         sudo chmod -R go+rw ${{ needs.pre-build.outputs.output_ccache_folder }}
