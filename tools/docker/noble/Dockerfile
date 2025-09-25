@@ -43,7 +43,7 @@ EOF
 RUN <<EOF
 sudo touch /usr/share/config.site
 sudo touch /usr/share/config.cache
-sudo chmod go+r /usr/share/config.site
+sudo chmod go+rx /usr/share/config.site
 sudo chmod go+rw /usr/share/config.cache
 EOF
 
