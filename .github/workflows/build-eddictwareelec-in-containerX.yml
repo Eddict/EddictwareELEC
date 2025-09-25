@@ -63,7 +63,7 @@ jobs:
         ref: 'master-entw'
     -
       name: Init environment variables
-      uses: ./.github/workflows/composite-actions/init-env-vars
+      uses: .github/workflows/composite-actions/init-env-vars
 
   repo-vars:
     name: Repo-vars
