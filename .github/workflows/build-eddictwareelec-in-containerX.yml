@@ -187,6 +187,10 @@ jobs:
         gh variable list
         gh variable delete REGISTRY_FQDN
     -
+      name: Download and cache package sources
+      run: |
+        tools/download-tool
+    -
       name: Build ${{ env.EE_Distro }} image
       run: |
         NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
