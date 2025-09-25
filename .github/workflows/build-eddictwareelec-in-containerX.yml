@@ -205,8 +205,8 @@ jobs:
       name: Init environment variables
       with:
         gh-token: ${{ secrets.GITHUB_TOKEN }}
-      # env:
-      #   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - run: echo mypwd "$PWDx"
       shell: bash
