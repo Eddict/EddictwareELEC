@@ -163,6 +163,8 @@ jobs:
       run: |
         export HOME="/home/$(whoami)"
         echo "HOME=$HOME"
+        ls -al /home
+        ls -al $HOME
         git config --global --list
         # delete gh variable set in gh-variable-set step
         echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
