@@ -15,22 +15,26 @@ outputs:
     value: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
 runs:
   using: "composite"
-  env:
-    GH_TOKEN: ${{ inputs.gh-token }}
   steps:
     - name: Set BUILDER_VERSION
       id: set-builder-version
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh-token }}
       run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
     - name: Get current directory
       id: get-pwd
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh-token }}
       run: echo "curdir=$PWD" >> $GITHUB_OUTPUT
 
     - name: Get Date
       id: get-date
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh-token }}
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
@@ -38,11 +42,15 @@ runs:
     - name: Get CPU info
       id: get-cpu-info
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh-token }}
       run: echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
 
     - name: Determine .ccache folder location
       id: ccache-folder
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.gh-token }}
       run: |
         # restore default permissions (gh cli complaining)
         chown -R root:root $PWD
