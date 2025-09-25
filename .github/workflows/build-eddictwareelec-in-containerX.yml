@@ -161,9 +161,7 @@ jobs:
     -
       name: Remove gh variable
       run: |
-        homedir=~
-        eval homedir=$homedir
-        export HOME="$homedir"
+        export HOME="/home/$(whoami)"
         echo "HOME=$HOME"
         git config --global --list
         # delete gh variable set in gh-variable-set step
