@@ -1,5 +1,9 @@
 name: Init-Env-Vars
 description: 'Initialize environment variables'
+inputs:
+  gh-token:
+    description: 'A Github PAT'
+    required: true
 outputs:
   output_get_pwd:
     value: ${{ steps.get-pwd.outputs.curdir }}
@@ -12,7 +16,7 @@ outputs:
 runs:
   using: "composite"
   env:
-    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GH_TOKEN: ${{ inputs.gh-token }}
   steps:
     - name: Set BUILDER_VERSION
       id: set-builder-version
