@@ -86,6 +86,9 @@ jobs:
       name: Determine .ccache folder location
       id: ccache-folder
       run: |
+        # restore default permissions (gh cli complaining)
+        chown -R root:root $PWD
+
         BUILD_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel
         CCACHE_DIR=$BUILD_DIR/.ccache
         echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_OUTPUT
@@ -190,7 +193,8 @@ jobs:
         BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
-        - ${{ needs.pre-build.outputs.output_get_pwd }}/../.ccache:${{ needs.pre-build.outputs.output_ccache_folder }}:rw
+        - ${{ steps.ccache-folder.outputs.BUILD_DIR }}
+        - ${{ needs.pre-build.outputs.output_get_pwd }}/../.ccache:${{ steps.ccache-folder.outputs.BUILD_DIR }}:rw
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site:rw
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
       options: --log-driver none --workdir /build
