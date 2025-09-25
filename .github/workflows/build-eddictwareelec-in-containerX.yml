@@ -169,7 +169,9 @@ jobs:
     - uses: ./.github/actions/composite-actions/init-env-vars
       id: get-env-vars
       name: Init environment variables
-
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
     - run: echo mypwd "$PWDx"
       shell: bash
       env:
