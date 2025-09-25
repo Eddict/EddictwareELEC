@@ -99,7 +99,7 @@ jobs:
       name: Determine .ccache folder location
       id: ccache-folder
       run: |
-        BUILD_DIR=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
+        BUILD_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
         CCACHE_DIR=$BUILD_DIR/.ccache
         echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_OUTPUT
         # if [ "${DISTRO_VERSION}" = "devel" ] ; then
