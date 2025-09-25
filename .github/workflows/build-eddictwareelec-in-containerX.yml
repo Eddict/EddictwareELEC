@@ -156,15 +156,14 @@ jobs:
         echo "whoami=$(whoami)"
         echo "hostname=$(hostname)"
         curdir=$(pwd) && echo "curdir: $curdir"
-        cat /etc/passwd | grep $(whoami)
-        cat /etc/group | grep $(whoami)
+        # cat /etc/passwd | grep $(whoami)
+        # cat /etc/group | grep $(whoami)
     -
       name: Remove gh variable
       run: |
         export HOME="/home/$(whoami)"
         echo "HOME=$HOME"
-        ls -al /home
-        ls -al $HOME
+        touch $HOME/.gitconfig
         git config --global --list
         # delete gh variable set in gh-variable-set step
         echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
