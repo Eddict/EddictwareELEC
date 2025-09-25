@@ -5,35 +5,36 @@ runs:
   steps:
     - name: Set GitHub Path
       id: set-github-path
-      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
       shell: bash
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
       env:
         GITHUB_ACTION_PATH: ${{ github.action_path }}
 
     - name: Set BUILDER_VERSION
       id: set-builder-version
-      run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
       shell: bash
+      run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
     - name: Get current directory
       id: get-pwd
-      run: echo "curdir=$PWD" >> $GITHUB_OUTPUT
       shell: bash
+      run: echo "curdir=$PWD" >> $GITHUB_OUTPUT
 
     - name: Get Date
       id: get-date
+      shell: bash
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-      shell: bash
 
     - name: Get CPU info
       id: get-cpu-info
-      run: echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
       shell: bash
+      run: echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
 
     - name: Determine .ccache folder location
       id: ccache-folder
+      shell: bash
       run: |
         # restore default permissions (gh cli complaining)
         chown -R root:root $PWD
@@ -48,9 +49,9 @@ runs:
         #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-${DISTRO_VERSION}
         # fi
 
-# Expose step outputs as job outputs
-outputs:
-  output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
-  output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-  output_build_dir: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
-  output_ccache_folder: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
+  # Expose step outputs as job outputs
+  outputs:
+    output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
+    output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+    output_build_dir: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
+    output_ccache_folder: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
