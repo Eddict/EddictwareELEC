@@ -125,24 +125,31 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
     steps:
-      - 
-        name: gh-variable-set
-        run: |
-          homedir=~
-          eval homedir=$homedir
-          export HOME="$homedir"
-          git config --global --unset-all safe.directory "${{ github.workspace }}"
-          git config --global --add safe.directory "${{ github.workspace }}"
-          # gh auth status
-          gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
-          sleep 3s # wait for variable to be set
-      -
-        name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.REGISTRY_FQDN }}
-          username: ${{ secrets.REGISTRY_USER }}
-          password: ${{ secrets.REGISTRY_PWD }}
+    - 
+      name: gh-variable-set
+      run: |
+        homedir=~
+        eval homedir=$homedir
+        export HOME="$homedir"
+        git config --global --unset-all safe.directory "${{ github.workspace }}"
+        git config --global --add safe.directory "${{ github.workspace }}"
+        # gh auth status
+        gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
+        sleep 3s # wait for variable to be set
+        gh variable get REGISTRY_FQDN
+
+  repo-login:
+    name: Repo-login
+    needs: repo-vars
+    runs-on: self-hosted
+    steps:
+    - 
+      name: Login to (private) Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ vars.REGISTRY_FQDN }}
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PWD }}
 
   build:
     name: Build
@@ -150,6 +157,7 @@ jobs:
     needs:
       - pre-build 
       - repo-vars
+      - repo-login
     container:
       image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       credentials:
