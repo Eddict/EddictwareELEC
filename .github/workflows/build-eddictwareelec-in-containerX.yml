@@ -187,6 +187,12 @@ jobs:
         gh variable list
         gh variable delete REGISTRY_FQDN
     -
+      name: Set .ccache permissions
+      run: |
+        # set permissions for .ccache folder
+        ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
+        sudo chmod go+rw ${{ needs.pre-build.outputs.output_ccache_folder }}
+    -
       name: Download and cache package sources
       run: |
         tools/download-tool
