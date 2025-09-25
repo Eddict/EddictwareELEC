@@ -209,10 +209,14 @@ jobs:
       run: |
         # set permissions for build folder
         ls -ld ${{ needs.pre-build.outputs.output_build_dir }}
-        sudo chmod -R go+rw ${{ needs.pre-build.outputs.output_build_dir }}
-        ls -ld ${{ needs.pre-build.outputs.output_build_dir }}
-        # set permissions for .ccache folder
         ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
+        sudo chown -R docker:docker ${{ needs.pre-build.outputs.output_build_dir }}
+        ls -ld ${{ needs.pre-build.outputs.output_build_dir }}
+        ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
+        # sudo chmod -R go+rw ${{ needs.pre-build.outputs.output_build_dir }}
+        # ls -ld ${{ needs.pre-build.outputs.output_build_dir }}
+        # # set permissions for .ccache folder
+        # ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
         # sudo chmod -R go+rw ${{ needs.pre-build.outputs.output_ccache_folder }}
         # ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
     -
