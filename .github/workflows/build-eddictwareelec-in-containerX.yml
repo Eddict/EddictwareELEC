@@ -132,6 +132,14 @@ jobs:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
       env:
+        INIT_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
+        HOST_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
+        TARGET_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
+        BOOTSTRAP_CONFIGURE_OPTS: "--cache_file=/usr/share/config.cache"
+        PKG_CONFIGURE_OPTS_INIT: "--cache_file=/usr/share/config.cache"
+        PKG_CONFIGURE_OPTS_HOST: "--cache_file=/usr/share/config.cache"
+        PKG_CONFIGURE_OPTS_TARGET: "--cache_file=/usr/share/config.cache"
+        PKG_CONFIGURE_OPTS_BOOTSTRAP: "--cache_file=/usr/share/config.cache"
         DISABLE_COLORS: yes
         LOGCOMBINE: fail
         MTIMMEDIATE: no
@@ -174,8 +182,8 @@ jobs:
       name: Set autoconf permissions
       run: |
         # set permissions for autoconf cache files
-        sudo chmod u=rw,g=r,o=r /usr/share/config.site
-        sudo chmod u=rw,g=rw,o=rw /usr/share/config.cache
+        sudo chmod go+rx /usr/share/config.site
+        sudo chmod go+rw /usr/share/config.cache
     -
       name: Build ${{ env.EE_Distro }} image
       run: |
