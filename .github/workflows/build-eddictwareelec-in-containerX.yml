@@ -156,6 +156,8 @@ jobs:
         echo "whoami=$(whoami)"
         echo "hostname=$(hostname)"
         curdir=$(pwd) && echo "curdir: $curdir"
+        cat /etc/passwd | grep $(whoami)
+        cat /etc/group | grep $(whoami)
     -
       name: Remove gh variable
       run: |
