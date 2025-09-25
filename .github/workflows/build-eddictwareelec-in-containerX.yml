@@ -137,6 +137,7 @@ jobs:
         gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
         sleep 3s # wait for variable to be set
         gh variable get REGISTRY_FQDN
+        echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
 
   repo-login:
     name: Repo-login
