@@ -164,7 +164,7 @@ jobs:
         homedir=~
         eval homedir=$homedir
         export HOME="$homedir"
-        echo "HOME=$(HOME)"
+        echo "HOME=$HOME"
         git config --global --list
         # delete gh variable set in gh-variable-set step
         echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
