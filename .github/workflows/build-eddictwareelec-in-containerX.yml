@@ -95,11 +95,25 @@ jobs:
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
 
+    -
+      name: Determine .ccache folder location
+      id: ccache-folder
+      run: |
+        BUILD_DIR=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
+        CCACHE_DIR=$BUILD_DIR/.ccache
+        echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_OUTPUT
+        # if [ "${DISTRO_VERSION}" = "devel" ] ; then
+        #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
+        # else
+        #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-${DISTRO_VERSION}
+        # fi
+
     # Expose step outputs as job outputs
     outputs:
       output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
       output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-     
+      output_ccache_folder: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
+
   repo-vars:
     name: Repo-vars
     needs: pre-build
@@ -147,6 +161,7 @@ jobs:
         BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
+        - ${{ needs.pre-build.outputs.output_get_pwd }}/../.ccache:${{ needs.pre-build.outputs.output_ccache_folder }}:rw
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site:rw
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
       options: --log-driver none --workdir /build
