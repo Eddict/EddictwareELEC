@@ -57,63 +57,13 @@ jobs:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
     -
-      name: Set BUILDER_VERSION
-      id: set-builder-version
-      run: |
-        echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
-      shell: bash
-
-    -
-      name: Get current directory
-      id: get-pwd
-      run: |
-        echo "curdir=$PWD" >> $GITHUB_OUTPUT
-      shell: bash
-
-    -
-      name: Get Date
-      id: get-date
-      run: |
-        # echo "[date]: $(/bin/date -u "+%Y%m%d")"
-        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-      shell: bash
-
-    -
-      name: Get CPU info
-      id: get-cpu-info
-      run: |
-        echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
-      shell: bash
-
-    -
       name: Checkout repository
       uses: actions/checkout@v5
       with:
         ref: 'master-entw'
-
     -
-      name: Determine .ccache folder location
-      id: ccache-folder
-      run: |
-        # restore default permissions (gh cli complaining)
-        chown -R root:root $PWD
-
-        BUILD_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel
-        CCACHE_DIR=$BUILD_DIR/.ccache
-        echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_OUTPUT
-        echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_OUTPUT
-        # if [ "${DISTRO_VERSION}" = "devel" ] ; then
-        #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
-        # else
-        #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-${DISTRO_VERSION}
-        # fi
-
-    # Expose step outputs as job outputs
-    outputs:
-      output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
-      output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-      output_build_dir: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
-      output_ccache_folder: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
+      name: Init environment variables
+      uses: ./.github/workflows/composite-actions/init-env-vars
 
   repo-vars:
     name: Repo-vars

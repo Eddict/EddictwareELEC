@@ -41,3 +41,6 @@ tools/mkpkg/*.git
 # ignore old linux configs
 projects/**/*.old
 build.log
+
+# ignore (temp) backup files
+.github/workflows/**/*.bak

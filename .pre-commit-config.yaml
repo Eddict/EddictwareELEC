@@ -3,8 +3,10 @@ repos:
   rev: v0.8.0
   hooks:
   - id: action-validator
+    exclude: action.yml
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
   hooks:
   - id: check-yaml
-    # args: [--unsafe] 
+    exclude: action.yml
+    args: [--unsafe] 
