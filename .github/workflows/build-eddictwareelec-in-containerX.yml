@@ -193,8 +193,8 @@ jobs:
         BUILDER_VERSION: "13.0-$(date +%Y%m%d)"
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
-        - ${{ steps.cpre-build.outputs.output_build_dir }}
-        - ${{ needs.pre-build.outputs.output_get_pwd }}/../.ccache:${{ steps.cpre-build.outputs.output_build_dir }}:rw
+        - ${{ needs.pre-build.outputs.output_build_dir }}
+        - ${{ needs.pre-build.outputs.output_get_pwd }}/../.ccache:${{ needs.pre-build.outputs.output_build_dir }}:rw
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site:rw
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
       options: --log-driver none --workdir /build
