@@ -65,6 +65,13 @@ jobs:
       name: Init environment variables
       uses: ./.github/actions/composite-actions/init-env-vars
 
+      # Expose step outputs as job outputs
+  # outputs:
+  #   output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
+  #   output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+  #   output_build_dir: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
+  #   output_ccache_folder: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
+
   repo-vars:
     name: Repo-vars
     needs: pre-build
@@ -158,16 +165,28 @@ jobs:
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
       options: --log-driver none --workdir /build
     steps:
-    -
-      name: Echo environment
+    - uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
+
+    - uses: ./.github/actions/composite-actions/init-env-vars
+      id: get-env-vars
+      name: Init environment variables
+
+    - run: echo mypwd "$PWDx"
+      shell: bash
+      env:
+        PWDx: ${{ steps.get-env-vars.outputs.output_get_pwd }}
+
+    - name: Echo environment
       run: |
         echo "whoami=$(whoami)"
         echo "hostname=$(hostname)"
         curdir=$(pwd) && echo "curdir: $curdir"
         # cat /etc/passwd | grep $(whoami)
         # cat /etc/group | grep $(whoami)
-    -
-      name: Remove gh variable
+
+    - name: Remove gh variable
       run: |
         export HOME="/home/$(whoami)"
         echo "HOME=$HOME"
@@ -178,8 +197,8 @@ jobs:
         gh auth status
         gh variable list
         gh variable delete REGISTRY_FQDN
-    -
-      name: Set .ccache permissions
+
+    - name: Set .ccache permissions
       run: |
         ls -ld /build
         # set permissions for root build folder
@@ -196,12 +215,13 @@ jobs:
         # ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
         # sudo chmod -R go+rw ${{ needs.pre-build.outputs.output_ccache_folder }}
         # ls -ld ${{ needs.pre-build.outputs.output_ccache_folder }}
+
     # -
     #   name: Download and cache package sources
     #   run: |
     #     tools/download-tool
-    -
-      name: Build ${{ env.EE_Distro }} image
+
+    - name: Build ${{ env.EE_Distro }} image
       run: |
         NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
         # echo "NB_CORES=$NB_CORES"
@@ -213,8 +233,7 @@ jobs:
     runs-on: self-hosted
     needs: build
     steps:
-    -
-      name: Copy built ${{ env.EE_Distro }} image to archive
+    - name: Copy built ${{ env.EE_Distro }} image to archive
       id: archive-image
       run: |
         debug=true
@@ -244,8 +263,7 @@ jobs:
           echo "No target directory found, skipping copy of built image."
         fi
 
-    - 
-      name: Upload built ${{ env.EE_Distro }} image
+    - name: Upload built ${{ env.EE_Distro }} image
       id: upload-image
       if: ${{ steps.archive-image.outputs.EE_image_pathfilename }} != ''
       env:
