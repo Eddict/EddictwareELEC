@@ -141,7 +141,7 @@ jobs:
       - repo-vars
       - repo-login
     container:
-      options: --user root --log-driver none --workdir /build
+      options: --log-driver none --workdir /build
       image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
@@ -185,7 +185,11 @@ jobs:
 
     - name: Remove gh variable
       run: |
-        export HOME="/home/$(whoami)"
+        if [[ $EUID -eq 0 ]]; then
+          export HOME="/root"
+        else
+          export HOME="/home/$(whoami)"
+        fi
         echo "HOME=$HOME"
         touch $HOME/.gitconfig
         git config --global --list
