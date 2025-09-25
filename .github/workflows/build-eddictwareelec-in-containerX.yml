@@ -83,12 +83,25 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
     steps:
-    - 
-      name: gh-variable-set
+    - name: gh-variable-set
+      continue-on-error: true
       run: |
-        homedir=~
-        eval homedir=$homedir
-        export HOME="$homedir"
+        # gh auth status
+        gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
+        sleep 3s # wait for variable to be set
+      shell: bash
+
+    - name: gh-variable-set-backup
+      if: steps.gh-variable-set.outcome == 'failure'
+      run: |
+        if [[ $EUID -eq 0 ]]; then
+          HOME="/root"
+        else
+          HOME="/home/$(whoami)"
+          homedir=~
+          eval HOME=$homedir
+        fi
+        export HOME="$HOME"
         git config --global --unset-all safe.directory "${{ github.workspace }}"
         git config --global --add safe.directory "${{ github.workspace }}"
         # gh auth status
@@ -103,25 +116,45 @@ jobs:
     permissions:
       actions: read
     env:
-      GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - 
-      name: gh-variable-get
+    - name: Get gh variable
+      id: gh-variable-get
+      continue-on-error: true
       run: |
         sleep 3s # wait for variable to get
         gh variable get REGISTRY_FQDN
         echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
       shell: bash
 
-    - 
-      name: Login to (private) Registry
+    - name: Get gh variable (backup)
+      id: gh-variable-get-backup
+      if: steps.gh-variable-get.outcome == 'failure'
+      continue-on-error: true
+      run: |
+        if [[ $EUID -eq 0 ]]; then
+          HOME="/root"
+        else
+          HOME="/home/$(whoami)"
+          homedir=~
+          eval HOME=$homedir
+        fi
+        export HOME="$HOME"
+        git config --global --unset-all safe.directory "${{ github.workspace }}"
+        git config --global --add safe.directory "${{ github.workspace }}"
+        sleep 3s # wait for variable to get
+        gh variable get REGISTRY_FQDN
+        echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
+      shell: bash
+
+    - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ vars.REGISTRY_FQDN }}
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
-    -
-      name: Prepare build directory
+
+    - name: Prepare build directory
       id: prepare-build-dir
       run: |
         echo "curdir: $PWD"
@@ -189,6 +222,14 @@ jobs:
         # cat /etc/group | grep $(whoami)
 
     - name: Remove gh variable
+      id: remove-gh-variable
+      run: |
+        echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
+        gh variable delete REGISTRY_FQDN
+
+    - name: Remove gh variable (backup)
+      id: remove-gh-variable-backup
+      if: steps.remove-gh-variable.outcome == 'failure'
       run: |
         if [[ $EUID -eq 0 ]]; then
           export HOME="/root"
