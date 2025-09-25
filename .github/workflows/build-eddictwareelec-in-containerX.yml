@@ -24,6 +24,7 @@ env:
   EE_image_pathfilename: ""
   EE_image_filename: ""
   NB_CORES: 1
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   info:
@@ -171,7 +172,7 @@ jobs:
       name: Init environment variables
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - run: echo mypwd "$PWDx"
       shell: bash
       env:
