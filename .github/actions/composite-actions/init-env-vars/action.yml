@@ -21,14 +21,14 @@ runs:
       shell: bash
       # env:
       #   GH_TOKEN: ${{ inputs.gh-token }}
-      run: sudo echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+      run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" | sudo tee -a  $GITHUB_OUTPUT
 
     - name: Get current directory
       id: get-pwd
       shell: bash
       # env:
       #   GH_TOKEN: ${{ inputs.gh-token }}
-      run: sudo echo "curdir=$PWD" >> $GITHUB_OUTPUT
+      run: echo "curdir=$PWD" | sudo tee -a  $GITHUB_OUTPUT
 
     - name: Get Date
       id: get-date
@@ -37,14 +37,14 @@ runs:
       #   GH_TOKEN: ${{ inputs.gh-token }}
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
-        sudo echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+        echo "date=$(/bin/date -u "+%Y%m%d")" | sudo tee -a  $GITHUB_OUTPUT
 
     - name: Get CPU info
       id: get-cpu-info
       shell: bash
       # env:
       #   GH_TOKEN: ${{ inputs.gh-token }}
-      run: sudo echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
+      run: echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" | sudo tee -a  $GITHUB_OUTPUT
 
     - name: Determine .ccache folder location
       id: ccache-folder
@@ -54,8 +54,8 @@ runs:
       run: |
         BUILD_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel
         CCACHE_DIR=$BUILD_DIR/.ccache
-        sudo echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_OUTPUT
-        sudo echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_OUTPUT
+        echo "BUILD_DIR=$BUILD_DIR" | sudo tee -a  $GITHUB_OUTPUT
+        echo "CCACHE_DIR=$CCACHE_DIR" | sudo tee -a  $GITHUB_OUTPUT
         # if [ "${DISTRO_VERSION}" = "devel" ] ; then
         #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
         # else
