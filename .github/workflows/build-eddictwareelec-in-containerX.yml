@@ -173,8 +173,8 @@ jobs:
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
 
-  outputs:
-    output_get_RFQDN: ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}
+    outputs:
+      output_get_RFQDN: ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}
 
 
   build:
