@@ -21,14 +21,14 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
-      run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+      run: sudo echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
     - name: Get current directory
       id: get-pwd
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
-      run: echo "curdir=$PWD" >> $GITHUB_OUTPUT
+      run: sudo echo "curdir=$PWD" >> $GITHUB_OUTPUT
 
     - name: Get Date
       id: get-date
@@ -37,14 +37,14 @@ runs:
         GH_TOKEN: ${{ inputs.gh-token }}
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
-        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+        sudo echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
 
     - name: Get CPU info
       id: get-cpu-info
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
-      run: echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
+      run: sudo echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" >> $GITHUB_OUTPUT
 
     - name: Determine .ccache folder location
       id: ccache-folder
@@ -52,13 +52,10 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
       run: |
-        # restore default permissions (gh cli complaining)
-        chown -R root:root $PWD
-
         BUILD_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel
         CCACHE_DIR=$BUILD_DIR/.ccache
-        echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_OUTPUT
-        echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_OUTPUT
+        sudo echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_OUTPUT
+        sudo echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_OUTPUT
         # if [ "${DISTRO_VERSION}" = "devel" ] ; then
         #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
         # else
