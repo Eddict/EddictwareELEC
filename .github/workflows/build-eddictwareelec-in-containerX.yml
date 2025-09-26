@@ -53,6 +53,15 @@ jobs:
     - name: display string
       run: |
         echo "The string is: ${{ env.MY_STRING }}"
+    - name: Set the value in bash
+      id: step_one
+      run: |
+        {
+          echo 'JSON_RESPONSE<<EOF'
+          curl https://example.com
+          echo EOF
+        } >> "$GITHUB_ENV"
+    - run: echo "${{ env.JSON_RESPONSE }}"
     - id: env-setup
       run: |
         "{
