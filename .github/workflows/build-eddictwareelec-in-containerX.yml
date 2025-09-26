@@ -80,7 +80,7 @@ jobs:
         echo "${{ steps.env-setup.outputs.env_token }}"
         echo "${{ steps.env-setup.outputs.env_domain }}"
 
-  test:
+  cancel:
     name: Cancel job
     runs-on: self-hosted
     permissions:
