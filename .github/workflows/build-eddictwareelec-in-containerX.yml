@@ -41,13 +41,14 @@ jobs:
     #     echo "- How about a third one?" >> $GITHUB_STEP_SUMMARY
     - name: Generate list using Markdown EF
       run: |
-        echo "<<EOF
+        # backslash-escape EOF to prevent variable expansion (although there are none)
+        cat <<\EOF >> "$GITHUB_STEP_SUMMARY"
         This is the lead in sentence for the list
 
         - Lets add a bullet point
         - Lets add a second bullet point
         - How about a third one?
-        EOF" >> "$GITHUB_STEP_SUMMARY"
+        EOF
     - name: create string
       run: |
         MY_STRING=$(cat << EOF
