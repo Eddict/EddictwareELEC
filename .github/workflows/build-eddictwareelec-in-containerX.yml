@@ -87,8 +87,12 @@ jobs:
       continue-on-error: true
       run: |
         # gh auth status
-        gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
-        sleep 3s # wait for variable to be set
+        if gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"; then
+          sleep 3s # wait for variable to be set
+        else
+          echo "Failed to set gh variable REGISTRY_FQDN"
+          exit 1
+        fi
       shell: bash
 
     - name: gh-variable-set-backup
@@ -126,10 +130,13 @@ jobs:
       shell: bash
       run: |
         sleep 3s # wait for variable to get
-        gh variable get REGISTRY_FQDN
-        ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN)
-        echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" >> $GITHUB_OUTPUT
         echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
+        if ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN); then
+          echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" >> $GITHUB_OUTPUT
+        else
+          echo "Failed to get gh variable REGISTRY_FQDN"
+          exit 1
+        fi
 
     - name: Get gh variable (backup)
       id: gh-variable-get-backup
