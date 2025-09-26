@@ -73,7 +73,7 @@ jobs:
           echo EOF
         } >> "$GITHUB_ENV"
     - name: display JSON_RESPONSE
-      run: echo "${{ env.JSON_RESPONSE }}"
+      run: head -n 10 "${{ env.JSON_RESPONSE }}"
 
   cancel:
     name: Cancel job
