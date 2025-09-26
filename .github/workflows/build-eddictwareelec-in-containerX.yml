@@ -30,44 +30,72 @@ jobs:
   test:
     name: Test job
     runs-on: self-hosted
-    permissions:
-      actions: write  # Required permissions for cancelling the workflow run
     steps:
+    - name: Generate list using Markdown
+      run: |
+        echo "This is the lead in sentence for the list" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY # this is a blank line
+        echo "- Lets add a bullet point" >> $GITHUB_STEP_SUMMARY
+        echo "- Lets add a second bullet point" >> $GITHUB_STEP_SUMMARY
+        echo "- How about a third one?" >> $GITHUB_STEP_SUMMARY
+    - name: create string
+      run: |
+        MY_STRING=$(cat << EOF
+        first line
+        second line
+        third line
+        EOF
+        )
+        echo "MY_STRING<<EOF" >> $GITHUB_ENV
+        echo "$MY_STRING" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+      id: my_string
+    - name: display string
+      run: |
+        echo "The string is: ${{ env.MY_STRING }}"
     - id: env-setup
       run: |
-        {
-          "env_token=production"
+        "{
+          "env_token=production",
           "env_domain=example.com"
-        } >> $GITHUB_OUTPUT
+        }" >> $GITHUB_OUTPUT
     - run: |
         echo "${{ steps.env-setup.outputs.env_token }}"
         echo "${{ steps.env-setup.outputs.env_domain }}"
     - id: env-setup-summary
       run: |
-        {
-          "env_token=production"
+        "{
+          "env_token=production",
           "env_domain=example.com"
-        } >> $GITHUB_OUTPUT
+        }" >> $GITHUB_OUTPUT
 
-        {
-          echo "### Workflow variables"
-          echo "| Variable   | Value       |"
-          echo "| ---------- | ----------- |"
-          echo "| env_token  | $env_token  |"
-          echo "| env_domain | $env_domain |"
-        } >> $GITHUB_STEP_SUMMARY
+        "{
+          echo '### Workflow variables'
+          echo '| Variable   | Value       |'
+          echo '| ---------- | ----------- |'
+          echo '| env_token  | $env_token  |'
+          echo '| env_domain | $env_domain |'
+        }" >> $GITHUB_STEP_SUMMARY
     - run: |
         echo "${{ steps.env-setup.outputs.env_token }}"
         echo "${{ steps.env-setup.outputs.env_domain }}"
-    - name: Cancelling this workflow run.
-      uses: actions/github-script@v6
-      with:
-        script: |
-          github.rest.actions.cancelWorkflowRun({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            run_id: context.runId
-          });
+
+  test:
+    name: Cancel job
+    runs-on: self-hosted
+    permissions:
+      actions: write  # Required permissions for cancelling the workflow run
+    steps:
+      - name: Cancelling this workflow run.
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.actions.cancelWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+
 
   info:
     runs-on: self-hosted
