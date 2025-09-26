@@ -130,7 +130,6 @@ jobs:
     - name: Get gh variable (backup)
       id: gh-variable-get-backup
       if: steps.gh-variable-get.outcome == 'failure'
-      continue-on-error: true
       run: |
         if [[ $EUID -eq 0 ]]; then
           HOME="/root"
@@ -223,6 +222,7 @@ jobs:
 
     - name: Remove gh variable
       id: remove-gh-variable
+      continue-on-error: true
       run: |
         echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
         gh variable delete REGISTRY_FQDN
