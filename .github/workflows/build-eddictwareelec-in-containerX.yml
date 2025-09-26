@@ -27,6 +27,49 @@ env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  test:
+    name: Test job
+    id: test-job
+    runs-on: self-hosted
+    permissions:
+      actions: write  # Required permissions for cancelling the workflow run
+    steps:
+    - id: env-setup
+      run: |
+        {
+          "env_token=production"
+          "env_domain=example.com"
+        } >> $GITHUB_OUTPUT
+    - run: |
+        echo "${{ steps.env-setup.outputs.env_token }}"
+        echo "${{ steps.env-setup.outputs.env_domain }}"
+    - id: env-setup-summary
+      run: |
+        {
+          "env_token=production"
+          "env_domain=example.com"
+        } >> $GITHUB_OUTPUT
+
+        {
+          echo "### Workflow variables"
+          echo "| Variable   | Value       |"
+          echo "| ---------- | ----------- |"
+          echo "| env_token  | $env_token  |"
+          echo "| env_domain | $env_domain |"
+        } >> $GITHUB_STEP_SUMMARY
+    - run: |
+        echo "${{ steps.env-setup.outputs.env_token }}"
+        echo "${{ steps.env-setup.outputs.env_domain }}"
+    - name: Cancelling this workflow run.
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.actions.cancelWorkflowRun({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: context.runId
+          });
+
   info:
     runs-on: self-hosted
     if: 0 == 1
