@@ -175,7 +175,7 @@ jobs:
       - repo-vars
       - repo-login
     container:
-      options: --log-driver none --workdir /build
+      options: --user root --log-driver none --workdir /build
       image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
