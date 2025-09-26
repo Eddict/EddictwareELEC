@@ -30,6 +30,7 @@ jobs:
   test:
     name: Test job
     runs-on: self-hosted
+    continue-on-error: true
     steps:
     - name: Generate list using Markdown
       run: |
@@ -61,13 +62,14 @@ jobs:
           curl https://example.com
           echo EOF
         } >> "$GITHUB_ENV"
-    - run: echo "${{ env.JSON_RESPONSE }}"
+    - name: display JSON_RESPONSE
+      run: echo "${{ env.JSON_RESPONSE }}"
     - id: env-setup
       run: |
-        "{
+        {
           "env_token=production",
           "env_domain=example.com"
-        }" >> $GITHUB_OUTPUT
+        } >> $GITHUB_OUTPUT
     - run: |
         echo "${{ steps.env-setup.outputs.env_token }}"
         echo "${{ steps.env-setup.outputs.env_domain }}"
@@ -93,6 +95,7 @@ jobs:
     name: Cancel job
     runs-on: self-hosted
     needs: [ test ]
+    if: 0 == 1
     permissions:
       actions: write  # Required permissions for cancelling the workflow run
     steps:
