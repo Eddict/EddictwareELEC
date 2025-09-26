@@ -83,6 +83,7 @@ jobs:
   cancel:
     name: Cancel job
     runs-on: self-hosted
+    needs: [ test ]
     permissions:
       actions: write  # Required permissions for cancelling the workflow run
     steps:
