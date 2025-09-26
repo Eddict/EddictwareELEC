@@ -92,7 +92,7 @@ jobs:
       shell: bash
 
     - name: gh-variable-set-backup
-      if: ${{ failure() && steps.gh-variable-set.outcome == 'failure' }}
+      if: ${{ failure() && steps.gh-variable-set.conclusion == 'failure' }}
       run: |
         if [[ $EUID -eq 0 ]]; then
           HOME="/root"
@@ -133,7 +133,7 @@ jobs:
 
     - name: Get gh variable (backup)
       id: gh-variable-get-backup
-      if: ${{ failure() && steps.gh-variable-get.outcome == 'failure' }}
+      if: ${{ failure() && steps.gh-variable-get.conclusion == 'failure' }}
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       shell: bash
@@ -254,7 +254,7 @@ jobs:
 
     - name: Remove gh variable (backup)
       id: remove-gh-variable-backup
-      if: ${{ failure() && steps.remove-gh-variable.outcome == 'failure' }}
+      if: ${{ failure() && steps.remove-gh-variable.conclusion == 'failure' }}
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
