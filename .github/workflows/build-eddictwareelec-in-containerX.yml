@@ -85,6 +85,7 @@ jobs:
     steps:
     - name: gh-variable-set
       continue-on-error: true
+      shell: bash
       run: |
         # gh auth status
         if gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"; then
@@ -93,10 +94,10 @@ jobs:
           echo "Failed to set gh variable REGISTRY_FQDN"
           exit 1
         fi
-      shell: bash
 
     - name: gh-variable-set-backup
-      if: ${{ failure() && steps.gh-variable-set.conclusion == 'failure' }}
+      if: ${{ steps.gh-variable-set.outcome == 'failure' }}
+      shell: bash
       run: |
         if [[ $EUID -eq 0 ]]; then
           HOME="/root"
@@ -109,9 +110,12 @@ jobs:
         git config --global --unset-all safe.directory "${{ github.workspace }}"
         git config --global --add safe.directory "${{ github.workspace }}"
         # gh auth status
-        gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"
-        sleep 3s # wait for variable to be set
-      shell: bash
+        if gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"; then
+          sleep 3s # wait for variable to be set
+        else
+          echo "Failed to set gh variable REGISTRY_FQDN"
+          exit 1
+        fi
 
   repo-login:
     name: Repo-login
@@ -156,10 +160,13 @@ jobs:
         git config --global --unset-all safe.directory "${{ github.workspace }}"
         git config --global --add safe.directory "${{ github.workspace }}"
         sleep 3s # wait for variable to get
-        gh variable get REGISTRY_FQDN
-        ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN)
-        echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" >> $GITHUB_OUTPUT
         echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
+        if ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN); then
+          echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" >> $GITHUB_OUTPUT
+        else
+          echo "Failed to get gh variable REGISTRY_FQDN"
+          exit 1
+        fi
 
     - name: Get ghREGISTRY_FQDN
       id: gh-ghREGISTRY_FQDN
