@@ -96,7 +96,7 @@ jobs:
         fi
 
     - name: gh-variable-set-backup
-      if: ${{ steps.gh-variable-set.outcome == 'failure' }}
+      if: ${{ steps.gh-variable-set.outcome != 'success' }}
       shell: bash
       run: |
         if [[ $EUID -eq 0 ]]; then
@@ -144,7 +144,7 @@ jobs:
 
     - name: Get gh variable (backup)
       id: gh-variable-get-backup
-      if: ${{ steps.gh-variable-get.outcome == 'failure' }}
+      if: ${{ steps.gh-variable-get.outcome != 'success' }}
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       shell: bash
@@ -268,7 +268,7 @@ jobs:
 
     - name: Remove gh variable (backup)
       id: remove-gh-variable-backup
-      if: ${{ steps.remove-gh-variable.outcome == 'failure' }}
+      if: ${{ steps.remove-gh-variable.outcome != 'success' }}
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
