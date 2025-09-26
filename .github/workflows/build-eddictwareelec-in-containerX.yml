@@ -121,6 +121,8 @@ jobs:
     - name: Get gh variable
       id: gh-variable-get
       continue-on-error: true
+      env:
+        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
         sleep 3s # wait for variable to get
         gh variable get REGISTRY_FQDN
@@ -130,6 +132,8 @@ jobs:
     - name: Get gh variable (backup)
       id: gh-variable-get-backup
       if: steps.gh-variable-get.outcome == 'failure'
+      env:
+        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
         if [[ $EUID -eq 0 ]]; then
           HOME="/root"
@@ -224,16 +228,16 @@ jobs:
       id: remove-gh-variable
       continue-on-error: true
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
-        echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
+        #echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
         gh variable delete REGISTRY_FQDN
 
     - name: Remove gh variable (backup)
       id: remove-gh-variable-backup
       if: steps.remove-gh-variable.outcome == 'failure'
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
         if [[ $EUID -eq 0 ]]; then
           export HOME="/root"
