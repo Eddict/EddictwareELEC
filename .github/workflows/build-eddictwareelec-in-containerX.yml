@@ -126,6 +126,8 @@ jobs:
       run: |
         sleep 3s # wait for variable to get
         gh variable get REGISTRY_FQDN
+        ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN)
+        echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" >> $GITHUB_OUTPUT
         echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
       shell: bash
 
@@ -147,13 +149,15 @@ jobs:
         git config --global --add safe.directory "${{ github.workspace }}"
         sleep 3s # wait for variable to get
         gh variable get REGISTRY_FQDN
+        ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN)
+        echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" >> $GITHUB_OUTPUT
         echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
       shell: bash
 
     - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ vars.REGISTRY_FQDN }}
+        registry: ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }} #${{ vars.REGISTRY_FQDN }}
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
 
@@ -168,6 +172,9 @@ jobs:
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
+
+  outputs:
+    output_get_RFQDN: ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}
 
 
   build:
