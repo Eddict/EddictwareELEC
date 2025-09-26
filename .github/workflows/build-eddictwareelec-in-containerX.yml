@@ -140,7 +140,7 @@ jobs:
 
     - name: Get gh variable (backup)
       id: gh-variable-get-backup
-      if: ${{ failure() && steps.gh-variable-get.conclusion == 'failure' }}
+      if: ${{ steps.gh-variable-get.outcome == 'failure' }}
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       shell: bash
@@ -261,7 +261,7 @@ jobs:
 
     - name: Remove gh variable (backup)
       id: remove-gh-variable-backup
-      if: ${{ failure() && steps.remove-gh-variable.conclusion == 'failure' }}
+      if: ${{ steps.remove-gh-variable.outcome == 'failure' }}
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
