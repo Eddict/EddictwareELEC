@@ -29,7 +29,6 @@ env:
 jobs:
   test:
     name: Test job
-    id: test-job
     runs-on: self-hosted
     permissions:
       actions: write  # Required permissions for cancelling the workflow run
