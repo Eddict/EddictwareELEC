@@ -73,9 +73,11 @@ jobs:
           echo EOF
         } >> "$GITHUB_ENV"
     - name: display JSON_RESPONSE
+      env:
+        JSON_RESPONSE: ${{ env.JSON_RESPONSE }}
       run: |
         # dummy comment
-        head -n 10 <<< "::add-mask::${{ env.JSON_RESPONSE }}"
+        head -n 10 <<< "::add-mask::$JSON_RESPONSE"
 
   cancel:
     name: Cancel job
