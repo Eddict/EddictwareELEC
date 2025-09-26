@@ -160,7 +160,7 @@ jobs:
       run: |
         echo ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}
         echo ${{ steps.gh-variable-get-backup.outputs.ghREGISTRY_FQDN }}
-        if [ -z "${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}" ]; then
+        if [ -n "${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}" ]; then
           echo "ghREGISTRY_FQDN=${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}" >> $GITHUB_OUTPUT
         else
           echo "ghREGISTRY_FQDN=${{ steps.gh-variable-get-backup.outputs.ghREGISTRY_FQDN }}" >> $GITHUB_OUTPUT
