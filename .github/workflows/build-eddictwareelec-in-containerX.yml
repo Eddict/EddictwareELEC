@@ -223,6 +223,8 @@ jobs:
     - name: Remove gh variable
       id: remove-gh-variable
       continue-on-error: true
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
         gh variable delete REGISTRY_FQDN
@@ -230,6 +232,8 @@ jobs:
     - name: Remove gh variable (backup)
       id: remove-gh-variable-backup
       if: steps.remove-gh-variable.outcome == 'failure'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         if [[ $EUID -eq 0 ]]; then
           export HOME="/root"
