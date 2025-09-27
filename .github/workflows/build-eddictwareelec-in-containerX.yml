@@ -134,7 +134,21 @@ jobs:
     - name: Initialize environment
       id: set-multi
       shell: bash
-      run: .github/actions/scripts/set_multi.sh
+      run: |
+        if [[ $EUID -eq 0 ]]; then
+          HOME="/root"
+        else
+          HOME="/home/$(whoami)"
+          homedir=~
+          eval HOME=$homedir
+        fi
+        export HOME="$HOME"
+
+        touch $HOME/.gitconfig
+        git config --global --unset-all safe.directory "${{ github.workspace }}"
+        git config --global --add safe.directory "${{ github.workspace }}"
+
+        #.github/actions/scripts/set_multi.sh
 
     - name: Set default branch
       id: set-default-branch
