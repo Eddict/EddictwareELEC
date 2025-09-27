@@ -131,6 +131,12 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+    - name: Initialize environment
+      id: set-multi
+      shell: bash
+      run: .github/actions/scripts/set_multi.sh
+
+     steps:
     - name: Set default branch
       id: set-default-branch
       shell: bash
@@ -166,32 +172,14 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
     steps:
-    - name: gh-variable-set
-      continue-on-error: true
+    - name: Initialize environment
+      id: set-multi
       shell: bash
-      run: |
-        # gh auth status
-        if gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"; then
-          sleep 3s # wait for variable to be set
-        else
-          echo "Failed to set gh variable REGISTRY_FQDN"
-          exit 1
-        fi
+      run: .github/actions/scripts/set_multi.sh
 
-    - name: gh-variable-set-backup
-      if: ${{ steps.gh-variable-set.outcome != 'success' }}
+    - name: gh-variable-set
       shell: bash
       run: |
-        if [[ $EUID -eq 0 ]]; then
-          HOME="/root"
-        else
-          HOME="/home/$(whoami)"
-          homedir=~
-          eval HOME=$homedir
-        fi
-        export HOME="$HOME"
-        git config --global --unset-all safe.directory "${{ github.workspace }}"
-        git config --global --add safe.directory "${{ github.workspace }}"
         # gh auth status
         if gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"; then
           sleep 3s # wait for variable to be set
@@ -209,9 +197,13 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+    - name: Initialize environment
+      id: set-multi
+      shell: bash
+      run: .github/actions/scripts/set_multi.sh
+
     - name: Get gh variable
       id: gh-variable-get
-      continue-on-error: true
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       shell: bash
@@ -223,50 +215,12 @@ jobs:
         else
           echo "Failed to get gh variable REGISTRY_FQDN"
           exit 1
-        fi
-
-    - name: Get gh variable (backup)
-      id: gh-variable-get-backup
-      if: ${{ steps.gh-variable-get.outcome != 'success' }}
-      env:
-        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
-      shell: bash
-      run: |
-        if [[ $EUID -eq 0 ]]; then
-          HOME="/root"
-        else
-          HOME="/home/$(whoami)"
-          homedir=~
-          eval HOME=$homedir
-        fi
-        export HOME="$HOME"
-        git config --global --unset-all safe.directory "${{ github.workspace }}"
-        git config --global --add safe.directory "${{ github.workspace }}"
-        sleep 3s # wait for variable to get
-        echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
-        if ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN); then
-          echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" >> $GITHUB_OUTPUT
-        else
-          echo "Failed to get gh variable REGISTRY_FQDN"
-          exit 1
-        fi
-
-    - name: Get ghREGISTRY_FQDN
-      id: gh-ghREGISTRY_FQDN
-      shell: bash
-      run: |
-        echo ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}
-        echo ${{ steps.gh-variable-get-backup.outputs.ghREGISTRY_FQDN }}
-        if [ -n "${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}" ]; then
-          echo "ghREGISTRY_FQDN=${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}" >> $GITHUB_OUTPUT
-        else
-          echo "ghREGISTRY_FQDN=${{ steps.gh-variable-get-backup.outputs.ghREGISTRY_FQDN }}" >> $GITHUB_OUTPUT
         fi
 
     - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ steps.gh-ghREGISTRY_FQDN.outputs.ghREGISTRY_FQDN }} #${{ vars.REGISTRY_FQDN }}
+        registry: ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }} #${{ vars.REGISTRY_FQDN }}
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
 
@@ -319,6 +273,11 @@ jobs:
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.site:/usr/share/config.site:rw
         # - ${{ needs.pre-build.outputs.output_get_pwd }}/../autoconf-cache/config.cache:/usr/share/config.cache:rw
     steps:
+    - name: Initialize environment
+      id: set-multi
+      shell: bash
+      run: .github/actions/scripts/set_multi.sh
+
     - uses: ./.github/actions/composite-actions/init-env-vars
       id: get-env-vars
       name: Init environment variables
@@ -342,31 +301,10 @@ jobs:
 
     - name: Remove gh variable
       id: remove-gh-variable
-      continue-on-error: true
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
         #echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
-        gh variable delete REGISTRY_FQDN
-
-    - name: Remove gh variable (backup)
-      id: remove-gh-variable-backup
-      if: ${{ steps.remove-gh-variable.outcome != 'success' }}
-      env:
-        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
-      run: |
-        if [[ $EUID -eq 0 ]]; then
-          export HOME="/root"
-        else
-          export HOME="/home/$(whoami)"
-        fi
-        echo "HOME=$HOME"
-        touch $HOME/.gitconfig
-        git config --global --list
-        # delete gh variable set in gh-variable-set step
-        echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
-        gh auth status
-        gh variable list
         gh variable delete REGISTRY_FQDN
 
     - name: Set .ccache permissions
