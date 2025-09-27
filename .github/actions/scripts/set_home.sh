@@ -7,4 +7,5 @@ else
   homedir=~
   eval HOME=$homedir
 fi
-export HOME="$HOME"
+#export HOME="$HOME"
+echo "HOME=$HOME" >> $GITHUB_ENV

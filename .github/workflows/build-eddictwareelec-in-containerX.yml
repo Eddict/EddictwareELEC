@@ -25,6 +25,7 @@ env:
   EE_image_filename: ""
   NB_CORES: 1
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  HOME: ""
 
 jobs:
   test:
@@ -188,7 +189,7 @@ jobs:
     - name: Initialize environment
       id: set-multi
       shell: bash
-      run: .github/actions/scripts/set_multi.sh
+      run: .github/actions/scripts/set_multi.sh ${{ env.B}}
 
     - name: gh-variable-set
       shell: bash
