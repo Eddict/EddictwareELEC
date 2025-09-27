@@ -131,6 +131,14 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+    - name: Set default branch
+      id: set-default-branch
+      shell: bash
+      run: |
+        echo "Default branch is: ${{ github.event.repository.default_branch }}"
+        # https://github.com/actions/checkout/issues/430#issuecomment-810950736
+        git config --global init.defaultBranch ${{ github.event.repository.default_branch }}"
+
     - name: Checkout repository
       uses: actions/checkout@v5
       with:
