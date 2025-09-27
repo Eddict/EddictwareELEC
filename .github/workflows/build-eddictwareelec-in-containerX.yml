@@ -30,6 +30,7 @@ jobs:
   test:
     name: Test job
     runs-on: self-hosted
+    if: 0 == 1
     continue-on-error: true
     steps:
     # - name: Generate list using Markdown
@@ -123,7 +124,6 @@ jobs:
     name: Pre-build
 #    runs-on: github
     runs-on: self-hosted
-    needs: [ cancel ]
     if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
