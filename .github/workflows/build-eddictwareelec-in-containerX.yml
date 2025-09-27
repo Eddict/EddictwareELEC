@@ -136,28 +136,21 @@ jobs:
       id: set-multi
       shell: bash
       run: |
-        if [[ $EUID -eq 0 ]]; then
-          HOME="/root"
-        else
-          HOME="/home/$(whoami)"
-          homedir=~
-          eval HOME=$homedir
-        fi
-        export HOME="$HOME"
+        # if [[ $EUID -eq 0 ]]; then
+        #   HOME="/root"
+        # else
+        #   HOME="/home/$(whoami)"
+        #   homedir=~
+        #   eval HOME=$homedir
+        # fi
+        # export HOME="$HOME"
 
-        touch $HOME/.gitconfig
-        git config --global --unset-all safe.directory "${{ github.workspace }}"
-        git config --global --add safe.directory "${{ github.workspace }}"
+        # touch $HOME/.gitconfig
+        # git config --global --unset-all safe.directory "${{ github.workspace }}"
+        # git config --global --add safe.directory "${{ github.workspace }}"
 
-        #.github/actions/scripts/set_multi.sh
-
-    - name: Set default branch
-      id: set-default-branch
-      shell: bash
-      run: |
-        echo "Default branch is: ${{ github.event.repository.default_branch }}"
-        # https://github.com/actions/checkout/issues/430#issuecomment-810950736
-        git config --global init.defaultBranch ${{ github.event.repository.default_branch }}
+        .github/actions/scripts/set_multi.sh
+        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
 
     - name: Checkout repository
       uses: actions/checkout@v5

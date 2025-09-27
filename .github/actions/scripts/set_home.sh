@@ -1,11 +1,20 @@
 #!/bin/bash
-
-if [[ $EUID -eq 0 ]]; then
-  HOME="/root"
-else
-  HOME="/home/$(whoami)"
-  homedir=~
-  eval HOME=$homedir
+# Argument validation check
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 [<home_dir>]"
+    exit 1
 fi
-#export HOME="$HOME"
-echo "HOME=$HOME" >> $GITHUB_ENV
+
+# Set HOME variable
+if [[ ! -z "$1" ]]; then
+  xHOME="$1"
+elif [[ $EUID -eq 0 ]]; then
+  xHOME="/root"
+else
+  homedir=~
+  if ! eval xHOME=$homedir; then
+    xHOME="/home/$(whoami)"
+  fi
+fi
+#export HOME="$xHOME"
+echo "HOME=$xHOME" >> $GITHUB_ENV
