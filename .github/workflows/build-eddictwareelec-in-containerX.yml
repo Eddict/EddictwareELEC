@@ -135,6 +135,9 @@ jobs:
       uses: actions/checkout@v5
       with:
         ref: 'master-entw'
+      clean: false # otherwise .ccache subfolder gets deleted
+      show-progress: false
+      set-safe-directory: true # this is the default, but just to be sure
 
     # - name: Init environment variables
     #   uses: ./.github/actions/composite-actions/init-env-vars #${{ github.action_path }}
