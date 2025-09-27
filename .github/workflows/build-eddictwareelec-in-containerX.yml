@@ -136,7 +136,6 @@ jobs:
       shell: bash
       run: .github/actions/scripts/set_multi.sh
 
-     steps:
     - name: Set default branch
       id: set-default-branch
       shell: bash
