@@ -7,4 +7,4 @@ fi
 
 mydir="$(dirname "$(readlink -f "$0")")"
 source "$mydir/set_home.sh" "$@"
-source "$mydir/set_git_safedir.sh"
+source "$mydir/set_git_config.sh"
