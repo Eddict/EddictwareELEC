@@ -1,6 +1,6 @@
 #!/bin/bash
 # Argument validation check
-if [ "$#" -lt 1 ]; then
+if [ "$#" -gt 1 ]; then
     echo "Usage: $0 [<home_dir>]"
     exit 1
 fi
