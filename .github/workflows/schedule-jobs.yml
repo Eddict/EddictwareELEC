@@ -1,3 +1,5 @@
+name: Schedule jobs for EddictwareELEC
+
 on:
   workflow_dispatch:
   schedule:
