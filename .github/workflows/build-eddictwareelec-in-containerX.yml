@@ -208,6 +208,7 @@ jobs:
       actions: write
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
+      HOME: ""
     steps:
     - name: Initialize environment
       id: set-multi
