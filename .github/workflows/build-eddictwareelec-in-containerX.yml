@@ -133,8 +133,11 @@ jobs:
 
     steps:
     - name: Checkout repository scripts (bash)
-      shell: bash
+      shell: bash 
       run: |
+        echo ${{ github.workspace }}
+        echo "whoami=$(whoami)"
+        touch $HOME/.gitconfig
         git checkout ${{ github.event.repository.default_branch }} -- .github/actions/scripts
         #   HOME="/root"
 
