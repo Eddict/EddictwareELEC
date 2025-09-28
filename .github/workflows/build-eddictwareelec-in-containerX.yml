@@ -140,7 +140,7 @@ jobs:
         show-progress: false
         set-safe-directory: false # this is the default, but just to be sure
         sparse-checkout: .github/actions/scripts
-        sparse-checkout-cone-mode: false
+#        sparse-checkout-cone-mode: false
         path: .
         # filter: .github/actions/scripts
 
