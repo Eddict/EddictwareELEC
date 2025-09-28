@@ -30,7 +30,7 @@ jobs:
 
           gh_owner_repo=${{ github.repository }}
 
-          workflowRuns=$(gh api repos/$gh_owner_repo/actions/runs --paginate --jq $jq_filter)
+          workflowRuns=$(gh api repos/$gh_owner_repo/actions/runs --paginate --jq "$jq_filter")
           for runId in $(echo $workflowRuns | jq -r '.[].id'); do
             echo "Deleting workflow run ID: $runId"
             # gh api repos/$gh_owner_repo/actions/runs/$runId -X DELETE
