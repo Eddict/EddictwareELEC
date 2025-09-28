@@ -290,6 +290,8 @@ jobs:
       - pre-build 
       - repo-vars
       - repo-login
+    env:
+      HOME: ""
     container:
       options: --user docker --log-driver none --workdir /build # --user root
       image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
@@ -319,7 +321,9 @@ jobs:
     - name: Initialize environment
       id: set-multi
       shell: bash
-      run: .github/actions/scripts/set_multi.sh
+      run: |
+        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
+        .github/actions/scripts/set_multi.sh
 
     - uses: ./.github/actions/composite-actions/init-env-vars
       id: get-env-vars
