@@ -17,4 +17,4 @@ else
   fi
 fi
 #export HOME="$xHOME"
-echo "HOME=$xHOME" >> $GITHUB_ENV
+echo "HOME=$xHOME" | sudo tee -a $GITHUB_ENV
