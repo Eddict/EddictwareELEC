@@ -170,10 +170,10 @@ jobs:
         clean: false # otherwise .ccache subfolder gets deleted
         show-progress: true
         set-safe-directory: true # this is the default, but just to be sure
-#        sparse-checkout: .github/actions/scripts
+        sparse-checkout: .github/actions/scripts
 #        sparse-checkout-cone-mode: false
 #        path: .
-        filter: .github/actions/scripts
+#        filter: .github/actions/scripts
 
     - name: Initialize environment
       id: set-multi
