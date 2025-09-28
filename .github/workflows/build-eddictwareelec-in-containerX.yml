@@ -214,8 +214,8 @@ jobs:
       id: set-multi
       shell: bash
       run: |
-        .github/actions/scripts/set_multi.sh
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
+        .github/actions/scripts/set_multi.sh
 
     - name: gh-variable-set
       shell: bash
