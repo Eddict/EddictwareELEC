@@ -141,6 +141,7 @@ jobs:
         set-safe-directory: false # this is the default, but just to be sure
         sparse-checkout: .github/actions/scripts
         sparse-checkout-cone-mode: false
+        path: .
         # filter: .github/actions/scripts
 
     - name: Initialize environment
