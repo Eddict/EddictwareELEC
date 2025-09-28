@@ -24,8 +24,8 @@ jobs:
             echo "Sync successful"
             git status
             git branch -a
-            git push ghfork master-entw --follow-tags
-            git push ghfork --tags
+            git push origin master-entw --follow-tags
+            git push origin --tags
           else
             echo "Sync failed"
             # exit 1
