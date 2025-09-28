@@ -135,8 +135,18 @@ jobs:
     - name: Checkout repository scripts (bash)
       shell: bash 
       run: |
+        if [[ $EUID -eq 0 ]]; then
+          xHOME="/root"
+        else
+          homedir=~
+          if ! eval xHOME=$homedir; then
+            xHOME="/home/$(whoami)"
+          fi
+        fi
+        export HOME="$xHOME"
         echo ${{ github.workspace }}
         echo "whoami=$(whoami)"
+        echo "pwd=$(pwd)"
         echo "HOME=$HOME"
         touch $HOME/.gitconfig
         git checkout ${{ github.event.repository.default_branch }} -- .github/actions/scripts
