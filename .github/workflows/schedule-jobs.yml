@@ -1,0 +1,23 @@
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */2 * * *'  # every 2 hours
+#    - cron: '30 5,17 * * 2,4'
+
+jobs:
+  test_schedule:
+    runs-on: ubuntu-latest #ubuntu-latest self-hosted
+    steps:
+      - name: Sync from LibreELEC master
+        if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
+        run: |
+          if gh repo sync Eddict/EddictwareELEC -b master-entw; then
+            echo "Sync successful"
+            git push ghfork master-entw --follow-tags
+            git push ghfork --tags
+          else
+            echo "Sync failed"
+            # exit 1
+          fi
