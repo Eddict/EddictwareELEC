@@ -178,9 +178,8 @@ jobs:
       id: set-multi
       shell: bash
       run: |
-        echo "whoami=$(whoami)"
-        .github/actions/scripts/set_multi.sh
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
+        .github/actions/scripts/set_multi.sh
 
     - name: Checkout repository
       uses: actions/checkout@v5
