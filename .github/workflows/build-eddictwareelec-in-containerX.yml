@@ -132,6 +132,17 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+    - name: Checkout repository scripts
+      uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
+        clean: false # otherwise .ccache subfolder gets deleted
+        show-progress: false
+        set-safe-directory: true # this is the default, but just to be sure
+        # sparse-checkout: .github/actions/scripts
+        # sparse-checkout-cone-mode: false
+        filter: .github/actions/scripts
+
     - name: Initialize environment
       id: set-multi
       shell: bash
