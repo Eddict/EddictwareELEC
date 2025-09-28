@@ -349,6 +349,7 @@ jobs:
 
     - name: Remove gh variable
       id: remove-gh-variable
+      continue-on-error: true
       env:
         GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       run: |
