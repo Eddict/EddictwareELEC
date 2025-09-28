@@ -40,7 +40,8 @@ jobs:
 
   every-two-hours:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
-    if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
+    # if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
+    if: 0 == 1
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
     steps:
