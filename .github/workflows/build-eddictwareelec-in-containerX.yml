@@ -192,6 +192,8 @@ jobs:
         # git config --global --unset-all safe.directory "${{ github.workspace }}"
         # git config --global --add safe.directory "${{ github.workspace }}"
 
+        echo "whoami=$(whoami)"
+        ls -al .github/actions/scripts
         .github/actions/scripts/set_multi.sh
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
 
