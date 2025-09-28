@@ -290,6 +290,7 @@ jobs:
       - repo-vars
       - repo-login
     env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
     container:
       options: --user docker --log-driver none --workdir /build # --user root
