@@ -130,7 +130,7 @@ jobs:
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      HOME: ""
     steps:
     - name: Checkout repository scripts (bash)
       if: 0 == 1
@@ -162,7 +162,6 @@ jobs:
         #git clean -ffdx
         #git checkout ${{ github.event.repository.default_branch }} -- .github/actions/scripts
 
-
     - name: Checkout repository scripts
       uses: actions/checkout@v5
       with:
@@ -179,21 +178,7 @@ jobs:
       id: set-multi
       shell: bash
       run: |
-        # if [[ $EUID -eq 0 ]]; then
-        #   HOME="/root"
-        # else
-        #   HOME="/home/$(whoami)"
-        #   homedir=~
-        #   eval HOME=$homedir
-        # fi
-        # export HOME="$HOME"
-
-        # touch $HOME/.gitconfig
-        # git config --global --unset-all safe.directory "${{ github.workspace }}"
-        # git config --global --add safe.directory "${{ github.workspace }}"
-
         echo "whoami=$(whoami)"
-        ls -al .github/actions/scripts
         .github/actions/scripts/set_multi.sh
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
 
