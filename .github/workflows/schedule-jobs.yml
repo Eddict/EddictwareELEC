@@ -4,10 +4,41 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 */2 * * *'  # every 2 hours
-#    - cron: '30 5,17 * * 2,4'
+    - cron: '0 18 * * *' # daily at 18:00
 
 jobs:
-  two-hours-schedule:
+  daily:
+    runs-on: ubuntu-latest #ubuntu-latest self-hosted
+    if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
+    env:
+      GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
+    steps:
+      - name: Cleanup old workflow runs
+        run: |
+          curDateTime=$(date)
+          calcDateTime=$(date -d "$curDateTime - 1 day")
+          calcEpoch=$(date -d "$calcDateTime" +%s)
+
+          echo "Current date and time: $curDateTime"
+          echo "Calculated date and time (24 hours ago): $calcDateTime"
+          echo "Calculated epoch time: $calcEpoch"
+
+          jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.creat_epoch < $calc_epoch) ]'
+          echo "JQ filter: $jq_filter"
+          jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
+          echo "Updated JQ filter: $jq_filter"
+
+          gh_owner_repo=${{ github.repository }}
+
+          workflowRuns=$(gh api repos/$gh_owner_repo/actions/runs --paginate --jq $jq_filter)
+          for runId in $(echo $workflowRuns | jq -r '.[].id'); do
+            echo "Deleting workflow run ID: $runId"
+            gh api repos/$gh_owner_repo/actions/runs/$runId -X DELETE
+            sleep 2s
+          done
+          echo "Cleanup completed."
+
+  every-two-hours:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
     if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
     env:
@@ -22,10 +53,8 @@ jobs:
         run: |
           if gh repo sync Eddict/EddictwareELEC -b master-entw; then
             echo "Sync successful"
-            git status
-            git branch -a
             git push origin master-entw --follow-tags
-            git push origin --tags
+            # git push origin --tags
           else
             echo "Sync failed"
             # exit 1
