@@ -5,5 +5,6 @@ if [ "$#" -gt 1 ]; then
     exit 1
 fi
 
-source .github/actions/scripts/set_home.sh $@
-source .github/actions/scripts/set_git_safedir.sh
+mydir="$(dirname "$(readlink -f "$0")")"
+source "$mydir/set_home.sh" "$@"
+source "$mydir/set_git_safedir.sh"
