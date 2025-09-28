@@ -6,7 +6,10 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: &exclude_paths # set YAML anchors for reuse
       - '*.*'
-      - '.github/workflows/build-docker-image.yml'
+      - '.github/workflows/*.yml'
+      - '!.github/workflows/build-eddictwareelec-in-containerX.yml'
+      # - '.github/workflows/build-docker-image.yml'
+      # - '.github/workflows/schedule-jobs.yml'
       - 'tools/docker/**'
   pull_request:
     branches: [ "master-entw" ]
