@@ -1,0 +1,33 @@
+name: Async jobs for EddictwareELEC
+
+on:
+  workflow_dispatch:
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  use-exec:
+    runs-on: ubuntu-latest
+    steps:
+      # - uses: actions/checkout@v4
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const exitCode = await exec.exec('echo', ['hello'])
+            console.log(exitCode)
+
+  use-get-exec-output:
+    runs-on: ubuntu-latest
+    steps:
+      # - uses: actions/checkout@v4
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const {
+              exitCode,
+              stdout,
+              stderr
+            } = await exec.getExecOutput('echo', ['hello']);
+
+            console.log(exitCode, stdout, stderr)
