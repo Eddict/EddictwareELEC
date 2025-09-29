@@ -19,19 +19,21 @@ jobs:
       #       const exitCode = await exec.exec('echo', ['hello'])
       #       console.log(exitCode)
 
+            # // const {
+            # //   exitCode,
+            # //   stdout,
+            # //   stderr
+            # // } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
+            # // } = await exec.getExecOutput('echo', ['hello']);
+
+            # // console.log(exitCode, stdout, stderr)
+
+
+      
       - uses: actions/github-script@v8
         with:
           result-encoding: string
           script: |
-            // const {
-            //   exitCode,
-            //   stdout,
-            //   stderr
-            // } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
-            // } = await exec.getExecOutput('echo', ['hello']);
-
-            // console.log(exitCode, stdout, stderr)
-
             let myOutput = '';
             let myError = '';
 
@@ -44,6 +46,6 @@ jobs:
                   myError += data.toString();
               }
             };
-            options.cwd = '.'; // './lib'
+            // options.cwd = '.';
 
             await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml'], options);
