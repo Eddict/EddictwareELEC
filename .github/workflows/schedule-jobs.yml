@@ -54,7 +54,7 @@ jobs:
         run: |
           remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/master | awk '{print $1}') #  HEAD | awk '{print substr($1,1,8)}
           echo "Remote sha: $remote_sha"
-          if git show $remote_sha --oneline; then # &> /dev/null
+          if git show $remote_sha --oneline &> /dev/null; then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
           else
@@ -67,7 +67,7 @@ jobs:
               git push origin ${{ github.event.repository.default_branch }} --follow-tags
               # git push origin --tags
 
-              # gh workflow run build-eddictwareelec-in-containerX.yml
+              gh workflow run build-eddictwareelec-in-containerX.yml
             else
               echo "Sync failed"
               # exit 1
