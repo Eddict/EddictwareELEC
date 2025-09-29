@@ -12,38 +12,38 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/github-script@v8
-        with:
-          result-encoding: string
-          script: |
-            const exitCode = await exec.exec('echo', ['hello'])
-            console.log(exitCode)
+      # - uses: actions/github-script@v8
+      #   with:
+      #     result-encoding: string
+      #     script: |
+      #       const exitCode = await exec.exec('echo', ['hello'])
+      #       console.log(exitCode)
 
       - uses: actions/github-script@v8
         with:
           result-encoding: string
           script: |
-            const {
-              exitCode,
-              stdout,
-              stderr
-            } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
+            // const {
+            //   exitCode,
+            //   stdout,
+            //   stderr
+            // } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
             // } = await exec.getExecOutput('echo', ['hello']);
 
-            console.log(exitCode, stdout, stderr)
+            // console.log(exitCode, stdout, stderr)
 
-            // let myOutput = '';
-            // let myError = '';
+            let myOutput = '';
+            let myError = '';
 
-            // const options = {};
-            // options.listeners = {
-            //   stdout: (data: Buffer) => {
-            //     myOutput += data.toString();
-            //   },
-            //   stderr: (data: Buffer) => {
-            //     myError += data.toString();
-            //   }
-            // };
-            // options.cwd = './lib';
+            const options = {};
+            options.listeners = {
+              stdout: (data: Buffer) => {
+                  myOutput += data.toString();
+              },
+              stderr: (data: Buffer) => {
+                  myError += data.toString();
+              }
+            };
+            options.cwd = '.'; // './lib'
 
-            // await exec.exec('node', ['index.js', 'foo=bar'], options);
+            await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml'], options);
