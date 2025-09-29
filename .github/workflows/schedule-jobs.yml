@@ -51,7 +51,7 @@ jobs:
 
       - name: Sync from LibreELEC master
         run: |
-          remote_sha=$(git ls-remote git@github.com:${{ env.UPSTREAM_REPO }}.git refs/heads/master | awk '{print $1}') #  HEAD | awk '{print substr($1,1,8)}
+          remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/master | awk '{print $1}') #  HEAD | awk '{print substr($1,1,8)}
           if git show $remote_sha --shortstat &> /dev/null; then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }} (sha: $remote_sha)"
             exit 0
