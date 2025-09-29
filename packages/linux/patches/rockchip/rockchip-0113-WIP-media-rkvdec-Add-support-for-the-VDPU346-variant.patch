@@ -1,7 +1,7 @@
-From 2cfd18fa6a7527132b808c3dd18ddcaddf270bec Mon Sep 17 00:00:00 2001
+From a23a778eed77764bfc91cb1733fd8c6fd7dfad95 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 19 Sep 2025 14:19:53 +0000
-Subject: [PATCH 111/113] WIP: media: rkvdec: Add support for the VDPU346
+Subject: [PATCH 113/115] WIP: media: rkvdec: Add support for the VDPU346
  variant
 
 VDPU346 is derived from VDPU381 but with a single core and limited

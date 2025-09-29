@@ -1,7 +1,7 @@
-From 685694983903db3cf328692b9cce26a07d727e00 Mon Sep 17 00:00:00 2001
+From a214468bfbcd1edb2c3dbf1f291d49a3e3e47441 Mon Sep 17 00:00:00 2001
 From: Muhammed Efe Cetin <efectn@protonmail.com>
 Date: Tue, 10 Dec 2024 21:56:10 +0300
-Subject: [PATCH 109/113] WIP: arm64: dts: rockchip: add pcie wifi support to
+Subject: [PATCH 111/115] WIP: arm64: dts: rockchip: add pcie wifi support to
  OrangePi-5b
 
 Add the PCIe nodes to OrangePi-5b to allow the OrangePi

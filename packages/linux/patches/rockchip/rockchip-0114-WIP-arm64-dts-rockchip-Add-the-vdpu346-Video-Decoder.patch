@@ -1,7 +1,7 @@
-From a56092cd59fc86c94bfda34c7c1f1f0596e2b092 Mon Sep 17 00:00:00 2001
+From c9312b6304df216cbb5688258ee199496a94d45b Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Wed, 17 Sep 2025 13:34:30 +0000
-Subject: [PATCH 112/113] WIP: arm64: dts: rockchip: Add the vdpu346 Video
+Subject: [PATCH 114/115] WIP: arm64: dts: rockchip: Add the vdpu346 Video
  Decoders on RK356X
 
 Add the vdpu346 Video Decoders to the rk356x-base devicetree to

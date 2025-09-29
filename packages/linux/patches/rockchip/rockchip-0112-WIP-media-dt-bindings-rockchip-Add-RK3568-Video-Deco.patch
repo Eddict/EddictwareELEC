@@ -1,7 +1,7 @@
-From 6f63401b7fd30ca028242ef9dfe97ff948148d55 Mon Sep 17 00:00:00 2001
+From e6d78bd48d1a3ac78d1232434391a3fe83c6e796 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 19 Sep 2025 14:28:48 +0000
-Subject: [PATCH 110/113] WIP: media: dt-bindings: rockchip: Add RK3568 Video
+Subject: [PATCH 112/115] WIP: media: dt-bindings: rockchip: Add RK3568 Video
  Decoder bindings
 
 The video decoder in RK356X (vdpu346) is described in the same way as

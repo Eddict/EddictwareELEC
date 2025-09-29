@@ -1,7 +1,7 @@
-From 490b38167b1a6d1121338d639f828125b6691446 Mon Sep 17 00:00:00 2001
+From 528645b72033a717fa8ba6aaf01ac38657fca060 Mon Sep 17 00:00:00 2001
 From: Christian Hewitt <christianshewitt@gmail.com>
 Date: Fri, 19 Sep 2025 14:53:29 +0000
-Subject: [PATCH 113/113] media: rkvdec: minor fixes for current DETLEV patches
+Subject: [PATCH 115/115] media: rkvdec: minor fixes for current DETLEV patches
 
 One typo in vdpu-381-regs and some H264 > H265 corrections in
 the vdpu-383-hevc file.
