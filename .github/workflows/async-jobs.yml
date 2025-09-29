@@ -27,23 +27,23 @@ jobs:
               exitCode,
               stdout,
               stderr
-            } = await exec.getExecOutput('gh workflow', ['run', 'build-eddictwareelec-in-containerX.yml']);
-            # } = await exec.getExecOutput('echo', ['hello']);
+            } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
+            // } = await exec.getExecOutput('echo', ['hello']);
 
             console.log(exitCode, stdout, stderr)
 
-            # let myOutput = '';
-            # let myError = '';
+            // let myOutput = '';
+            // let myError = '';
 
-            # const options = {};
-            # options.listeners = {
-            #   stdout: (data: Buffer) => {
-            #     myOutput += data.toString();
-            #   },
-            #   stderr: (data: Buffer) => {
-            #     myError += data.toString();
-            #   }
-            # };
-            # options.cwd = './lib';
+            // const options = {};
+            // options.listeners = {
+            //   stdout: (data: Buffer) => {
+            //     myOutput += data.toString();
+            //   },
+            //   stderr: (data: Buffer) => {
+            //     myError += data.toString();
+            //   }
+            // };
+            // options.cwd = './lib';
 
-            # await exec.exec('node', ['index.js', 'foo=bar'], options);
+            // await exec.exec('node', ['index.js', 'foo=bar'], options);
