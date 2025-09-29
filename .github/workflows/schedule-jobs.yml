@@ -52,11 +52,12 @@ jobs:
       - name: Sync from LibreELEC master
         run: |
           remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/master | awk '{print $1}') #  HEAD | awk '{print substr($1,1,8)}
-          if git show $remote_sha --shortstat &> /dev/null; then
-            echo "Already up to date with ${{ env.UPSTREAM_REPO }} (sha: $remote_sha)"
+          echo "Remote sha: $remote_sha"
+          if git show $remote_sha --oneline; then # &> /dev/null
+            echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
           else
-            echo "Not up to date with ${{ env.UPSTREAM_REPO }} (sha: $remote_sha), syncing..."
+            echo "Not up to date with ${{ env.UPSTREAM_REPO }}, syncing..."
             last_sha=$(git rev-parse --short @)
             echo "Current sha: $last_sha"
             if gh repo sync ${{ github.repository }} -b ${{ github.event.repository.default_branch }}; then
@@ -65,7 +66,7 @@ jobs:
               git push origin ${{ github.event.repository.default_branch }} --follow-tags
               # git push origin --tags
 
-              gh workflow run build-eddictwareelec-in-containerX.yml
+              # gh workflow run build-eddictwareelec-in-containerX.yml
             else
               echo "Sync failed"
               # exit 1
