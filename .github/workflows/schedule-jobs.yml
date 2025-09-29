@@ -6,12 +6,15 @@ on:
     - cron: '0 */2 * * *'  # every 2 hours
     - cron: '0 18 * * *' # daily at 18:00
 
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  UPSTREAM_REPO: 'LibreELEC/LibreELEC.tv'
+
 jobs:
   daily:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
     if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
-    env:
-      GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
+    # if: 0 == 1
     steps:
       - name: Cleanup old workflow runs
         run: |
@@ -28,22 +31,18 @@ jobs:
           jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
           echo "Updated JQ filter: $jq_filter"
 
-          gh_owner_repo=${{ github.repository }}
-
-          workflowRuns=$(gh api repos/$gh_owner_repo/actions/runs --paginate --jq "$jq_filter")
+          workflowRuns=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter")
           for runId in $(echo $workflowRuns | jq -r '.[].id'); do
             echo "Deleting workflow run ID: $runId"
-            # gh api repos/$gh_owner_repo/actions/runs/$runId -X DELETE
+            gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE
             # sleep 2s
           done
           echo "Cleanup completed."
 
   every-two-hours:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
-    # if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
-    if: 0 == 1
-    env:
-      GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
+    if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
+    # if: 0 == 1
     steps:
       - name: Checkout repository scripts
         uses: actions/checkout@v5
@@ -52,11 +51,22 @@ jobs:
 
       - name: Sync from LibreELEC master
         run: |
-          if gh repo sync Eddict/EddictwareELEC -b master-entw; then
-            echo "Sync successful"
-            git push origin master-entw --follow-tags
-            # git push origin --tags
+          remote_sha=$(git ls-remote git@github.com:${{ env.UPSTREAM_REPO }}.git refs/heads/master | awk '{print $1}') #  HEAD | awk '{print substr($1,1,8)}
+          if git show $remote_sha --shortstat &> /dev/null; then
+            echo "Already up to date with ${{ env.UPSTREAM_REPO }} (sha: $remote_sha)"
+            exit 0
           else
-            echo "Sync failed"
-            # exit 1
+            echo "Not up to date with ${{ env.UPSTREAM_REPO }} (sha: $remote_sha), syncing..."
+            # last_sha=$(git rev-parse --short @)
+            if gh repo sync ${{ github.repository }} -b ${{ github.event.repository.default_branch }}; then
+              # new_sha=$(git rev-parse --short @)
+              echo "Sync successful"
+              git push origin ${{ github.event.repository.default_branch }} --follow-tags
+              # git push origin --tags
+
+              gh workflow run build-eddictwareelec-in-containerX.yml
+            else
+              echo "Sync failed"
+              # exit 1
+            fi
           fi
