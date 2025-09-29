@@ -20,18 +20,18 @@ jobs:
     steps:
       - name: Cleanup old workflow runs
         run: |
+          debug=false
           curDateTime=$(date)
           calcDateTime=$(date -d "$curDateTime - 1 day")
           calcEpoch=$(date -d "$calcDateTime" +%s)
 
-          echo "Current date and time: $curDateTime"
-          echo "Calculated date and time (24 hours ago): $calcDateTime"
-          echo "Calculated epoch time: $calcEpoch"
+          [ "$debug" = true ] && echo "Current date and time: $curDateTime"
+          [ "$debug" = true ] && echo "Calculated date and time (24 hours ago): $calcDateTime"
+          [ "$debug" = true ] && echo "Calculated epoch time: $calcEpoch"
 
           jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.creat_epoch < $calc_epoch) ]'
-          echo "JQ filter: $jq_filter"
           jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
-          echo "Updated JQ filter: $jq_filter"
+          [ "$debug" = true ] && echo "Updated JQ filter: $jq_filter"
 
           workflowRuns=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter")
           for runId in $(echo $workflowRuns | jq -r '.[].id'); do
