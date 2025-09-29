@@ -7,47 +7,23 @@ env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  use-exec:
+  async-test:
+    name: Async Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
-      # - uses: actions/github-script@v8
-      #   with:
-      #     result-encoding: string
-      #     script: |
-      #       const exitCode = await exec.exec('echo', ['hello'])
-      #       console.log(exitCode)
-
-            # // const {
-            # //   exitCode,
-            # //   stdout,
-            # //   stderr
-            # // } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
-            # // } = await exec.getExecOutput('echo', ['hello']);
-
-            # // console.log(exitCode, stdout, stderr)
-
-
-      
       - uses: actions/github-script@v8
         with:
           result-encoding: string
           script: |
-            const exec = require('@actions/exec');
-            
-            let myOutput = '';
-            let myError = '';
+            // const exitCode = await exec.exec('echo', ['hello'])
+            // console.log(exitCode)
 
-            const options = {};
-            options.listeners = {
-              stdout: (data: Buffer) => {
-                  myOutput += data.toString();
-              },
-              stderr: (data: Buffer) => {
-                  myError += data.toString();
-              }
-            };
-            // options.cwd = '.';
+            const {
+              exitCode,
+              stdout,
+              stderr
+            } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
 
-            await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml'], options);
+            console.log(exitCode, stdout, stderr)
