@@ -1,4 +1,4 @@
-name: Build EddictwareELEC image in containerX
+name: Build EddictwareELEC image in container
 
 on:
   workflow_dispatch:
@@ -194,8 +194,6 @@ jobs:
     - uses: ./.github/actions/composite-actions/init-env-vars
       id: get-env-vars
       name: Init environment variables
-      with:
-        gh-token: ${{ secrets.GITHUB_TOKEN }}
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -259,4 +257,13 @@ jobs:
       with:
         name: "${{ steps.archive-image.outputs.EE_image_filename }}"
         path: "${{ steps.archive-image.outputs.EE_image_pathfilename }}"
- 
+
+    # - name: Copy ${{ env.EE_Distro }} image via SCP
+    #   uses: appleboy/scp-action@v1
+    #   with:
+    #     host: ${{ secrets.HOST }}
+    #     username: ${{ secrets.USERNAME }}
+    #     password: ${{ secrets.PASSWORD }}
+    #     port: ${{ secrets.PORT }}
+    #     source: "tests/a.txt,tests/b.txt"
+    #     target: your_server_target_folder_path
