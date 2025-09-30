@@ -310,6 +310,7 @@ post_install() {
   add_group input 104
   add_group render 105
   add_group sgx 106
+  add_group clock 107
 
   enable_service machine-id.service
   enable_service debugconfig.service
