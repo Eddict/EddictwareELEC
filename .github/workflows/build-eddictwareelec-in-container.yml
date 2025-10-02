@@ -211,6 +211,8 @@ jobs:
         NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
         # echo "NB_CORES=$NB_CORES"
         # run the build
+        export
+        exit 1
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
