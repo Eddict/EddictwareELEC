@@ -60,7 +60,9 @@ FROM update AS build
 
 RUN apt-get update \
  && apt-get install -y \
-    build-essential
+    make cmake build-essential \
+    --no-install-recommends
+
 #gcc-14 cpp-14 g++-14
 RUN apt-get update \
  && apt-get install -y \
