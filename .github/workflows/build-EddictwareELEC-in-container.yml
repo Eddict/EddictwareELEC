@@ -7,7 +7,7 @@ on:
     paths-ignore: &exclude_paths # set YAML anchors for reuse
       - '*.*'
       - '.github/workflows/*.yml'
-      - '!.github/workflows/build-EddictwareELEC-in-container.yml'
+      - '!.github/workflows/build-eddictwareelec-in-container.yml'
       # - '.github/workflows/build-docker-image.yml'
       # - '.github/workflows/schedule-jobs.yml'
       - 'tools/docker/**'
@@ -28,6 +28,7 @@ env:
   EE_image_filename: ""
   NB_CORES: 1
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # HOME: ""
 
 jobs:
   pre-build:
