@@ -1,10 +1,16 @@
 name: Init-Env-Vars
 description: 'Initialize environment variables'
+# inputs:
+#   distro-codename:
+#     description: 'The distribution codename'
+#     required: true
 outputs:
   output_get_pwd:
     value: ${{ steps.get-pwd.outputs.curdir }}
   output_get_cpu_info:
     value: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+  output_get_distro_codename:
+    value: ${{ steps.set-distro-codename.outputs.DistroCodeName }}
   # output_build_dir:
   #   value: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
   # output_ccache_folder:
@@ -33,6 +39,13 @@ runs:
       id: get-cpu-info
       shell: bash
       run: echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" | sudo tee -a $GITHUB_OUTPUT
+
+    - name: Set DistroCodeName
+      id: set-distro-codename
+      # env:
+      #   DISTRO_CODE_NAME: ${{ inputs.distro-codename }}
+      shell: bash
+      run: echo "DistroCodeName=${{ env.DistroCodeName }} | sudo tee -a $GITHUB_OUTPUT
 
     # - name: Determine .ccache folder location
     #   id: ccache-folder
