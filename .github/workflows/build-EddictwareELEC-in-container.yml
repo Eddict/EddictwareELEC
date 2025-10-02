@@ -33,14 +33,12 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: *exclude_paths
 
-# run-name: format('{0} {1}', ${{ github.workflow }}, ( ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }} ))
-run-name: ${{ github.workflow }} ( ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }} )
-# run-name: >-
-#   if [[ ${{ github.event_name }} == "push" ]]; then
-#     "${{ github.workflow }} (${{ inputs.env_dummy }})"
-#   else
-#     "${{ github.workflow }} (${{ inputs.environment }})"
-#   fi
+run-name: >-
+  if [[ ${{ github.event_name }} == "push" ]]; then
+    "${{ github.workflow }} (${{ inputs.env_dummy }})"
+  else
+    "${{ github.workflow }} (${{ inputs.environment }})"
+  fi
 
 env:
   DistroCodeName: ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }}
