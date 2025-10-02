@@ -172,8 +172,8 @@ jobs:
         DISABLE_COLORS: yes
         LOGCOMBINE: fail
         MTIMMEDIATE: no
-        MTDEBUG: no
-        MTVERBOSE: no
+        MTDEBUG: yes
+        MTVERBOSE: yes
         MTPROGRESS: yes
         DISTRO: ${{ env.EE_Distro }}
         PROJECT: ${{ env.EE_Project }}
