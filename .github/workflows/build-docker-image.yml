@@ -29,7 +29,7 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}" >> $GITHUB_OUTPUT
       shell: bash
 
     -
