@@ -7,6 +7,7 @@ on:
         description: 'Environment to run against'
         type: environment
         required: true
+        default: 'noble'
   deployment:
   push:
     branches: [ "master-entw" ]
