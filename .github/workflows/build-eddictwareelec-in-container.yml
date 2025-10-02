@@ -262,7 +262,7 @@ jobs:
     name: Accessing JSON secret
     permissions: write-all
     runs-on: self-hosted #ubuntu-latest
-    needs: build
+    needs: post-build
     env:
       encSCP_INFO: ${{ secrets.SCP_INFO }}
     steps:
