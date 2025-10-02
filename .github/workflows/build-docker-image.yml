@@ -14,7 +14,7 @@ on:
       - 'tools/docker/noble/Dockerfile'
 
 env:
-  DistroCodeName: ${{ github.event.deployment.environment }}
+  DistroCodeName: ${{ inputs.environment }}
 
 jobs:
   build:
