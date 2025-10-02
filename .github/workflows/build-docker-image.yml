@@ -14,7 +14,7 @@ on:
     paths: &include_paths
       - 'tools/docker/noble/Dockerfile'
 
-run-name: '${{ github.event.inputs.environment }}-${{ github.workflow }} - Run ID: ${{ github.run_id }} - by @${{ github.actor }}'
+run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
 
 env:
   DistroCodeName: ${{ inputs.environment }}
