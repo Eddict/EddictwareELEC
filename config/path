@@ -9,7 +9,7 @@ set -e
   PACKAGES=packages
   SOURCES=${SOURCES_DIR:-$ROOT/sources}
   BUILD_ROOT=${BUILD_DIR:-$ROOT}
-  BUILD_BASE=build
+  BUILD_BASE=${BUILD_BASE:-build}
   TARGET_IMG=${TARGET_DIR:-$ROOT/target}
   ADDONS=addons
 
