@@ -172,6 +172,8 @@ jobs:
         DISABLE_COLORS: yes
         LOGCOMBINE: fail
         MTIMMEDIATE: no
+        DEBUG: yes
+        LOCAL_CCACHE: yes
         MTDEBUG: yes
         MTVERBOSE: yes
         MTPROGRESS: yes
