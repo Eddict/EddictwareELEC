@@ -86,5 +86,7 @@ RUN rm -rf /var/lib/apt/lists/*
 #     --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
 #     --slave /usr/bin/gcov gcov /usr/bin/gcov-14
 # RUN update-alternatives --config gcc
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc 100
+RUN update-alternatives --config gcc
 
 USER docker
