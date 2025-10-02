@@ -2,6 +2,19 @@ name: Build EddictwareELEC image in container
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run against'
+        required: true
+        # type: environment
+        type: choice
+        options:
+          - bookworm
+          - focal
+          - jammy
+          - noble
+          - plucky
+        default: noble
   push:
     branches: [ "master-entw" ]
     paths-ignore: &exclude_paths # set YAML anchors for reuse
@@ -15,8 +28,10 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: *exclude_paths
 
+run-name: '${{ github.workflow }} (${{ inputs.environment }})'
+
 env:
-  DistroCodeName: noble
+  DistroCodeName: ${{ inputs.environment }}
   BUILDER_NAME: ${{ github.repository_owner }}
   BUILDER_VERSION: ""
   EE_Distro: EddictwareELEC
@@ -86,17 +101,6 @@ jobs:
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
-    - name: gh-variable-set
-      shell: bash
-      run: |
-        # gh auth status
-        if gh variable set REGISTRY_FQDN --body "${{ secrets.REGISTRY_FQDN }}"; then
-          sleep 3s # wait for variable to be set
-        else
-          echo "Failed to set gh variable REGISTRY_FQDN"
-          exit 1
-        fi
-
   repo-login:
     name: Repo-login
     needs: repo-vars
@@ -114,25 +118,10 @@ jobs:
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
-    - name: Get gh variable
-      id: gh-variable-get
-      env:
-        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
-      shell: bash
-      run: |
-        sleep 3s # wait for variable to get
-        echo "REGISTRY_FQDN=${{ vars.REGISTRY_FQDN }}"
-        if ghREGISTRY_FQDN=$(gh variable get REGISTRY_FQDN); then
-          echo "ghREGISTRY_FQDN=$ghREGISTRY_FQDN" | sudo tee -a $GITHUB_OUTPUT
-        else
-          echo "Failed to get gh variable REGISTRY_FQDN"
-          exit 1
-        fi
-
     - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }} #${{ vars.REGISTRY_FQDN }}
+        registry: ${{ secrets.REGISTRY_FQDN }}
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
 
@@ -148,9 +137,6 @@ jobs:
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
 
-    outputs:
-      output_get_RFQDN: ${{ steps.gh-variable-get.outputs.ghREGISTRY_FQDN }}
-
   build:
     name: Build
     runs-on: self-hosted
@@ -163,8 +149,7 @@ jobs:
       HOME: ""
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      # image: ${{ vars.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}
-      image: ${{ needs.repo-login.outputs.output_get_RFQDN }}/${{ github.repository_owner }}/${{ needs.pre-build.outputs.output_get_distro_codename }} #${{ env.DistroCodeName }}
+      image: ${{ needs.pre-build.outputs.output_get_distro_tag }}
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
@@ -183,6 +168,7 @@ jobs:
         ARCH: ${{ env.EE_Arch }}
         BUILDER_NAME: ${{ env.BUILDER_NAME }}
         BUILDER_VERSION: ${{ env.BUILDER_VERSION }}
+        BUILD_BASE: "build.${{ env.DistroCodeName }}"
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
     steps:

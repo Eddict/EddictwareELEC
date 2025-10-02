@@ -9,8 +9,8 @@ outputs:
     value: ${{ steps.get-pwd.outputs.curdir }}
   output_get_cpu_info:
     value: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-  output_get_distro_codename:
-    value: ${{ steps.set-distro-codename.outputs.DistroCodeName }}
+  output_get_distro_tag:
+    value: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
   # output_build_dir:
   #   value: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
   # output_ccache_folder:
@@ -42,10 +42,17 @@ runs:
 
     - name: Set DistroCodeName
       id: set-distro-codename
-      # env:
-      #   DISTRO_CODE_NAME: ${{ inputs.distro-codename }}
       shell: bash
       run: echo "DistroCodeName=${{ env.DistroCodeName }} | sudo tee -a $GITHUB_OUTPUT
+
+    -
+      name: Compose image tag
+      id: compose-image-tag
+      shell: bash
+      run: |
+        dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
+        # Use ,, to convert all characters to lowercase
+        echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
 
     # - name: Determine .ccache folder location
     #   id: ccache-folder
