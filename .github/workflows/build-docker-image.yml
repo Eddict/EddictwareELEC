@@ -2,13 +2,19 @@ name: Build Container for building EddictwareELEC images
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run against'
+        type: environment
+        required: true
+  deployment:
   push:
     branches: [ "master-entw" ]
     paths: &include_paths
       - 'tools/docker/noble/Dockerfile'
 
 env:
-  DistroCodeName: noble
+  DistroCodeName: ${{ github.event.deployment.environment }}
 
 jobs:
   build:
