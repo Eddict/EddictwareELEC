@@ -15,6 +15,11 @@ on:
           - noble
           - plucky
         default: noble
+      env_dummy:
+        description: 'Environment to run against'
+        required: false
+        type: string
+        default: noble
   push:
     branches: [ "master-entw" ]
     paths-ignore: &exclude_paths # set YAML anchors for reuse
@@ -28,10 +33,17 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: *exclude_paths
 
-run-name: '${{ github.workflow }} (${{ inputs.environment }})'
+run-name: format('{0} ({1})', ${{ github.workflow }}, ( ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }} ))
+# run-name: ( ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }} )
+# run-name: >-
+#   if [[ ${{ github.event_name }} == "push" ]]; then
+#     "${{ github.workflow }} (${{ inputs.env_dummy }}"
+#   else
+#     "${{ github.workflow }} (${{ inputs.environment }}"
+#   fi
 
 env:
-  DistroCodeName: ${{ inputs.environment }}
+  DistroCodeName: ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }}
   BUILDER_NAME: ${{ github.repository_owner }}
   BUILDER_VERSION: ""
   EE_Distro: EddictwareELEC
