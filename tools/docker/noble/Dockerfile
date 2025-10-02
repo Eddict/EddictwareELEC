@@ -81,7 +81,8 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
     --slave /usr/bin/gcov gcov /usr/bin/gcov-14
 RUN update-alternatives --config gcc
 
-RUN apt-get install -y \
+RUN apt-get update \
+ && apt-get install -y \
     build-essential \
     --no-install-recommends
 
