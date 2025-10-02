@@ -5,9 +5,16 @@ on:
     inputs:
       environment:
         description: 'Environment to run against'
-        type: environment
         required: true
-        default: 'noble'
+        # type: environment
+        type: choice
+        options:
+          - bookworm
+          - focal
+          - jammy
+          - noble
+          - plucky
+        default: noble
   deployment:
   push:
     branches: [ "master-entw" ]
