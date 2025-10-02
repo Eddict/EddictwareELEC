@@ -258,12 +258,77 @@ jobs:
         name: "${{ steps.archive-image.outputs.EE_image_filename }}"
         path: "${{ steps.archive-image.outputs.EE_image_pathfilename }}"
 
-    # - name: Copy ${{ env.EE_Distro }} image via SCP
-    #   uses: appleboy/scp-action@v1
-    #   with:
-    #     host: ${{ secrets.HOST }}
-    #     username: ${{ secrets.USERNAME }}
-    #     password: ${{ secrets.PASSWORD }}
-    #     port: ${{ secrets.PORT }}
-    #     source: "tests/a.txt,tests/b.txt"
-    #     target: your_server_target_folder_path
+  secrets:
+    name: Accessing JSON secret
+    permissions: write-all
+    runs-on: self-hosted #ubuntu-latest
+    needs: build
+    env:
+      encSCP_INFO: ${{ secrets.SCP_INFO }}
+    steps:
+      - name: Create JQ filter file
+        run: |
+          # quoted 'EOF' to prevent variable expansion when creating the file
+          cat <<'EOF' > "${{ runner.temp }}/filter.jq"
+          # filter.jq
+          to_entries[]                                      # 1. Iterate over top-level keys (e.g., "red", "green")
+          | . as {key: $parent, value: $v}                  # 2. Assign parent key and its value
+          | ($v | if type == "array" then .[] else . end)   # 3. Normalize: if value is array, iterate; else, use as-is
+          | to_entries[]                                    # 4. Iterate over each child key-value pair
+          | "\($parent)_\(.key)=\(.value)"                  # 5. Format as "parent.child=value"
+          EOF
+
+      - name: Decode Secrets
+        id: decode-secrets
+        run: |
+          if [ ! -x "$(command -v jq)" ]; then
+            export DEBIAN_FRONTEND="noninteractive"
+            echo "jq not found, installing..."
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+
+          echo "${{ env.encSCP_INFO }}" |
+            base64 --decode |
+            jq --raw-output --from-file ${{ runner.temp }}/filter.jq |
+          while read line; do
+            option="${line%%=*}"
+            value="${line#*=}"
+            echo "::add-mask::$value";
+            echo "$option=$value" >> $GITHUB_ENV;
+          done
+          rm -f ${{ runner.temp }}/filter.jq
+
+      - name: Decode connection_key
+        id: decode-connection-key
+        run: |
+          value=$(printf '%s' "$connection_key" | base64 -d)
+          escaped_value=$(printf '%s' "$value" | sed 's/%/%25/g; s/\r/%0D/g; s/$/%0A/' | tr -d '\n' | sed 's/%0A$//')
+          echo "::add-mask::$escaped_value";
+          {
+            echo 'decoded_key<<EOF'
+            echo "$escaped_value"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Echo out a GitHub Actions Secret to the logs
+        id: unescape-connection-key
+        run: |
+          unescaped_value=$(printf '%s' "${{ steps.decode-connection-key.outputs.decoded_key }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+          echo "::add-mask::$unescaped_value";
+          echo "connection_keyX=$unescaped_value" >> $GITHUB_OUTPUT;
+          # echo "Trick to echo GitHub Actions Secret:"
+          # echo "$unescaped_value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+          # echo "$connection_port" | sed 's/./& /g'
+
+      - name: Copy ${{ env.EE_Distro }} image via SCP
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ steps.decode-secrets.outputs.connection_host }}
+          port: ${{ steps.decode-secrets.outputs.connection_port }}
+          username: ${{ steps.decode-secrets.outputs.connection_username }}
+          key: ${{ steps.unescape-connection-key.outputs.connection_keyX }}
+          fingerprint: ${{ steps.decode-secrets.outputs.connection_fingerprint }}
+          protocol: ${{ steps.decode-secrets.outputs.connection_protocol }}
+          source: ${{ steps.archive-image.outputs.EE_image_pathfilename }}
+          target: ${{ steps.decode-secrets.outputs.transfer_target }}
