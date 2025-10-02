@@ -212,7 +212,7 @@ jobs:
         # echo "NB_CORES=$NB_CORES"
         # run the build
         export
-        exit 1
+        # exit 1
         make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
