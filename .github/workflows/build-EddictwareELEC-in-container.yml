@@ -200,7 +200,7 @@ jobs:
         # echo "EE_Distro_tag: $EE_Distro_tag"
         # echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
         # echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
-        exit 1
+        # exit 1
     - name: Get EE_Test
       env:
         EE_Test: ${{ steps.env-test.outputs.EE_Test }}
