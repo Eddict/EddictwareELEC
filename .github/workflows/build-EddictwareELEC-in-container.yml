@@ -33,7 +33,7 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: *exclude_paths
 
-run-name: ${{ format('{0} ({1})', github.workflow, inputs.environment || 'noble') }}
+run-name: ${{ format('{0} ({1} - {2})', github.workflow, inputs.environment || 'noble', github.event_name) }}
 # run-name: ${{ format('{0} ({1})', github.workflow, github.event_name == 'push' && 'noble' || inputs.environment) }}
 # run-name: ${{ format('{0} ({1})', github.workflow, github.event_name == 'push' && inputs.env_dummy || inputs.environment) }}
 # run-name: ${{ github.event_name == 'push' && 'github.workflow (inputs.env_dummy)' || 'github.workflow (inputs.environment)' }}
