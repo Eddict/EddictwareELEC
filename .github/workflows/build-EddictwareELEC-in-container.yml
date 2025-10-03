@@ -116,6 +116,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       HOME: ""
     outputs:
+      output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}
       output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
       output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
       output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}
@@ -200,7 +201,7 @@ jobs:
         DEVICE: ${{ env.EE_Device }}
         ARCH: ${{ env.EE_Arch }}
         BUILDER_NAME: ${{ env.BUILDER_NAME }}
-        BUILDER_VERSION: ${{ env.BUILDER_VERSION }}
+        BUILDER_VERSION: ${{ needs.repo-vars.outputs.output_set_builder_version }}
         BUILD_BASE: "build.${{ env.DistroCodeName }}"
       volumes:
         - ${{ needs.repo-vars.outputs.output_get_pwd }}:/build:rw
