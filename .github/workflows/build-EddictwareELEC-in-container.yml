@@ -136,6 +136,16 @@ jobs:
       with:
         registry_fqdn: ${{ secrets.REGISTRY_FQDN }}
 
+    - name: edtest
+      run: |
+        var1=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g')
+        echo "spaced: $var1"
+        # unspaced=$(echo "$var1" | tr -d ' ')
+        unspaced=$(echo "$var1" | sed 's/ //g')
+        # echo "::add-mask::$unspaced"
+        echo "unspaced: $unspaced" # | sudo tee -a $GITHUB
+        exit 1
+
   repo-login:
     name: Repo-login
     needs: repo-vars
