@@ -180,6 +180,7 @@ jobs:
 
     - name: Prepare build directory
       id: prepare-build-dir
+      shell: bash
       run: |
         echo "curdir: $PWD"
         chown -R docker:docker $PWD
@@ -189,6 +190,15 @@ jobs:
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
+
+    - name: Test
+      id: env-test
+      shell: bash
+      run: |
+        echo "EE_Distro_tag: $EE_Distro_tag"
+        echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
+        echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
+        exit 1
 
   build:
     name: Build
