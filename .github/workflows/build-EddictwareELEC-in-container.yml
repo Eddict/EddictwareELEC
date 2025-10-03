@@ -166,9 +166,12 @@ jobs:
         # exit 1
     - name: Get EE_Test
       env:
+        EE_DT: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
         EE_Test: ${{ steps.env-test.outputs.EE_Test }}
       shell: bash
-      run: echo "The selected EE_Test is $EE_Test"
+      run: |
+        echo "The selected EE_DT is $EE_DT"
+        echo "The selected EE_Test is $EE_Test"
 
 
   repo-login:
@@ -199,6 +202,7 @@ jobs:
       id: prepare-build-dir
       shell: bash
       run: |
+        echo "EE_DT: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
         echo "EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}"
         echo "curdir: $PWD"
         chown -R docker:docker $PWD
