@@ -1,9 +1,5 @@
 name: Init-Env-Vars
 description: 'Initialize environment variables'
-inputs:
-  registry_fqdn:
-    description: 'The fully qualified domain name of the registry'
-    required: true
 outputs:
   output_set_builder_version:
     value: ${{ steps.set-builder-version.outputs.BUILDER_VERSION }}
@@ -11,12 +7,6 @@ outputs:
     value: ${{ steps.get-pwd.outputs.curdir }}
   output_get_cpu_info:
     value: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-  output_get_distro_tag:
-    value: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-  # output_build_dir:
-  #   value: ${{ steps.ccache-folder.outputs.BUILD_DIR }}
-  # output_ccache_folder:
-  #   value: ${{ steps.ccache-folder.outputs.CCACHE_DIR }}
 runs:
   using: "composite"
   steps:
@@ -46,26 +36,3 @@ runs:
     #   id: set-distro-codename
     #   shell: bash
     #   run: echo "DistroCodeName=${{ env.DistroCodeName }}" | sudo tee -a $GITHUB_OUTPUT
-
-    -
-      name: Compose image tag
-      id: compose-image-tag
-      shell: bash
-      run: |
-        dTag="${{ inputs.registry_fqdn }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
-        # Use ,, to convert all characters to lowercase
-        echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
-
-    # - name: Determine .ccache folder location
-    #   id: ccache-folder
-    #   shell: bash
-    #   run: |
-    #     BUILD_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel
-    #     CCACHE_DIR=$BUILD_DIR/.ccache
-    #     echo "BUILD_DIR=$BUILD_DIR" | sudo tee -a $GITHUB_OUTPUT
-    #     echo "CCACHE_DIR=$CCACHE_DIR" | sudo tee -a $GITHUB_OUTPUT
-    #     # if [ "${DISTRO_VERSION}" = "devel" ] ; then
-    #     #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-13.0-${DISTRO_VERSION}
-    #     # else
-    #     #   BUILD=/build.${{ env.EE_Distro }}-${{ env.EE_Distro }}.${{ env.EE_Arch }}-${DISTRO_VERSION}
-    #     # fi

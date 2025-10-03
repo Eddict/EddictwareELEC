@@ -133,21 +133,26 @@ jobs:
       name: Init environment variables
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        registry_fqdn: ${{ secrets.REGISTRY_FQDN }}
 
-    - name: edtest
+    - name: Compose image tag
+      id: compose-image-tag
+      shell: bash
       run: |
-        # var1=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g')
-        # echo "spaced: $var1"
-        x=$(echo "${{ github.event.repository.full_name }}" | sed 's/./& /g' | sed 's/ //g')
-        echo "repository_fullname: $x"
-        exit 1
-        # unspaced=$(echo "$var1" | tr -d ' ')
-        unspaced=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g')
-        # echo "::add-mask::$unspaced"
-        echo "unspaced: $unspaced" # | sudo tee -a $GITHUB
-        exit 1
+        fqdn=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g')
+        dTag="$fqdn/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
+        # Use ,, to convert all characters to lowercase
+        echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
+
+      # # var1=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g')
+      #   # echo "spaced: $var1"
+      #   x=$(echo "${{ github.event.repository.full_name }}" | sed 's/./& /g' | sed 's/ //g')
+      #   echo "repository_fullname: $x"
+      #   exit 1
+      #   # unspaced=$(echo "$var1" | tr -d ' ')
+      #   unspaced=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g')
+      #   # echo "::add-mask::$unspaced"
+      #   echo "unspaced: $unspaced" # | sudo tee -a $GITHUB
+      #   exit 1
 
   repo-login:
     name: Repo-login
