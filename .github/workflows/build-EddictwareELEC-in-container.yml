@@ -120,6 +120,7 @@ jobs:
       output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
       output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      EE_Test: ${{ steps.env-test.outputs.EE_Test }}
     steps:
     - name: Initialize environment
       id: set-multi
@@ -155,12 +156,28 @@ jobs:
       #   echo "unspaced: $unspaced" # | sudo tee -a $GITHUB
       #   exit 1
 
+    - name: Test
+      id: env-test
+      shell: bash
+      run: |
+        echo EE_Test=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g' | tr '[:upper:]' '[:lower:]') | sudo tee -a $GITHUB_OUTPUT
+        # echo "EE_Distro_tag: $EE_Distro_tag"
+        # echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
+        # echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
+        # exit 1
+    - name: Get EE_Test
+      env:
+        EE_Test: ${{ steps.env-test.outputs.EE_Test }}
+      shell: bash
+      run: echo "The selected EE_Test is $EE_Test"
+
+
   repo-login:
     name: Repo-login
     needs: repo-vars
     runs-on: self-hosted
     permissions:
-      actions: read
+      actions: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
@@ -183,6 +200,7 @@ jobs:
       id: prepare-build-dir
       shell: bash
       run: |
+        echo "EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}"
         echo "curdir: $PWD"
         chown -R docker:docker $PWD
 
@@ -191,21 +209,6 @@ jobs:
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
-
-    - name: Test
-      id: env-test
-      shell: bash
-      run: |
-        echo EE_Test=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g' | tr '[:upper:]' '[:lower:]') | sudo tee -a $GITHUB_OUTPUT
-        # echo "EE_Distro_tag: $EE_Distro_tag"
-        # echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
-        # echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
-        # exit 1
-    - name: Get EE_Test
-      env:
-        EE_Test: ${{ steps.env-test.outputs.EE_Test }}
-      shell: bash
-      run: echo "The selected EE_Test is $EE_Test"
 
   build:
     name: Build
@@ -217,11 +220,11 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
       BUILDER_VERSION: ${{ needs.repo-vars.outputs.output_set_builder_version }}
-      EE_Distro_tag: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
+      EE_Distro_tag: ${{ needs.repo-vars.outputs.EE_Test }}
       NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      image: ${{ needs.repo-vars.outputs.output_get_distro_tag }}:latest
+      image: ${{ needs.repo-vars.outputs.EE_Test }}:latest
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
