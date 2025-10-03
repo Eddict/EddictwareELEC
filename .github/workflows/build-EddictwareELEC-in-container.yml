@@ -181,9 +181,12 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
+      BUILDER_VERSION: ${{ needs.repo-vars.outputs.output_set_builder_version }}
+      EE_Distro_tag: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
+      NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      image: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
+      image: ${{ env.EE_Distro_tag }}:latest
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
@@ -201,7 +204,7 @@ jobs:
         DEVICE: ${{ env.EE_Device }}
         ARCH: ${{ env.EE_Arch }}
         BUILDER_NAME: ${{ env.BUILDER_NAME }}
-        BUILDER_VERSION: ${{ needs.repo-vars.outputs.output_set_builder_version }}
+        BUILDER_VERSION: ${{ env.BUILDER_VERSION }}
         BUILD_BASE: "build.${{ env.DistroCodeName }}"
       volumes:
         - ${{ needs.repo-vars.outputs.output_get_pwd }}:/build:rw
@@ -215,8 +218,9 @@ jobs:
 
     - name: Build ${{ env.EE_Distro }} image
       run: |
-        NB_CORES=${{ needs.repo-vars.outputs.output_get_cpu_info }}
-        # echo "NB_CORES=$NB_CORES"
+        NB_CORES=${{ env.NB_CORES }}
+        [ "$NB_CORES" -lt 1 ] && NB_CORES=1
+        echo "NB_CORES=$NB_CORES"
         # run the build
         export
         # exit 1
