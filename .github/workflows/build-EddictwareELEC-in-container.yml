@@ -170,8 +170,8 @@ jobs:
         EE_Test: ${{ steps.env-test.outputs.EE_Test }}
       shell: bash
       run: |
-        echo "The selected EE_DT is $EE_DT"
-        echo "The selected EE_Test is $EE_Test"
+        echo "The selected EE_DT is ${EE_DT}"
+        echo "The selected EE_Test is ${EE_Test}"
 
 
   repo-login:
@@ -201,9 +201,12 @@ jobs:
     - name: Prepare build directory
       id: prepare-build-dir
       shell: bash
+      env:
+        EE_DT: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
+        EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}
       run: |
-        echo "EE_DT: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
-        echo "EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}"
+        echo "EE_DT: ${EE_DT}"
+        echo "EE_Test: ${EE_Test}"
         echo "curdir: $PWD"
         chown -R docker:docker $PWD
 
@@ -224,10 +227,12 @@ jobs:
       HOME: ""
       BUILDER_VERSION: ${{ needs.repo-vars.outputs.output_set_builder_version }}
       EE_Distro_tag: ${{ needs.repo-vars.outputs.EE_Test }}
+      EE_DT: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
+      EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}
       NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      image: ${{ needs.repo-vars.outputs.EE_Test }}:latest
+      image: ${{ env.EE_DT }}:latest
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
