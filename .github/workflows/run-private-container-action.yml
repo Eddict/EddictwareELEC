@@ -1,3 +1,5 @@
+name: Docker Container Action to build EddictwareELEC
+
 on:
   workflow_dispatch:
 
