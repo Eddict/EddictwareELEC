@@ -55,6 +55,7 @@ env:
   DistroCodeName: ${{ inputs.environment || 'noble' }}
   BUILDER_NAME: ${{ github.repository_owner }}
   BUILDER_VERSION: ""
+  BUILD_BASE: ""
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
@@ -122,6 +123,19 @@ jobs:
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
+    - uses: ./.github/actions/composite-actions/init-env-vars
+      id: get-env-vars
+      name: Init environment variables
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        registry_fqdn: ${{ secrets.REGISTRY_FQDN }}
+      outputs:
+        output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
+        output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+        output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+
+
   repo-login:
     name: Repo-login
     needs: repo-vars
@@ -162,7 +176,6 @@ jobs:
     name: Build
     runs-on: self-hosted
     needs:
-      - pre-build 
       - repo-vars
       - repo-login
     env:
@@ -170,7 +183,7 @@ jobs:
       HOME: ""
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      image: ${{ needs.pre-build.outputs.output_get_distro_tag }}
+      image: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
@@ -191,7 +204,7 @@ jobs:
         BUILDER_VERSION: ${{ env.BUILDER_VERSION }}
         BUILD_BASE: "build.${{ env.DistroCodeName }}"
       volumes:
-        - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
+        - ${{ needs.repo-vars.outputs.output_get_pwd }}:/build:rw
     steps:
     - name: Initialize environment
       id: set-multi
@@ -200,26 +213,9 @@ jobs:
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
-    - uses: ./.github/actions/composite-actions/init-env-vars
-      id: get-env-vars
-      name: Init environment variables
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        registry_fqdn: ${{ secrets.REGISTRY_FQDN }}
-
-    - name: Remove gh variable
-      id: remove-gh-variable
-      continue-on-error: true
-      env:
-        GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
-      run: |
-        #echo ${{ secrets.GH_RUNNER_TOKEN }} | gh auth login --with-token
-        gh variable delete REGISTRY_FQDN
-
     - name: Build ${{ env.EE_Distro }} image
       run: |
-        NB_CORES=${{ needs.pre-build.outputs.output_get_cpu_info }}
+        NB_CORES=${{ needs.repo-vars.outputs.output_get_cpu_info }}
         # echo "NB_CORES=$NB_CORES"
         # run the build
         export
