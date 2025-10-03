@@ -1,0 +1,50 @@
+on:
+  workflow_dispatch:
+
+env:
+  DISABLE_COLORS: yes
+  LOGCOMBINE: fail
+  MTIMMEDIATE: no
+  DEBUG: yes
+  MTDEBUG: yes
+  MTVERBOSE: yes
+  MTPROGRESS: yes
+  DISTRO: EddictwareELEC
+  PROJECT: RPi
+  DEVICE: RPi4
+  ARCH: aarch64
+  BUILDER_NAME: ${{ github.repository_owner }}
+  BUILD_BASE: "alt.build.noble"
+
+jobs:
+  hello_world_job:
+    runs-on: self-hosted #ubuntu-latest
+    name: A test job to build in a noble container
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set BUILDER_VERSION
+        id: set-builder-version
+        shell: bash
+        run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" | sudo tee -a $GITHUB_OUTPUT
+
+      - name: Command action step
+        uses: ./.github/actions/container-actions/noble
+        id: cmd-step
+        with:
+          cmd-to-run: 'make image'
+          disable-colors: ${{ env.DISABLE_COLORS }}
+          logcombine: ${{ env.LOGCOMBINE }}
+          mtimmediate: ${{ env.MTIMMEDIATE }}
+          debug: ${{ env.DEBUG }}
+          mtdebug: ${{ env.MTDEBUG }}
+          mtverbose: ${{ env.MTVERBOSE }}
+          mtprogress: ${{ env.MTPROGRESS }}
+          distro: ${{ env.DISTRO }}
+          project: ${{ env.PROJECT }}
+          device: ${{ env.DEVICE }}
+          arch: ${{ env.ARCH }}
+          builder-name: ${{ env.BUILDER_NAME }}
+          builder-version: ${{ steps.set-builder-version.outputs.BUILDER_VERSION }}
+          build-base: ${{ env.BUILD_BASE }}

@@ -6,7 +6,6 @@ on:
       environment:
         description: 'Environment to run against'
         required: true
-        # type: environment
         type: choice
         options:
           - bookworm
@@ -14,15 +13,11 @@ on:
           - noble
           - plucky
         default: noble
-      # env_dummy:
-      #   description: 'Environment to run against'
-      #   required: false
-      #   type: string
-      #   default: noble
   push:
     branches: [ "master-entw" ]
     paths-ignore: &exclude_paths # set YAML anchors for reuse
       - '*.*'
+      - '.github/actions/container-actions/*.yml'
       - '.github/workflows/*.yml'
       - '!.github/workflows/build-EddictwareELEC-in-container.yml'
       # - '.github/workflows/build-docker-image.yml'
@@ -33,23 +28,6 @@ on:
     paths-ignore: *exclude_paths
 
 run-name: ${{ format('{0} ({1} - {2})', github.workflow, inputs.environment || 'noble', github.event_name) }}
-# run-name: ${{ format('{0} ({1})', github.workflow, github.event_name == 'push' && 'noble' || inputs.environment) }}
-# run-name: ${{ format('{0} ({1})', github.workflow, github.event_name == 'push' && inputs.env_dummy || inputs.environment) }}
-# run-name: ${{ github.event_name == 'push' && 'github.workflow (inputs.env_dummy)' || 'github.workflow (inputs.environment)' }}
-# run-name: >-
-#   if [[ ${{ github.event_name }} == "push" ]]; then
-#     "${{ github.workflow }} (${{ inputs.env_dummy }})"
-#   else
-#     "${{ github.workflow }} (${{ inputs.environment }})"
-#   fi
-# run-name: "${{ github.event.inputs.operation == 'init' && format('Provision') || format('Destroy') }} terraform state for the customer ${{ github.event.inputs.customer_name}}. Branch: ${{ github.ref_name }} and msg: ${{ github.event.head_commit.message}}"
-# run-name: '${{ github.event.inputs.environment || vars.DEFAULT_ENVIRONMENT }} - Run ID: ${{ github.run_id }} - by @${{ github.actor }}'
-# run-name: >-
-#   ${{ github.event.repository.name == 'ci-systems'
-#     && format('My Regression tests: drv:{0} + ci-systems:{1}',
-#               inputs.my_version,
-#               github.head_ref || github.ref_name)
-#     || format('My Regression tests: {0}', inputs.my_version) }}
 
 env:
   DistroCodeName: ${{ inputs.environment || 'noble' }}
