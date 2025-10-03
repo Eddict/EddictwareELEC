@@ -33,13 +33,21 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: *exclude_paths
 
-run-name: ${{ github.event_name }} == 'push' && '${{ github.workflow }} (${{ inputs.env_dummy }})' || '${{ github.workflow }} (${{ inputs.environment }})'
+# run-name: ${{ github.event_name }} == 'push' && '${{ github.workflow }} (${{ inputs.env_dummy }})' || '${{ github.workflow }} (${{ inputs.environment }})'
 # run-name: >-
 #   if [[ ${{ github.event_name }} == "push" ]]; then
 #     "${{ github.workflow }} (${{ inputs.env_dummy }})"
 #   else
 #     "${{ github.workflow }} (${{ inputs.environment }})"
 #   fi
+# run-name: "${{ github.event.inputs.operation == 'init' && format('Provision') || format('Destroy') }} terraform state for the customer ${{ github.event.inputs.customer_name}}. Branch: ${{ github.ref_name }} and msg: ${{ github.event.head_commit.message}}"
+# run-name: '${{ github.event.inputs.environment || vars.DEFAULT_ENVIRONMENT }} - Run ID: ${{ github.run_id }} - by @${{ github.actor }}'
+run-name: >-
+  ${{ github.event.repository.name == 'ci-systems'
+    && format('My Regression tests: drv:{0} + ci-systems:{1}',
+              inputs.my_version,
+              github.head_ref || github.ref_name)
+    || format('My Regression tests: {0}', inputs.my_version) }}
 
 env:
   DistroCodeName: ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }}
