@@ -1,9 +1,9 @@
 name: Init-Env-Vars
 description: 'Initialize environment variables'
-# inputs:
-#   distro-codename:
-#     description: 'The distribution codename'
-#     required: true
+inputs:
+  registry_fqdn:
+    description: 'The fully qualified domain name of the registry'
+    required: true
 outputs:
   output_get_pwd:
     value: ${{ steps.get-pwd.outputs.curdir }}
@@ -50,7 +50,7 @@ runs:
       id: compose-image-tag
       shell: bash
       run: |
-        dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
+        dTag="${{ inputs.registry_fqdn }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
 

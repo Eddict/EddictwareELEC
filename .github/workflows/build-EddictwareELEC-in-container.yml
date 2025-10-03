@@ -205,6 +205,8 @@ jobs:
       name: Init environment variables
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        registry_fqdn: ${{ secrets.REGISTRY_FQDN }}
 
     - name: Remove gh variable
       id: remove-gh-variable
