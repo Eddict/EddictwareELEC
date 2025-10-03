@@ -138,8 +138,11 @@ jobs:
 
     - name: edtest
       run: |
-        var1=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g')
-        echo "spaced: $var1"
+        # var1=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g')
+        # echo "spaced: $var1"
+        x=$(echo "${{ github.event.repository.full_name }}" | sed 's/./& /g' | sed 's/ //g')
+        echo "repository_fullname: $x"
+        exit 1
         # unspaced=$(echo "$var1" | tr -d ' ')
         unspaced=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g')
         # echo "::add-mask::$unspaced"
