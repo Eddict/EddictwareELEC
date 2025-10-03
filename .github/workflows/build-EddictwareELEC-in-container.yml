@@ -186,7 +186,7 @@ jobs:
       NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      image: ${{ env.EE_Distro_tag }}:latest
+      image: ${{ needs.repo-vars.outputs.output_get_distro_tag }}:latest
       credentials:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
