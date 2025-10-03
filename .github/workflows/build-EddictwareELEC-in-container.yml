@@ -142,6 +142,7 @@ jobs:
         dTag="$fqdn/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
+        echo "EF_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
 
       # # var1=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g')
       #   # echo "spaced: $var1"
@@ -195,10 +196,16 @@ jobs:
       id: env-test
       shell: bash
       run: |
-        echo "EE_Distro_tag: $EE_Distro_tag"
-        echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
-        echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
+        echo EE_Test=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g' | tr '[:upper:]' '[:lower:]') | sudo tee -a $GITHUB_OUTPUT
+        # echo "EE_Distro_tag: $EE_Distro_tag"
+        # echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
+        # echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
         exit 1
+    - name: Get EE_Test
+      env:
+        EE_Test: ${{ steps.env-test.outputs.EE_Test }}
+      shell: bash
+      run: echo "The selected EE_Test is $EE_Test"
 
   build:
     name: Build
