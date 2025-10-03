@@ -115,6 +115,10 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       HOME: ""
+    outputs:
+      output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
+      output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
+      output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}
     steps:
     - name: Initialize environment
       id: set-multi
@@ -130,12 +134,6 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         registry_fqdn: ${{ secrets.REGISTRY_FQDN }}
-
-    outputs:
-      output_get_pwd: ${{ steps.get-pwd.outputs.curdir }}
-      output_get_cpu_info: ${{ steps.get-cpu-info.outputs.NB_CORES }}
-      output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-
 
   repo-login:
     name: Repo-login
