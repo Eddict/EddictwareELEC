@@ -159,7 +159,7 @@ jobs:
       id: env-test
       shell: bash
       run: |
-        echo EE_Test=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g' | tr '[:upper:]' '[:lower:]') | sudo tee -a $GITHUB_OUTPUT
+        echo "EE_Test=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g' | tr '[:upper:]' '[:lower:]')" | sudo tee -a $GITHUB_OUTPUT
         # echo "EE_Distro_tag: $EE_Distro_tag"
         # echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
         # echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
