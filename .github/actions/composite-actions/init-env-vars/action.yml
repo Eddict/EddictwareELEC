@@ -43,7 +43,7 @@ runs:
     - name: Set DistroCodeName
       id: set-distro-codename
       shell: bash
-      run: echo "DistroCodeName=${{ env.DistroCodeName }} | sudo tee -a $GITHUB_OUTPUT
+      run: echo "DistroCodeName=${{ env.DistroCodeName }}" | sudo tee -a $GITHUB_OUTPUT
 
     -
       name: Compose image tag
