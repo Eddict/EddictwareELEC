@@ -52,7 +52,7 @@ run-name: ${{ format('{0} ({1} - {2})', github.workflow, inputs.environment || '
 #     || format('My Regression tests: {0}', inputs.my_version) }}
 
 env:
-  DistroCodeName: ${{ github.event_name }} == 'push' && ${{ inputs.env_dummy }} || ${{ inputs.environment }}
+  DistroCodeName: ${{ inputs.environment || 'noble' }}
   BUILDER_NAME: ${{ github.repository_owner }}
   BUILDER_VERSION: ""
   EE_Distro: EddictwareELEC
