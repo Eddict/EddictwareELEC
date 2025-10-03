@@ -119,7 +119,7 @@ jobs:
       output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}
       output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
       output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
-      output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}
+      output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
     steps:
     - name: Initialize environment
       id: set-multi
