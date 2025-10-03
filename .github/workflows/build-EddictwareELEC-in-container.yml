@@ -15,11 +15,11 @@ on:
           - noble
           - plucky
         default: noble
-      env_dummy:
-        description: 'Environment to run against'
-        required: false
-        type: string
-        default: noble
+      # env_dummy:
+      #   description: 'Environment to run against'
+      #   required: false
+      #   type: string
+      #   default: noble
   push:
     branches: [ "master-entw" ]
     paths-ignore: &exclude_paths # set YAML anchors for reuse
@@ -33,7 +33,9 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: *exclude_paths
 
-run-name: ${{ format('{0} ({1})', github.workflow, github.event_name == 'push' && inputs.env_dummy || inputs.environment) }}
+run-name: ${{ format('{0} ({1})', github.workflow, inputs.environment || 'noble') }}
+# run-name: ${{ format('{0} ({1})', github.workflow, github.event_name == 'push' && 'noble' || inputs.environment) }}
+# run-name: ${{ format('{0} ({1})', github.workflow, github.event_name == 'push' && inputs.env_dummy || inputs.environment) }}
 # run-name: ${{ github.event_name == 'push' && 'github.workflow (inputs.env_dummy)' || 'github.workflow (inputs.environment)' }}
 # run-name: >-
 #   if [[ ${{ github.event_name }} == "push" ]]; then
