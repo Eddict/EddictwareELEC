@@ -4,6 +4,9 @@ inputs:
     description: 'Command to run inside container'
     required: true
     default: 'make image'
+  cmd-args:
+    required: false
+    default:
   gh-token:
     required: true
   disable-colors:
@@ -39,8 +42,8 @@ inputs:
 runs:
   using: 'docker'
   image: '../../../../tools/docker/noble/Dockerfile'
-  entrypoint:
-    - '${{ inputs.cmd-to-run }}'
+  entrypoint: ${{ inputs.cmd-to-run }}
+  args: ${{ inputs.cmd-args }}
   env:
     GH_TOKEN: ${{ inputs.gh-token }}
     DISABLE_COLORS: ${{ inputs.disable-colors }}
