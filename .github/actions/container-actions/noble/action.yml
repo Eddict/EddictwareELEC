@@ -40,8 +40,8 @@ runs:
   using: 'docker'
   image: '../../../../tools/docker/noble/Dockerfile'
   # entrypoint: 'make'
-  args: 
-    - ${{ inputs.make-args }}
+  # args: 
+  #   - ${{ inputs.make-args }}
   env:
     GH_TOKEN: ${{ inputs.gh-token }}
     DISABLE_COLORS: ${{ inputs.disable-colors }}
