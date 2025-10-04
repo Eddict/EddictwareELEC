@@ -17,8 +17,8 @@ on:
     branches: [ "master-entw" ]
     paths-ignore: &exclude_paths # set YAML anchors for reuse
       - '*.*'
-      - '.github/actions/container-actions/*.yml'
-      - '.github/workflows/*.yml'
+      - '.github/actions/container-actions/**/*.yml'
+      - '.github/workflows/**/*.yml'
       - '!.github/workflows/build-EddictwareELEC-in-container.yml'
       # - '.github/workflows/build-docker-image.yml'
       # - '.github/workflows/schedule-jobs.yml'
