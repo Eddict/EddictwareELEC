@@ -35,13 +35,15 @@ jobs:
         shell: bash
         run: |
           sed -i 's/USER docker/# USER docker/g' tools/docker/noble/Dockerfile
+          sed -i 's/# ENTRYPOINT \[\]/\["make", "image"\]/g' tools/docker/noble/Dockerfile
           sed -i 's/"\${EUID}" -eq 0/"\${EUID}" -eq -1/g' config/options
-          # cat tools/docker/noble/Dockerfile
-          # cat config/options
+          cat tools/docker/noble/Dockerfile
+
           git config --global user.name '${{ github.repository_owner }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
           git config --global --add safe.directory ${{ github.workspace }}
           git config --global --add safe.directory '/github/workspace'
+          # cat config/options
 
       - name: Set BUILDER_VERSION
         id: set-builder-version

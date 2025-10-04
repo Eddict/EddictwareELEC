@@ -57,6 +57,7 @@ RUN apt-get update \
 
 # ---- Build Stage ----
 FROM update AS build
+# ENTRYPOINT []
 
 RUN apt-get update \
  && apt-get install -y \
