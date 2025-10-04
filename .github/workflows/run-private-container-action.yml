@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          set-safe-directory: true #${{ github.workspace }}
 
       - name: overwrite some repo files
         id: overwrite-repo-files
