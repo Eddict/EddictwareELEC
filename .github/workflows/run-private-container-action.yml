@@ -41,6 +41,7 @@ jobs:
           git config --global user.name '${{ github.repository_owner }}'
           git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
           git config --global --add safe.directory ${{ github.workspace }}
+          git config --global --add safe.directory '/github/workspace'
 
       - name: Set BUILDER_VERSION
         id: set-builder-version
