@@ -81,4 +81,4 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
     --slave /usr/bin/gcov gcov /usr/bin/gcov-14
 RUN update-alternatives --config gcc
 
-# USER docker
+USER docker
