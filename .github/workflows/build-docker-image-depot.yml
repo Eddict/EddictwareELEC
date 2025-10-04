@@ -13,10 +13,6 @@ on:
           - noble
           - plucky
         default: noble
-  push:
-    branches: [ "master-entw" ]
-    paths: &include_paths
-      - 'tools/docker/**/Dockerfile'
 
 run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
 
@@ -32,10 +28,7 @@ jobs:
       id-token: write
       # Allows pushing to the GitHub Container Registry
       packages: write
-    env:
-      BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
-
     - uses: actions/checkout@v5
     - uses: depot/setup-action@v1
       # with:
@@ -48,12 +41,6 @@ jobs:
       #   token: ${{ secrets.DEPOT_WRITE_TOKEN }}
       #   # token: ${{ secrets.DEPOT_ADMIN_TOKEN }}
       #   install-depotctl: true
-
-    - name: Get docker guid
-      id: get-docker-guid
-      run: |
-        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
-      shell: bash
 
     - name: Compose image tag
       id: compose-image-tag
@@ -69,20 +56,6 @@ jobs:
         project: 4qqpxt59lq
         context: .
         file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
-        # outputs: type=cacheonly # build without pushing
-        push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
-        # target: custom
-        # no-cache: false
-        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
-        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
-        # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
-        # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
-        # cache-from: type=local,src=/tmp/.buildx-cache
-        # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
-        # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
-        # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
-        build-args: |
-          USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
-#          --progress=plain
-#          DOCKER_BUILDKIT=0
+        # build-args: |
+        #   USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
