@@ -40,7 +40,7 @@ runs:
   using: 'docker'
   image: '../../../../tools/docker/noble/Dockerfile'
   entrypoint:
-    - ${{ inputs.cmd-to-run }}
+    - '${{ inputs.cmd-to-run }}'
   env:
     GH_TOKEN: ${{ inputs.gh-token }}
     DISABLE_COLORS: ${{ inputs.disable-colors }}
