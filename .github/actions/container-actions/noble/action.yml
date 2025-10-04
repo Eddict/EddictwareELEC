@@ -40,6 +40,7 @@ runs:
   using: 'docker'
   image: '../../../../tools/docker/noble/Dockerfile'
   # entrypoint: 'make'
+  entrypoint: '"/bin/sh", "-c", "git config --global --add safe.directory /github/workspace && make image"'
   # args: 
   #   - ${{ inputs.make-args }}
   env:

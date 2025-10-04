@@ -58,6 +58,11 @@ RUN apt-get update \
 # ---- Build Stage ----
 FROM update AS build
 # ENTRYPOINT []
+# xENTRYPOINT ["sh", \
+#      "-c", \
+#      "git config --global --add safe.directory /github/workspace \
+#      && make image \
+#      "]
 
 RUN apt-get update \
  && apt-get install -y \
