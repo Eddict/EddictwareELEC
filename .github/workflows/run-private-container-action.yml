@@ -33,12 +33,11 @@ jobs:
         shell: bash
         run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" | sudo tee -a $GITHUB_OUTPUT
 
-      - name: Command action step
+      - name: make action step
         uses: ./.github/actions/container-actions/noble
-        id: cmd-step
+        id: make-step
         with:
-          cmd-to-run: 'make'
-          cmd-args: 'image'
+          make-args: 'image'
           gh-token: ${{ env.GH_TOKEN }}
           disable-colors: ${{ env.DISABLE_COLORS }}
           logcombine: ${{ env.LOGCOMBINE }}
