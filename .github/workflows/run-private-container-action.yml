@@ -20,8 +20,10 @@ env:
 
 jobs:
   hello_world_job:
-    runs-on: self-hosted #ubuntu-latest
+    runs-on: ubuntu-latest #ubuntu-latest #self-hosted 
     name: A test job to build in a noble container
+    env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -36,6 +38,7 @@ jobs:
         id: cmd-step
         with:
           cmd-to-run: 'make image'
+          gh-token: ${{ env.GH_TOKEN }}
           disable-colors: ${{ env.DISABLE_COLORS }}
           logcombine: ${{ env.LOGCOMBINE }}
           mtimmediate: ${{ env.MTIMMEDIATE }}
