@@ -52,7 +52,7 @@ jobs:
         uses: ./.github/actions/container-actions/noble
         id: make-step
         with:
-          make-args: 'image'
+          make-args: 'make image'
           gh-token: ${{ env.GH_TOKEN }}
           disable-colors: ${{ env.DISABLE_COLORS }}
           logcombine: ${{ env.LOGCOMBINE }}

@@ -39,7 +39,7 @@ inputs:
 runs:
   using: 'docker'
   image: '../../../../tools/docker/noble/Dockerfile'
-  entrypoint: 'make'
+  # entrypoint: 'make'
   args: 
     - ${{ inputs.make-args }}
   env:
