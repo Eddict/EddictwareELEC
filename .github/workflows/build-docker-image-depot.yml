@@ -1,0 +1,88 @@
+name: Build Container on Depot for building EddictwareELEC images
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run against'
+        required: true
+        type: choice
+        options:
+          - bookworm
+          - jammy
+          - noble
+          - plucky
+        default: noble
+  push:
+    branches: [ "master-entw" ]
+    paths: &include_paths
+      - 'tools/docker/**/Dockerfile'
+
+run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
+
+env:
+  DistroCodeName: ${{ inputs.environment }}
+
+jobs:
+  build:
+    runs-on: depot-ubuntu-24.04-16
+    # Permissions to use OIDC token authentication
+    permissions:
+      contents: read
+      id-token: write
+      # Allows pushing to the GitHub Container Registry
+      packages: write
+    env:
+      BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
+    steps:
+
+    - uses: actions/checkout@v5
+    - uses: depot/setup-action@v1
+      # with:
+      #   version: 'latest'
+      #   # version: '0.10.3'
+      #   # version: '0.9.1'
+      #   # registry-url: ${{ secrets.DEPOT_REGISTRY_URL }}
+      #   # token: ${{ secrets.DEPOT_TOKEN }}
+      #   # token: ${{ secrets.DEPOT_READONLY_TOKEN }}
+      #   token: ${{ secrets.DEPOT_WRITE_TOKEN }}
+      #   # token: ${{ secrets.DEPOT_ADMIN_TOKEN }}
+      #   install-depotctl: true
+
+    - name: Get docker guid
+      id: get-docker-guid
+      run: |
+        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Compose image tag
+      id: compose-image-tag
+      run: |
+        dTag="${{ env.DistroCodeName }}"
+        # Use ,, to convert all characters to lowercase
+        echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Build and export to (local/private) registry
+      uses: depot/build-push-action@v1
+      with:
+        project: 4qqpxt59lq
+        context: .
+        file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
+        # outputs: type=cacheonly # build without pushing
+        push: true
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        # target: custom
+        # no-cache: false
+        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
+        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
+        # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
+        # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
+        # cache-from: type=local,src=/tmp/.buildx-cache
+        # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+        # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
+        # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+        build-args: |
+          USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
+#          --progress=plain
+#          DOCKER_BUILDKIT=0
