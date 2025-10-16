@@ -59,18 +59,22 @@ jobs:
         run: |
           # git remote -v
           # git branch -a
-          # git remote add -t ${{ env.UPSTREAM_BRANCH }} --tags ${{ env.UPSTREAM_REMOTE }} https://github.com/${{ env.UPSTREAM_REPO }}.git
+          # git remote add -t ${{ env.UPSTREAM_BRANCH }} --tags ${{ env.UPSTREAM_REMOTE }} https://github.com/${{ env.UPSTREAM_REPO }}
+          # echo "git remote exit code: $?"
           git remote -v
           git branch -a
-          git fetch --set-upstream --depth 50 https://github.com/${{ env.UPSTREAM_REPO }}.git ${{ env.UPSTREAM_BRANCH }}
+          git fetch --set-upstream --depth 50 https://github.com/${{ env.UPSTREAM_REPO }} ${{ env.UPSTREAM_BRANCH }}
           # git fetch --set-upstream --quiet --depth 50 ${{ env.UPSTREAM_REMOTE }} ${{ env.UPSTREAM_BRANCH }}
+          echo "git fetch exit code: $?"
           git remote -v
           git branch -a
           git push --set-upstream ${{ env.THIS_REMOTE }} ${{ github.event.repository.default_branch }}
+          echo "git push exit code: $?"
           git remote -v
           git branch -a
-          git branch --set-upstream-to https://github.com/${{ env.UPSTREAM_REPO }}.git/${{ github.event.repository.default_branch }}
+          git branch --set-upstream-to https://github.com/${{ env.UPSTREAM_REPO }}/${{ github.event.repository.default_branch }}
           # git branch --set-upstream-to ${{ env.THIS_REMOTE }}/${{ github.event.repository.default_branch }}
+          echo "git branch exit code: $?"
           git remote -v
           git branch -a
           exit 0
