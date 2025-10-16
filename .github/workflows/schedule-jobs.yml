@@ -62,7 +62,7 @@ jobs:
           # git remote add -t ${{ env.UPSTREAM_BRANCH }} --tags ${{ env.UPSTREAM_REMOTE }} https://github.com/${{ env.UPSTREAM_REPO }}.git
           git remote -v
           git branch -a
-          git fetch --set-upstream --quiet --depth 50 https://github.com/${{ env.UPSTREAM_REPO }}.git ${{ env.UPSTREAM_BRANCH }}
+          git fetch --verbose --progress --set-upstream --depth 50 https://github.com/${{ env.UPSTREAM_REPO }}.git ${{ env.UPSTREAM_BRANCH }}
           # git fetch --set-upstream --quiet --depth 50 ${{ env.UPSTREAM_REMOTE }} ${{ env.UPSTREAM_BRANCH }}
           git remote -v
           git branch -a
