@@ -76,7 +76,7 @@ jobs:
           # echo "git branch exit code: $?"
           # git remote -v
           # git branch -a
-          git branch --set-upstream-to https://github.com/${{ env.UPSTREAM_REPO }} ${{ env.UPSTREAM_BRANCH }}
+          git branch --set-upstream-to https://github.com/${{ env.UPSTREAM_REPO }} ${{ github.event.repository.default_branch }}
           # git branch --set-upstream-to ${{ env.THIS_REMOTE }}/${{ github.event.repository.default_branch }}
           echo "git branch exit code: $?"
           git remote -v
