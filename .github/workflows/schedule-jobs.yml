@@ -3,7 +3,7 @@ name: Schedule jobs for EddictwareELEC
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */2 * * *'  # every 2 hours
+    - cron: '0 */8 * * *'  # every 8 hours
     - cron: '0 18 * * *' # daily at 18:00
 
 env:
@@ -43,7 +43,7 @@ jobs:
 
   every-two-hours:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
-    if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '0 */8 * * *' || github.event_name == 'workflow_dispatch'
     # if: 0 == 1
     steps:
       - name: Checkout repository scripts
@@ -54,6 +54,9 @@ jobs:
 
       - name: Sync from LibreELEC master
         run: |
+          git remote -v
+          git branch -a
+          exit 0
           remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/${{ env.UPSTREAM_BRANCH }} | awk '{print substr($1,1,8)}') #  HEAD | awk '{print substr($1,1,8)} / awk '{print $1}'
           echo "Remote sha: $remote_sha"
           if git show $remote_sha --oneline &> /dev/null; then
@@ -71,10 +74,11 @@ jobs:
               # so adding fetch and merge code before push
               git config --global user.name '${{ github.repository_owner }}'
               git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
-              git remote add ${{ env.UPSTREAM_REMOTE }} https://github.com/${{ env.UPSTREAM_REPO }}.git
-              git fetch --quiet --depth 50 ${{ env.UPSTREAM_REMOTE }} ${{ env.UPSTREAM_BRANCH }}
+              git remote add -t ${{ env.UPSTREAM_BRANCH }} --tags ${{ env.UPSTREAM_REMOTE }} https://github.com/${{ env.UPSTREAM_REPO }}.git
+              git remote set-url --push ${{ env.UPSTREAM_REMOTE }} NO_PUSH
+              git fetch --set-upstream --quiet --depth 50 ${{ env.UPSTREAM_REMOTE }} # ${{ env.UPSTREAM_BRANCH }}
               git checkout ${{ github.event.repository.default_branch }}
-              git merge --quiet ${{ env.UPSTREAM_REMOTE }}/${{ env.UPSTREAM_BRANCH }}
+              git merge --no-edit --quiet ${{ env.UPSTREAM_REMOTE }}/${{ env.UPSTREAM_BRANCH }}
               git push --quiet origin ${{ github.event.repository.default_branch }} --follow-tags
               # git push origin --tags
 
