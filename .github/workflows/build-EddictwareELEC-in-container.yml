@@ -16,13 +16,11 @@ on:
   push:
     branches: [ "master-entw" ]
     paths-ignore: &exclude_paths # set YAML anchors for reuse
-      - '*.*'
-      - '.github/actions/**/*.yml'
-      - '.github/actions/javascript/**/*.js'
-      - '.github/workflows/**/*.yml'
+      - '*'
+      - '.github/actions/**'
+      - '.github/actions/javascript/**'
+      - '.github/workflows/**'
       - '!.github/workflows/build-EddictwareELEC-in-container.yml'
-      # - '.github/workflows/build-docker-image.yml'
-      # - '.github/workflows/schedule-jobs.yml'
       - 'tools/docker/**'
   pull_request:
     branches: [ "master-entw" ]
