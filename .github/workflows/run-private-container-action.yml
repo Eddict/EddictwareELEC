@@ -51,7 +51,7 @@ jobs:
         run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" | sudo tee -a $GITHUB_OUTPUT
 
       - name: make action step
-        uses: ./.github/actions/container-actions/noble
+        uses: ./.github/actions/container/noble
         id: make-step
         with:
           make-args: '$(make image)'
