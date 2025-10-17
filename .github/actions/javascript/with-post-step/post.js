@@ -1,4 +1,6 @@
-console.log(`INPUT_POST: ${INPUT_POST}`);
+const key = process.env.INPUT_POST;
+console.log(`INPUT_POST: ${key}`);
 console.log(`INPUT_POST: ` + process.env.INPUT_POST);
-console.log(`INPOST: ${STATE_INPOST}`);
+key = process.env.STATE_INPOST;
+console.log(`INPOST: ${key}`);
 console.log("INPOST: " + process.env.STATE_INPOST);
