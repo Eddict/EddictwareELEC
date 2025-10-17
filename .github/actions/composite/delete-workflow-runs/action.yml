@@ -1,0 +1,13 @@
+# https://dev.to/abiwinanda/github-action-adding-post-steps-in-composite-actions-5ak3
+# https://github.com/pyTooling/Actions/blob/dev/with-post-step/action.yml
+name: Delete workflow run
+description: "Delete this workflow run"
+runs:
+  using: "composite"
+  steps:
+    - name: Delete workflow run
+      uses: ./.github/actions/javascript/with-post-step
+      with:
+        main: ... # run commands to restore app build artifacts
+        post: console.log("The running PID from the main action is: " + process.env.STATE_processID);
+        key: inPOST

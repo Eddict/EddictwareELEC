@@ -86,3 +86,6 @@ jobs:
               # exit 1
             fi
           fi
+
+      - name: Delete workflow run
+        uses: ./.github/actions/composite/delete-workflow-runs
