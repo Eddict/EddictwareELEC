@@ -6,6 +6,8 @@ runs:
   using: "composite"
   steps:
     - name: Install modules
+      id: install-modules
+      shell: bash
       run: npm install @actions/core @actions/github
 
     - name: Delete workflow run
