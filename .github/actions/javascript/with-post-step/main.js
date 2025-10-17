@@ -31,7 +31,7 @@ const key = process.env.INPUT_KEY.toUpperCase();
 
 if ( process.env[`STATE_${key}`] !== undefined ) { // Are we in the 'post' step?
   run(process.env.INPUT_POST);
-  console.log("The running PID from the main action is: " + process.env.STATE_processID);
+  console.log("inPOST from the main action: " + process.env.STATE_inPOST);
 } else { // Otherwise, this is the main step
   // appendFileSync(process.env.GITHUB_STATE, `${key}=true${EOL}`);
   // {{github.workflow_ref}}
