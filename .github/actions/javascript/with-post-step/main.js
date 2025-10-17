@@ -19,6 +19,8 @@
 import { spawn } from "child_process";
 import { appendFileSync } from "fs";
 import { EOL } from "os";
+// import * as core from "@actions/core";
+import * as github from "@actions/github";
 
 function run(cmd) {
   const subprocess = spawn(cmd, { stdio: "inherit", shell: true });
@@ -37,5 +39,7 @@ if ( process.env[`STATE_${key}`] !== undefined ) { // Are we in the 'post' step?
   // {{github.run_attempt}}
   console.log(`key: ${key}`);
   appendFileSync(process.env.GITHUB_STATE, `${key}=true${EOL}`);
+  const run_id=github.run_id;
+  appendFileSync(process.env.GITHUB_STATE, `run_id=${run_id}${EOL}`);
   run(process.env.INPUT_MAIN);
 }
