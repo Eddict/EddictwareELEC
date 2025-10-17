@@ -9,6 +9,8 @@ runs:
       run: |
         echo "Installing JS action dependencies for with-post-step"
         npm ci --prefix ./.github/actions/javascript/with-post-step
+      shell: bash
+      working-directory: ${{ github.workspace }}
 
     - name: Delete workflow run
       uses: ./.github/actions/javascript/with-post-step
