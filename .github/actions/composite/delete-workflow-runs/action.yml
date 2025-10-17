@@ -5,10 +5,12 @@ description: "Delete this workflow run"
 runs:
   using: "composite"
   steps:
+    - name: Install modules
+      run: npm install @actions/core @actions/github
+
     - name: Delete workflow run
       uses: ./.github/actions/javascript/with-post-step
       with:
-        # main: 'main.js'
-        main: npm install @actions/core @actions/github
+        main: 'main.js'
         post: 'post.js'
         key: INPOST # will be converted to capitals
