@@ -87,5 +87,12 @@ jobs:
             fi
           fi
 
+      - c
+        with:
+          node-version: 24
+
+      - run: |
+          npm install @actions/core @actions/github
+
       - name: Delete workflow run
         uses: ./.github/actions/composite/delete-workflow-runs
