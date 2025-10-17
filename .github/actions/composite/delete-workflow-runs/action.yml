@@ -8,6 +8,7 @@ runs:
     - name: Delete workflow run
       uses: ./.github/actions/javascript/with-post-step
       with:
-        main: 'main.js'
+        # main: 'main.js'
+        main: npm install @actions/core @actions/github
         post: 'post.js'
         key: INPOST # will be converted to capitals
