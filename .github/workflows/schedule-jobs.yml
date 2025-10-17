@@ -130,11 +130,11 @@ jobs:
           echo "2: ${{ steps.sync_repo.outputs.hasSHA == true }}"
           echo "3: ${{ steps.sync_repo.outputs.hasSHA }}"
           echo "4: ${{ ! needs.daily.outputs.hasRuns }}"
-          printf "5: "${{ steps.sync_repo.outputs.hasSHA == 'true' }}
-          printf "6: "${{ steps.sync_repo.outputs.hasSHA == true }}
-          printf "7: "${{ steps.sync_repo.outputs.hasSHA }}
-          printf "8: "${{ steps.sync_repo.outputs.hasRuns }}
-          ${{ format('true && {0}', false) }}
+          printf "5: "${{ steps.sync_repo.outputs.hasSHA == 'true' }}"\n"
+          printf "6: "${{ steps.sync_repo.outputs.hasSHA == true }}"\n"
+          printf "7: "${{ steps.sync_repo.outputs.hasSHA }}"\n"
+          printf "8: "${{ needs.daily.outputs.hasRuns }}"\n"
+          printf "9: "${{ format('true && {0}', false) }}"\n"
 
       - name: Delete workflow run
         # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' }} && ${{ needs.daily.outputs.hasRuns == 'true' }}
