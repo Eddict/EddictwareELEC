@@ -45,8 +45,10 @@ jobs:
 
           # pagination-safe: list matching run ids across pages and count lines
           run_ids=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter | .[] | .id" 2>/dev/null || true)
-          # determine whether there are workflow runs to delete
-          count=$(echo "$run_ids" | wc -l | tr -d ' ')
+          [ "$debug" = true ] && echo "run_ids: [$run_ids]"
+          # determine whether there are workflow runs to delete (count non-empty lines)
+          count=$(printf '%s\n' "$run_ids" | sed '/^\s*$/d' | wc -l | tr -d ' ')
+          [ "$debug" = true ] && echo "count: [$count]"
           hasRuns=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
           echo "hasRuns=$hasRuns" >> $GITHUB_OUTPUT
           echo "hasRuns=$hasRuns"
@@ -111,18 +113,19 @@ jobs:
           fi
         shell: bash
 
-      - name: Setup Node.js
+      - id: setup_node
+        name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
-        env:
-          NODE_OPTIONS: --trace-deprecation
+        # env:
+        #   NODE_OPTIONS: --trace-deprecation
 
       # - run: |
       #     npm install @actions/core @actions/github
 
       - id: delete_workflow_run
         name: Delete workflow run
-        if: ${{ steps.sync_repo.outputs.hasSHA }} && ${{ ! needs.daily.outputs.hasRuns }}
-        # if: 0 == 1
+        # if: ${{ steps.sync_repo.outputs.hasSHA }} && ${{ ! needs.daily.outputs.hasRuns }}
+        if: 0 == 1
         uses: ./.github/actions/composite/delete-workflow-runs
