@@ -10,6 +10,6 @@ runs:
       with:
         # Run the helper action's main/post JS using node and a path relative to the action.
         # Using `node ./main.js` ensures the script is executed by Node and resolves from the action directory.
-        main: 'node ./main.js'
-        post: 'node ./post.js'
+        main: 'node ./.github/actions/javascript/with-post-step/main.js'
+        post: 'node ./.github/actions/javascript/with-post-step/post.js'
         key: INPOST # will be converted to capitals
