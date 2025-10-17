@@ -18,6 +18,7 @@ on:
     paths-ignore: &exclude_paths # set YAML anchors for reuse
       - '*.*'
       - '.github/actions/**/*.yml'
+      - '.github/actions/javascript/**/*.js'
       - '.github/workflows/**/*.yml'
       - '!.github/workflows/build-EddictwareELEC-in-container.yml'
       # - '.github/workflows/build-docker-image.yml'
