@@ -45,3 +45,7 @@ build.log
 # ignore (temp) backup files
 .github/workflows/**/*.bak
 .github/copilot-instructions.md
+
+# node_modules (avoid committing dependencies)
+/.github/actions/**/node_modules
+**/node_modules
