@@ -13,7 +13,7 @@ runs:
     - name: Delete workflow run
       uses: ./.github/actions/javascript/with-post-step
       with:
-        # Run the helper action's main/post JS using node and a full path to the scripts.
-        main: 'node ./.github/actions/javascript/with-post-step/main.js'
-        post: 'node ./.github/actions/javascript/with-post-step/post.js'
+        # Call the executable scripts directly; scripts include a shebang and are executable in git.
+        main: './.github/actions/javascript/with-post-step/main.js'
+        post: './.github/actions/javascript/with-post-step/post.js'
         key: INPOST # will be converted to capitals
