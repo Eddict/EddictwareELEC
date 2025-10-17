@@ -49,6 +49,7 @@ jobs:
           count=$(echo "$run_ids" | wc -l | tr -d ' ')
           hasRuns=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
           echo "hasRuns=$hasRuns" >> $GITHUB_OUTPUT
+          echo "hasRuns=$hasRuns"
           if [ "${hasRuns:-}" = "true" ]; then
             echo "Found $count workflow run(s) to delete"
             for runId in $run_ids; do
@@ -81,6 +82,7 @@ jobs:
           # determine whether the local repo already has the upstream sha
           hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
           echo "hasSHA=$hasSHA" >> $GITHUB_OUTPUT
+          echo "hasSHA=$hasSHA"
           if [ "${hasSHA:-}" = "true" ]; then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
@@ -113,10 +115,13 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+        env:
+          NODE_OPTIONS: --trace-deprecation
 
       # - run: |
       #     npm install @actions/core @actions/github
 
       - name: Delete workflow run
-        if: ${{ steps.sync_repo.outputs.hasSHA == 'true' }} && ${{ needs.daily.outputs.hasRuns == 'true' }}
+        # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' }} && ${{ needs.daily.outputs.hasRuns == 'true' }}
+        if: 0 == 1
         uses: ./.github/actions/composite/delete-workflow-runs
