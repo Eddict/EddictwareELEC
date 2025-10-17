@@ -20,9 +20,13 @@ jobs:
     if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
     # if: 0 == 1
     name: Jobs to run daily
+    outputs:
+      has_runs: ${{ steps.cleanup_runs.outputs.has_runs }}
     steps:
       - name: Cleanup old workflow runs
+        id: cleanup_runs
         run: |
+          set -euo pipefail
           debug=false
           curDateTime=$(date)
           calcDateTime=$(date -d "$curDateTime - 1 day")
@@ -36,18 +40,30 @@ jobs:
           jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
           [ "$debug" = true ] && echo "Updated JQ filter: $jq_filter"
 
-          workflowRuns=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter")
-          for runId in $(echo $workflowRuns | jq -r '.[].id'); do
-            echo "Deleting workflow run ID: $runId"
-            gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE
-            # sleep 2s
-          done
+          # workflowRuns=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter")
+          # for runId in $(echo $workflowRuns | jq -r '.[].id'); do
+
+          # pagination-safe: list matching run ids across pages and count lines
+          run_ids=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter | .[] | .id" 2>/dev/null || true)
+          # determine whether there are workflow runs to delete
+          count=$(echo "$run_ids" | wc -l | tr -d ' ')
+          has_runs=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
+          echo "has_runs=$has_runs" >> $GITHUB_OUTPUT
+          if $has_runs then
+            echo "Found $count workflow run(s) to delete"
+            for runId in $run_ids; do
+              echo "Deleting workflow run ID: $runId"
+              gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE
+              # sleep 2s
+            done
+          fi
           echo "Cleanup completed."
 
   every-n-hours:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
     if: github.event.schedule == '0 */8 * * *' || github.event_name == 'workflow_dispatch'
     # if: 0 == 1
+    needs: daily
     name: Jobs to run every N hours
     steps:
       - name: Checkout repository scripts
@@ -57,10 +73,15 @@ jobs:
           fetch-depth: ${{ env.FETCH_DEPTH }}
 
       - name: Sync from LibreELEC master
+        id: sync_repo
         run: |
+          set -euo pipefail
           remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/${{ env.UPSTREAM_BRANCH }} | awk '{print substr($1,1,8)}') #  HEAD | awk '{print substr($1,1,8)} / awk '{print $1}'
           echo "Remote sha: $remote_sha"
-          if git show $remote_sha --oneline &> /dev/null; then
+          # determine whether the local repo already has the upstream sha
+          hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
+          echo "hasSHA=$hasSHA" >> $GITHUB_OUTPUT
+          if $hasSHA then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
           else
@@ -86,6 +107,7 @@ jobs:
               # exit 1
             fi
           fi
+        shell: bash
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -96,4 +118,5 @@ jobs:
       #     npm install @actions/core @actions/github
 
       - name: Delete workflow run
+        if: ${{ steps.sync_repo.outputs.hasSHA == 'true' }} && ${{ needs.daily.outputs.has_runs == 'true' }}
         uses: ./.github/actions/composite/delete-workflow-runs

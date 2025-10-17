@@ -20,6 +20,8 @@
 import { spawn } from "child_process";
 import { appendFileSync } from "fs";
 import { EOL } from "os";
+import { fileURLToPath } from "url";
+import { resolve } from "path";
 // import * as core from "@actions/core";
 import * as github from "@actions/github";
 
@@ -42,5 +44,25 @@ if ( process.env[`STATE_${key}`] !== undefined ) { // Are we in the 'post' step?
   appendFileSync(process.env.GITHUB_STATE, `${key}=true${EOL}`);
   const run_id=github.run_id;
   appendFileSync(process.env.GITHUB_STATE, `run_id=${run_id}${EOL}`);
+  // Guard: if INPUT_MAIN resolves to this action's main file, spawning it will recurse forever.
+  // Detect common misconfiguration where the composite action passes the action's own main as the
+  // input `main` value and abort with a clear error to avoid infinite loops seen in CI logs.
+  try {
+    const currentFile = fileURLToPath(import.meta.url);
+    const inputMain = process.env.INPUT_MAIN || "";
+    // Resolve the input path relative to the current working directory (the workflow workspace).
+    const resolvedInputMain = inputMain ? resolve(process.cwd(), inputMain) : "";
+    if (resolvedInputMain && resolvedInputMain === currentFile) {
+      console.error(
+        `Refusing to spawn INPUT_MAIN which resolves to the action main file (${currentFile}). This would cause recursion. Please set the composite action 'main' input to a different script or command.`
+      );
+      process.exitCode = 1;
+      process.exit(1);
+    }
+  } catch (err) {
+    // If resolution fails for any reason, fall back to attempting to run the input. We still
+    // keep this non-destructive and let the spawn handler surface errors.
+  }
+
   run(process.env.INPUT_MAIN);
 }
