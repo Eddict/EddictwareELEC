@@ -21,7 +21,7 @@ jobs:
     # if: 0 == 1
     name: Jobs to run daily
     outputs:
-      has_runs: ${{ steps.cleanup_runs.outputs.has_runs }}
+      hasRuns: ${{ steps.cleanup_runs.outputs.hasRuns }}
     steps:
       - name: Cleanup old workflow runs
         id: cleanup_runs
@@ -47,9 +47,9 @@ jobs:
           run_ids=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter | .[] | .id" 2>/dev/null || true)
           # determine whether there are workflow runs to delete
           count=$(echo "$run_ids" | wc -l | tr -d ' ')
-          has_runs=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
-          echo "has_runs=$has_runs" >> $GITHUB_OUTPUT
-          if $has_runs then
+          hasRuns=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
+          echo "hasRuns=$hasRuns" >> $GITHUB_OUTPUT
+          if [ "${hasRuns:-}" = "true" ]; then
             echo "Found $count workflow run(s) to delete"
             for runId in $run_ids; do
               echo "Deleting workflow run ID: $runId"
@@ -81,7 +81,7 @@ jobs:
           # determine whether the local repo already has the upstream sha
           hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
           echo "hasSHA=$hasSHA" >> $GITHUB_OUTPUT
-          if $hasSHA then
+          if [ "${hasSHA:-}" = "true" ]; then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
           else
@@ -118,5 +118,5 @@ jobs:
       #     npm install @actions/core @actions/github
 
       - name: Delete workflow run
-        if: ${{ steps.sync_repo.outputs.hasSHA == 'true' }} && ${{ needs.daily.outputs.has_runs == 'true' }}
+        if: ${{ steps.sync_repo.outputs.hasSHA == 'true' }} && ${{ needs.daily.outputs.hasRuns == 'true' }}
         uses: ./.github/actions/composite/delete-workflow-runs
