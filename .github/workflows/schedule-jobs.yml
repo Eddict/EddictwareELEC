@@ -121,22 +121,8 @@ jobs:
       # - run: |
       #     npm install @actions/core @actions/github
 
-      - id: test_delete_workflow_run
+      - id: delete_workflow_run
         name: Delete workflow run
-        # if: ${{ steps.sync_repo.outputs.hasSHA }} && ${{ ! needs.daily.outputs.hasRuns }}
-        if: 1 == 1
-        run: |
-          echo "1: ${{ steps.sync_repo.outputs.hasSHA == 'true' }}"
-          echo "2: ${{ steps.sync_repo.outputs.hasSHA == true }}"
-          echo "3: ${{ steps.sync_repo.outputs.hasSHA }}"
-          echo "4: ${{ ! needs.daily.outputs.hasRuns }}"
-          printf "5: "${{ steps.sync_repo.outputs.hasSHA == 'true' }}"\n"
-          printf "6: "${{ steps.sync_repo.outputs.hasSHA == true }}"\n"
-          printf "7: "${{ steps.sync_repo.outputs.hasSHA }}"\n"
-          printf "8: "${{ needs.daily.outputs.hasRuns }}"\n"
-          printf "9: "${{ format('true && {0}', false) }}"\n"
-
-      - name: Delete workflow run
-        # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' }} && ${{ needs.daily.outputs.hasRuns == 'true' }}
-        if: 0 == 1
+        if: ${{ steps.sync_repo.outputs.hasSHA }} && ${{ ! needs.daily.outputs.hasRuns }}
+        # if: 0 == 1
         uses: ./.github/actions/composite/delete-workflow-runs
