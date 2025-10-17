@@ -30,13 +30,15 @@ function run(cmd) {
 const key = process.env.INPUT_KEY.toUpperCase();
 
 if ( process.env[`STATE_${key}`] !== undefined ) { // Are we in the 'post' step?
-  run(process.env.INPUT_POST);
+  console.log("INPUT_POST from the main action: " + process.env.INPUT_POST);
   console.log("inPOST from the main action: " + process.env.STATE_inPOST);
+  run(process.env.INPUT_POST);
 } else { // Otherwise, this is the main step
   // appendFileSync(process.env.GITHUB_STATE, `${key}=true${EOL}`);
   // {{github.workflow_ref}}
   // ${{github.run_id}}
   // {{github.run_attempt}}
+  console.log(`key: ${key}`);
   appendFileSync(process.env.GITHUB_STATE, `${key}=true${EOL}`);
   run(process.env.INPUT_MAIN);
 }
