@@ -5,11 +5,15 @@ description: "Delete this workflow run"
 runs:
   using: "composite"
   steps:
+    - name: Install JS action dependencies
+      run: |
+        echo "Installing JS action dependencies for with-post-step"
+        npm ci --prefix ./.github/actions/javascript/with-post-step
+
     - name: Delete workflow run
       uses: ./.github/actions/javascript/with-post-step
       with:
-        # Run the helper action's main/post JS using node and a path relative to the action.
-        # Using `node ./main.js` ensures the script is executed by Node and resolves from the action directory.
+        # Run the helper action's main/post JS using node and a full path to the scripts.
         main: 'node ./.github/actions/javascript/with-post-step/main.js'
         post: 'node ./.github/actions/javascript/with-post-step/post.js'
         key: INPOST # will be converted to capitals

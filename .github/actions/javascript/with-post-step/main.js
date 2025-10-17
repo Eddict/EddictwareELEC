@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // 1. In your action code (pre or main), append key/value lines to the file at process.env.GITHUB_STATE. Use UTF-8 and OS newline. Example (JavaScript):
 //   import * as fs from 'fs'
 //   import * as os from 'os'

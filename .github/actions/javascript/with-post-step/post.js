@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var key = process.env.STATE_INPOST;
 console.log(`INPOST: ${key}`);
 console.log("INPOST: " + process.env.STATE_INPOST);
