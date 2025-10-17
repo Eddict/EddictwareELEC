@@ -15,7 +15,8 @@ inputs:
 runs:
   using: 'node24'
   main: 'main.js'
-  post: 'main.js'
+#  post: 'main.js'
+  post: 'post.js'
   # pre: 'setup.js'
   # main: 'index.js'
   # post: 'cleanup.js'
