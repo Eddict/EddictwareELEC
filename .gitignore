@@ -48,4 +48,7 @@ build.log
 
 # node_modules (avoid committing dependencies)
 /.github/actions/**/node_modules
-**/node_modules
+# **/node_modules
+
+# Optionally ignore generated build output
+dist/

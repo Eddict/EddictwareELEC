@@ -8,9 +8,22 @@ runs:
     - name: Install JS action dependencies
       run: |
         echo "Installing JS action dependencies for with-post-step"
-        npm ci --prefix ./.github/actions/javascript/with-post-step
+        # Use `npm ci` for reproducible installs when a lockfile exists. Fall back to `npm install` otherwise.
+        if [ -f ./.github/actions/javascript/with-post-step/package-lock.json ]; then
+          npm ci --prefix ./.github/actions/javascript/with-post-step --no-fund --no-audit
+        else
+          npm install --prefix ./.github/actions/javascript/with-post-step --no-fund --no-audit
+        fi
       shell: bash
       working-directory: ${{ github.workspace }}
+
+    - name: Cache action node modules
+      uses: actions/cache@v4
+      with:
+        path: ./.github/actions/javascript/with-post-step/node_modules
+        key: ${{ runner.os }}-with-post-step-${{ hashFiles('.github/actions/javascript/with-post-step/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-with-post-step-
 
     - name: Delete workflow run
       uses: ./.github/actions/javascript/with-post-step
