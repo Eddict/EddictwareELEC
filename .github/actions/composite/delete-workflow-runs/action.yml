@@ -11,14 +11,13 @@ runs:
         key: INPOST # will be converted to capitals
         # Main command(s) executed by the action. Replace with appropriate shell or JS code.
         main: |
-          # console.log("INPUT_POST from the main action: " + process.env.INPUT_POST);
-          # console.log("INPOST from the main action: " + process.env.STATE_INPOST);
-          echo "INPUT_POST: ${INPUT_POST}"
-          echo "INPOST: ${INPOST}"
+          echo "INPUT_POST: $INPUT_POST"
+          echo "INPOST: $INPOST"
 
         # Post-step is an arbitrary JS snippet executed by the helper action — use a block scalar for readability.
         post: |
-          # console.log("INPUT_POST from the main action: " + process.env.INPUT_POST);
-          # console.log("INPOST from the main action: " + process.env.STATE_INPOST);
-          echo "INPUT_POST from the main action: ${INPUT_POST}"
-          echo "INPOST from the main action: ${INPOST}"
+          echo "INPUT_POST from the main action: $INPUT_POST"
+          echo "INPOST from the main action: $INPOST"
+
+# console.log("INPUT_POST from the main action: " + process.env.INPUT_POST);
+# console.log("INPOST from the main action: " + process.env.STATE_INPOST);
