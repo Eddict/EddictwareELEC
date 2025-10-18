@@ -174,8 +174,9 @@ jobs:
           # by asking the run for its head SHA and checking whether that commit exists in
           # the upstream repository. This is safe but causes extra API calls; disabled by default.
           RETRO_HASHA_CHECK: 'true'
-          # Only consider retro-checking runs older than this many hours (default 24)
-          RETRO_OLDER_THAN_HOURS: '24'
+          # Only consider retro-checking runs older than this many hours. Set to '0' to
+          # evaluate retro-check for all runs (user-requested).
+          RETRO_OLDER_THAN_HOURS: '0'
         run: |
           set -euo pipefail
           export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
