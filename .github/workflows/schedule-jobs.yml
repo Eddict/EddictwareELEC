@@ -117,13 +117,55 @@ jobs:
           fi
         shell: bash
 
+      - name: Inspect previous schedule runs and delete if condition met
+        id: inspect_prev_runs
+        env:
+          DRY_RUN: 'true' # set to 'false' to actually delete matching runs
+        run: |
+          set -euo pipefail
+          export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+          workflow_name='Schedule jobs for EddictwareELEC'
+
+          # list recent runs for this workflow by name
+          run_ids=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq '.workflow_runs[] | select(.name=="Schedule jobs for EddictwareELEC") | .id' 2>/dev/null || true)
+          if [ -z "${run_ids:-}" ]; then
+            echo "No previous runs found for workflow: ${workflow_name}"
+            exit 0
+          fi
+
+          for runId in $run_ids; do
+            if [ "$runId" = "$GITHUB_RUN_ID" ]; then
+              continue
+            fi
+
+            echo "Inspecting run $runId..."
+            logs=$(gh run view $runId --repo ${{ github.repository }} --log 2>/dev/null || true)
+            hasSHA=$(printf '%s\n' "$logs" | grep -m1 -o 'hasSHA=true' || true)
+            hasRuns=$(printf '%s\n' "$logs" | grep -m1 -o 'hasRuns=true' || true)
+
+            if [ -n "$hasSHA" ] && [ -z "$hasRuns" ]; then
+              echo "Run $runId matches condition (hasSHA=true && hasRuns!=true)"
+              if [ "${DRY_RUN:-true}" = 'true' ]; then
+                echo "DRY-RUN: would delete run $runId"
+              else
+                echo "Deleting run $runId"
+                gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE || echo "Failed to delete run $runId"
+              fi
+            else
+              echo "Run $runId does not match condition (hasSHA:$hasSHA hasRuns:$hasRuns)"
+            fi
+          done
+        shell: bash
+
+
+
       - id: setup_node
         name: Setup Node.js
         # Use a single expression and explicit string comparisons so GitHub evaluates booleans
         # correctly. Avoid using multiple ${{ }} blocks which can produce a non-empty string
         # (e.g. "true && false") that is treated as truthy.
-        if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
-        # if: 0 == 1
+        # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+        if: 0 == 1
         uses: actions/setup-node@v6
         with:
           node-version: 24
