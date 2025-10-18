@@ -46,24 +46,28 @@ env:
 
 jobs:
   runner:
-    name: Set runner
-    description: Set the runner to use for this workflow
+    name: Set workflow runner
     if: ${{ always() }}
     runs-on: self-hosted # github
     outputs:
-      # runner: ${{ runner.name }}
-      runner: ${{ format('[{0}, {1}]', runner.environment, runner.name) }}
-      # runner: [self-hosted, "${{ inputs.chosen-os }}"]
-      # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
-      # runner.os: ${{ runner.os }}
-      # runner.arch: ${{ runner.arch }}
-      # runner.temp: ${{ runner.temp }}
-      # runner.tool_cache: ${{ runner.tool_cache }}
-      # runner.debug: ${{ runner.debug }}
-      # runner.environment: ${{ runner.environment }}
+      runner: ${{ steps.echo_runner.outputs.WF_RUNNER }}
     steps:
       - name: echo the runner
-        run: echo "selected runner = ${{ runner.name }}"
+        id: echo_runner
+        run: |
+          WF_RUNNER=${{ format('[{0}, {1}]', runner.environment, runner.name) }}"
+          echo "WF_RUNNER=$WF_RUNNER" | sudo tee -a $GITHUB_OUTPUT
+          echo "selected runner: $WF_RUNNER"
+        # runner: ${{ runner.name }}
+        # runner: ${{ format('[{0}, {1}]', runner.environment, runner.name) }}
+        # runner: [self-hosted, "${{ inputs.chosen-os }}"]
+        # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
+        # runner.os: ${{ runner.os }}
+        # runner.arch: ${{ runner.arch }}
+        # runner.temp: ${{ runner.temp }}
+        # runner.tool_cache: ${{ runner.tool_cache }}
+        # runner.debug: ${{ runner.debug }}
+        # runner.environment: ${{ runner.environment }}
 
   pre-build:
     name: Pre-build
