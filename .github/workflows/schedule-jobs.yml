@@ -37,7 +37,7 @@ jobs:
           [ "$debug" = true ] && echo "Calculated epoch time: $calcEpoch"
 
           jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.creat_epoch < $calc_epoch) ]'
-          jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.id = 18605342624) ]'
+          jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} | select(.id == 18605342624) ]'
 
           jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
           [ "$debug" = true ] && echo "Updated JQ filter: $jq_filter"
