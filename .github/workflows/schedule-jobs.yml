@@ -70,14 +70,24 @@ jobs:
         id: publish_daily_marker
         run: |
           set -euo pipefail
-          echo "marker" > marker.txt
+          DEBUG=${DEBUG:-false}
+          # Ensure repository is present so we can check for the upstream SHA
+          echo "Checking out repository for hasSHA detection"
+          git init .
+          git remote add origin "${{ github.server_url }}/${{ github.repository }}.git" || true
+          git fetch --no-tags --depth ${{ env.FETCH_DEPTH }} origin ${{ github.event.repository.default_branch }} || true
+          remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/${{ env.UPSTREAM_BRANCH }} | awk '{print substr($1,1,8)}')
+          echo "Remote sha: $remote_sha"
+          hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
+          echo "MARKER_HASSHA=$hasSHA" >> $GITHUB_OUTPUT
+          echo marker > marker.txt
         shell: bash
 
       - name: Upload cleanup marker artifact (daily)
         if: ${{ steps.cleanup_runs.outputs.hasRuns != 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: cleanup-marker-${{ github.run_id }}-hasRuns-${{ steps.cleanup_runs.outputs.hasRuns }}
+          name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.publish_daily_marker.outputs.MARKER_HASSHA }}-hasRuns-${{ steps.cleanup_runs.outputs.hasRuns }}
           path: marker.txt
 
   every-n-hours:
@@ -159,6 +169,12 @@ jobs:
         id: inspect_prev_runs
         env:
           DRY_RUN: 'false' # set to 'false' to actually delete matching runs
+          # Opt-in: when true, for artifacts that lacked hasSHA we will perform a "retro" check
+          # by asking the run for its head SHA and checking whether that commit exists in
+          # the upstream repository. This is safe but causes extra API calls; disabled by default.
+          RETRO_HASHA_CHECK: 'false'
+          # Only consider retro-checking runs older than this many hours (default 24)
+          RETRO_OLDER_THAN_HOURS: '24'
         run: |
           set -euo pipefail
           export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
@@ -211,6 +227,11 @@ jobs:
           ignored_count=0
           unknown_count=0
           skipped_no_hasSHA=0
+          skipped_recent_count=0
+          # retro-check configuration (opt-in)
+          RETRO_HASHA_CHECK=${RETRO_HASHA_CHECK:-false}
+          RETRO_OLDER_THAN_HOURS=${RETRO_OLDER_THAN_HOURS:-24}
+          RETRO_OLDER_THAN_SECONDS=$((RETRO_OLDER_THAN_HOURS * 3600))
 
           # prepare artifact list and iterate in the current shell (preserve counters)
           artifact_list=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d')
@@ -237,16 +258,99 @@ jobs:
                 if [ "${DRY_RUN:-true}" = 'true' ]; then
                   echo "DRY-RUN: would delete run $runid"
                 else
-                  echo "Deleting run $runid"
-                  if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
-                    echo "Deleted run $runid: success"
+                  # Age-check: skip deleting runs that are newer than threshold to avoid 403 on active runs
+                  threshold_minutes=15
+                  threshold_seconds=$((threshold_minutes * 60))
+                  created_at=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.created_at' 2>/dev/null || true)
+                  if [ -z "${created_at:-}" ]; then
+                    echo "Could not determine created_at for run $runid; skipping deletion"
+                    skipped_recent_count=$((skipped_recent_count + 1))
                   else
-                    echo "Deleted run $runid: FAILED (api error)"
+                    created_epoch=$(date -d "$created_at" +%s)
+                    now_epoch=$(date +%s)
+                    age=$((now_epoch - created_epoch))
+                    if [ "$age" -lt "$threshold_seconds" ]; then
+                      echo "Skipping deletion of run $runid: age=${age}s < ${threshold_seconds}s (threshold ${threshold_minutes}m)"
+                      skipped_recent_count=$((skipped_recent_count + 1))
+                    else
+                      echo "Deleting run $runid (age=${age}s)"
+                      if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
+                        echo "Deleted run $runid: success"
+                      else
+                        echo "Deleted run $runid: FAILED (api error)"
+                      fi
+                    fi
                   fi
                 fi
               else
-                echo "Skipping $name: hasSHA=false or missing (no upstream sync)"
-                skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
+                # No hasSHA marker present. Optionally attempt a retroactive check to see
+                # whether the run's head SHA exists upstream. This is controlled by
+                # RETRO_HASHA_CHECK and only runs for older runs (RETRO_OLDER_THAN_HOURS)
+                if [ "${RETRO_HASHA_CHECK}" = 'true' ]; then
+                  echo "Performing retro hasSHA check for run $runid"
+                  created_at_rt=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.created_at' 2>/dev/null || true)
+                  if [ -z "${created_at_rt:-}" ]; then
+                    echo "  Could not determine created_at for run $runid; skipping retro-check"
+                    skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
+                  else
+                    created_epoch_rt=$(date -d "$created_at_rt" +%s)
+                    now_epoch_rt=$(date +%s)
+                    age_rt=$((now_epoch_rt - created_epoch_rt))
+                    if [ "$age_rt" -lt "$RETRO_OLDER_THAN_SECONDS" ]; then
+                      echo "  Run $runid is only ${age_rt}s old (< ${RETRO_OLDER_THAN_SECONDS}s); skipping retro-check"
+                      skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
+                    else
+                      # Get the run's head sha and check upstream for it
+                      head_sha=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.head_sha' 2>/dev/null || true)
+                      head_sha=${head_sha:-}
+                      if [ -z "$head_sha" ]; then
+                        echo "  Could not determine head_sha for run $runid; skipping retro-check"
+                        skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
+                      else
+                        echo "  Found head_sha=$head_sha for run $runid; checking upstream ${UPSTREAM_REPO}"
+                        # Check whether upstream repo contains this commit
+                        if gh api repos/${{ env.UPSTREAM_REPO }}/commits/$head_sha >/dev/null 2>&1; then
+                          echo "  Retro-check: commit $head_sha exists upstream — treating as hasSHA=true"
+                          # Treat as hasSHA=true and fall through to deletion path by setting hassha
+                          hassha='true'
+                          deletable_count=$((deletable_count + 1))
+                          if [ "${DRY_RUN:-true}" = 'true' ]; then
+                            echo "  DRY-RUN: would delete run $runid (retro hasSHA)"
+                          else
+                            threshold_minutes=15
+                            threshold_seconds=$((threshold_minutes * 60))
+                            created_at=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.created_at' 2>/dev/null || true)
+                            if [ -z "${created_at:-}" ]; then
+                              echo "  Could not determine created_at for run $runid; skipping deletion"
+                              skipped_recent_count=$((skipped_recent_count + 1))
+                            else
+                              created_epoch=$(date -d "$created_at" +%s)
+                              now_epoch=$(date +%s)
+                              age=$((now_epoch - created_epoch))
+                              if [ "$age" -lt "$threshold_seconds" ]; then
+                                echo "  Skipping deletion of run $runid: age=${age}s < ${threshold_seconds}s (threshold ${threshold_minutes}m)"
+                                skipped_recent_count=$((skipped_recent_count + 1))
+                              else
+                                echo "  Deleting run $runid (age=${age}s)"
+                                if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
+                                  echo "  Deleted run $runid: success"
+                                else
+                                  echo "  Deleted run $runid: FAILED (api error)"
+                                fi
+                              fi
+                            fi
+                          fi
+                        else
+                          echo "  Retro-check: commit $head_sha NOT found upstream — keeping skipped"
+                          skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
+                        fi
+                      fi
+                    fi
+                  fi
+                else
+                  echo "Skipping $name: hasSHA=false or missing (no upstream sync)"
+                  skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
+                fi
               fi
             else
               echo "Skipping $name: unknown pattern"
