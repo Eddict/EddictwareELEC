@@ -58,11 +58,13 @@ jobs:
           if [ "${hasRuns:-}" = true ]; then
             echo "Found $count workflow run(s) to delete"
             for runId in $run_ids; do
-              echo "Deleting run $runid"
-              if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
-                echo "Deleted run $runid: success"
+              # debug both variable spellings to catch case mismatches
+              echo "loop var runId=${runId:-<unset>} runid=${runid:-<unset>}"
+              echo "Deleting run $runId"
+              if gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE; then
+                echo "Deleted run $runId: success"
               else
-                echo "Deleted run $runid: FAILED (api error)"
+                echo "Deleted run $runId: FAILED (api error)"
               fi
               # sleep 2s
             done
