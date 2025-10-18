@@ -48,9 +48,10 @@ jobs:
   runner:
     name: Set workflow runner
     if: ${{ always() }}
-    runs-on: [self-hosted, linux, x64] #self-hosted # github
+    runs-on: self-hosted #self-hosted # github
     outputs:
-      runner: ${{ steps.echo_runner.outputs.WF_RUNNER }}
+      # runner: ${{ steps.echo_runner.outputs.WF_RUNNER }}
+      runner: ${{ runner.environment }}
     steps:
       - name: echo the runner
         id: echo_runner
@@ -63,9 +64,10 @@ jobs:
           echo "runner.tool_cache: ${{ runner.tool_cache }}"
           echo "runner.debug: ${{ runner.debug }}"
           echo "runner.environment: ${{ runner.environment }}"
-          WF_RUNNER="${{ format('[{0}, {1}]', runner.environment, runner.name) }}"
-          echo "WF_RUNNER=$WF_RUNNER" | sudo tee -a $GITHUB_OUTPUT
-          echo "selected runner: $WF_RUNNER"
+          # WF_RUNNER="${{ format('[{0}, {1}]', runner.environment, runner.name) }}"
+          # echo "WF_RUNNER=$WF_RUNNER" | sudo tee -a $GITHUB_OUTPUT
+          # echo "selected runner: $WF_RUNNER"
+          echo "selected runner: ${{ runner.environment }}"
         # runner: ${{ runner.name }}
         # runner: ${{ format('[{0}, {1}]', runner.environment, runner.name) }}
         # runner: [self-hosted, "${{ inputs.chosen-os }}"]
