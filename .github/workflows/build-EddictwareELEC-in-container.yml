@@ -46,11 +46,21 @@ env:
 
 jobs:
   runner:
-    name: Set and get the runner to use for this workflow
+    name: Set runner
+    description: Set the runner to use for this workflow
     if: ${{ always() }}
-    runs-on: self-hosted #g ithub
+    runs-on: self-hosted # github
     outputs:
-      runner: ${{ runner.name }}
+      # runner: ${{ runner.name }}
+      runner: ${{ format('[{0}, {1}]', runner.environment, runner.name) }}
+      # runner: [self-hosted, "${{ inputs.chosen-os }}"]
+      # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
+      # runner.os: ${{ runner.os }}
+      # runner.arch: ${{ runner.arch }}
+      # runner.temp: ${{ runner.temp }}
+      # runner.tool_cache: ${{ runner.tool_cache }}
+      # runner.debug: ${{ runner.debug }}
+      # runner.environment: ${{ runner.environment }}
     steps:
       - name: echo the runner
         run: echo "selected runner = ${{ runner.name }}"
