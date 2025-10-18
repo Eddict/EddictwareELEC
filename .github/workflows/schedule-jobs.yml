@@ -13,6 +13,7 @@ env:
   UPSTREAM_REMOTE: 'upstream'
   UPSTREAM_BRANCH: 'master'
   FETCH_DEPTH: 100
+  DEBUG: ${DEBUG:-true}
 
 jobs:
   daily:
@@ -22,12 +23,14 @@ jobs:
     name: Jobs to run daily
     outputs:
       hasRuns: ${{ steps.cleanup_runs.outputs.hasRuns }}
+    env:
+      DEBUG: ${DEBUG:-false}
     steps:
       - name: Cleanup old workflow runs
         id: cleanup_runs
         run: |
           set -euo pipefail
-          debug=false
+          DEBUG=${DEBUG:-false}
           curDateTime=$(date)
           calcDateTime=$(date -d "$curDateTime - 1 day")
           calcEpoch=$(date -d "$calcDateTime" +%s)
@@ -85,6 +88,8 @@ jobs:
     # if: 0 == 1
     needs: daily
     name: Jobs to run every N hours
+    env:
+      DEBUG: ${DEBUG:-false}
     steps:
       - name: Checkout repository scripts
         uses: actions/checkout@v5
@@ -96,7 +101,7 @@ jobs:
         id: sync_repo
         run: |
           set -euo pipefail
-          debug=false
+          DEBUG=${DEBUG:-false}
 
           remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/${{ env.UPSTREAM_BRANCH }} | awk '{print substr($1,1,8)}') #  HEAD | awk '{print substr($1,1,8)} / awk '{print $1}'
           echo "Remote sha: $remote_sha"
