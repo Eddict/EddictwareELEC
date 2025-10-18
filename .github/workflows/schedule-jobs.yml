@@ -13,7 +13,7 @@ env:
   UPSTREAM_REMOTE: 'upstream'
   UPSTREAM_BRANCH: 'master'
   FETCH_DEPTH: 100
-  DEBUG: true
+  DEBUG: false
 
 jobs:
   daily:
@@ -58,8 +58,6 @@ jobs:
           if [ "${hasRuns:-}" = true ]; then
             echo "Found $count workflow run(s) to delete"
             for runId in $run_ids; do
-              # debug both variable spellings to catch case mismatches
-              echo "loop var runId=${runId:-<unset>} runid=${runid:-<unset>}"
               echo "Deleting run $runId"
               if gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE; then
                 echo "Deleted run $runId: success"
@@ -111,7 +109,7 @@ jobs:
               git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
               git remote add -t ${{ env.UPSTREAM_BRANCH }} --tags ${{ env.UPSTREAM_REMOTE }} 'https://github.com/${{ env.UPSTREAM_REPO }}.git'
               git remote set-url --push ${{ env.UPSTREAM_REMOTE }} NO_PUSH
-              git fetch ---depth ${{ env.FETCH_DEPTH }} ${{ env.UPSTREAM_REMOTE }}
+              git fetch --depth ${{ env.FETCH_DEPTH }} ${{ env.UPSTREAM_REMOTE }}
               git checkout -B ${{ github.event.repository.default_branch }} ${{ env.THIS_REMOTE }}/${{ github.event.repository.default_branch }}
               git merge --no-edit ${{ env.UPSTREAM_REMOTE }}/${{ env.UPSTREAM_BRANCH }}
               git push ${{ env.THIS_REMOTE }} ${{ github.event.repository.default_branch }} #--follow-tags
