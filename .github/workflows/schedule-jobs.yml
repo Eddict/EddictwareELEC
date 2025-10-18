@@ -58,20 +58,17 @@ jobs:
           if [ "${hasRuns:-}" = true ]; then
             echo "Found $count workflow run(s) to delete"
             for runId in $run_ids; do
-              echo "Deleting workflow run ID: $runId"
-              gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE
-                else
-                  echo "Deleting run $runid"
-                  if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
-                    echo "Deleted run $runid: success"
-                  else
-                    echo "Deleted run $runid: FAILED (api error)"
-                  fi
-                fi
-        uses: actions/upload-artifact@v4
-        with:
-          name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.publish_daily_marker.outputs.MARKER_HASSHA }}-hasRuns-${{ steps.cleanup_runs.outputs.hasRuns }}
-          path: marker.txt
+              echo "Deleting run $runid"
+              if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
+                echo "Deleted run $runid: success"
+              else
+                echo "Deleted run $runid: FAILED (api error)"
+              fi
+              # sleep 2s
+            done
+          fi
+          echo "Cleanup completed."
+
 
   every-n-hours:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
@@ -126,241 +123,23 @@ jobs:
           fi
         shell: bash
 
-      - name: Compute marker hasSHA (every-n-hours)
-        if: ${{ steps.sync_repo.outputs.hasSHA != 'true' }}
-        id: compute_marker
-        run: |
-          set -euo pipefail
-          # Propagate the sync step's hasSHA output into the marker so the artifact reflects whether
-          # the repo already had the upstream SHA. This will be 'true' or 'false'.
-          sync_hasSHA='${{ steps.sync_repo.outputs.hasSHA }}'
-          daily_result='${{ needs.daily.result }}'
-          echo "compute_marker: sync_hasSHA=$sync_hasSHA"
-          echo "compute_marker: daily_result=$daily_result"
-          echo "MARKER_HASSHA=$sync_hasSHA" >> $GITHUB_OUTPUT
-          echo marker > marker.txt
-        shell: bash
+      # - id: setup_node
+      #   name: Setup Node.js
+      #   # Use a single expression and explicit string comparisons so GitHub evaluates booleans
+      #   # correctly. Avoid using multiple ${{ }} blocks which can produce a non-empty string
+      #   # (e.g. "true && false") that is treated as truthy.
+      #   # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+      #   if: 0 == 1
+      #   uses: actions/setup-node@v6
+      #   with:
+      #     node-version: 24
+      #   # env:
+      #   #   NODE_OPTIONS: --trace-deprecation
 
-      - name: Upload sync marker artifact (every-n-hours)
-        if: ${{ steps.sync_repo.outputs.hasSHA != 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.compute_marker.outputs.MARKER_HASSHA }}-hasRuns-${{ needs.daily.outputs.hasRuns }}
-          path: marker.txt
-
-      - name: Inspect previous schedule runs via artifacts and delete matches
-        id: inspect_prev_runs
-        env:
-          # For live operation, enable actual deletions. Set to 'false' to actually delete matching runs.
-          DRY_RUN: 'false'
-          # Opt-in: when true, for artifacts that lacked hasSHA we will perform a "retro" check
-          # by asking the run for its head SHA and checking whether that commit exists in
-          # the upstream repository. This is safe but causes extra API calls; disabled by default.
-          RETRO_HASHA_CHECK: 'true'
-          # Only consider retro-checking runs older than this many hours. Set to '0' to
-          # evaluate retro-check for all runs (user-requested).
-          RETRO_OLDER_THAN_HOURS: '0'
-        run: |
-          set -euo pipefail
-          export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
-          DEBUG=${DEBUG:-false}
-
-          echo "Listing artifacts and parsing marker names..."
-          # get artifact names excluding any artifact containing -<GITHUB_RUN_ID>- (skip current run)
-          raw_artifacts=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate 2>/dev/null || true)
-          raw_len=$(printf '%s' "$raw_artifacts" | wc -c | tr -d ' ')
-          if [ "${DEBUG}" = 'true' ]; then
-            echo "raw artifacts payload length: $raw_len"
-          fi
-
-          artifact_names=$(printf '%s' "$raw_artifacts" | jq -r --arg curid "$GITHUB_RUN_ID" '.artifacts[] | select((.name | test("-" + $curid + "-")) | not) | .name' 2>/dev/null || true)
-          jq_path_used=true
-
-          # fallback if jq returned nothing (some runners / gh output formats can differ)
-          if [ -z "${artifact_names:-}" ]; then
-            jq_path_used=false
-            echo "jq returned no artifact names; falling back to simple name listing"
-            artifact_names=$(printf '%s' "$raw_artifacts" | jq -r '.artifacts[] | .name' 2>/dev/null || true)
-            # if still empty, try gh --jq with simple field and strip quotes
-            if [ -z "${artifact_names:-}" ]; then
-              artifact_names=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate --jq '.artifacts[] | .name' 2>/dev/null || true)
-              artifact_names=$(printf '%s\n' "${artifact_names}" | sed 's/^"//; s/"$//' || true)
-            fi
-            # remove any names containing the current run id
-            artifact_names=$(printf '%s\n' "${artifact_names}" | sed 's/^"//; s/"$//' | grep -v -- "-${GITHUB_RUN_ID}-" || true)
-          fi
-          if [ "${DEBUG}" = 'true' ]; then
-            echo "artifact discovery: jq_path_used=$jq_path_used"
-            # list artifact names for debug with indices
-            echo "artifact names:"
-            # print indexed artifact names (skip blank lines)
-            printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | nl -ba -w1 -s' ' | while IFS= read -r line; do
-              num=$(printf '%s' "$line" | awk '{print $1}')
-              an=$(printf '%s' "$line" | cut -d' ' -f2-)
-              echo "  [$num] $an"
-            done
-          fi
-          if [ -z "${artifact_names:-}" ]; then
-            echo "No artifacts found"
-            exit 0
-          fi
-          total_artifacts=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | wc -l | tr -d ' ')
-          echo "artifact candidate count: $total_artifacts"
-
-          # Counters for summary
-          deletable_count=0
-          ignored_count=0
-          unknown_count=0
-          skipped_no_hasSHA=0
-          skipped_recent_count=0
-          # retro-check configuration (opt-in)
-          RETRO_HASHA_CHECK=${RETRO_HASHA_CHECK:-false}
-          RETRO_OLDER_THAN_HOURS=${RETRO_OLDER_THAN_HOURS:-24}
-          RETRO_OLDER_THAN_SECONDS=$((RETRO_OLDER_THAN_HOURS * 3600))
-
-          # prepare artifact list and iterate in the current shell (preserve counters)
-          artifact_list=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d')
-          while IFS= read -r name; do
-            # flexible parsing: extract run id, optional hasSHA and hasRuns
-            # runid
-            runid=$(printf '%s' "$name" | sed -nE 's/^cleanup-marker-([0-9]+).*$/\1/p' || true)
-            hassha=$(printf '%s' "$name" | sed -nE 's/^.*-hasSHA-(true|false).*/\1/p' || true)
-            hasruns=$(printf '%s' "$name" | sed -nE 's/^.*-hasRuns-(true|false).*/\1/p' || true)
-            # default missing flags to 'false'
-            hassha=${hassha:-false}
-            hasruns=${hasruns:-false}
-
-            if [ -n "$runid" ]; then
-              echo "Found marker for run $runid (marker: $name) -> hasSHA=$hassha hasRuns=$hasruns"
-              if [ "$hasruns" = 'true' ]; then
-                echo "Skipping $name: hasRuns=true (other runs present)"
-                ignored_count=$((ignored_count + 1))
-              elif [ "$hassha" = 'true' ]; then
-                deletable_count=$((deletable_count + 1))
-                if [ "${DEBUG}" = 'true' ]; then
-                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count skipped_no_hasSHA=$skipped_no_hasSHA"
-                fi
-                if [ "${DRY_RUN:-true}" = 'true' ]; then
-                  echo "DRY-RUN: would delete run $runid"
-                else
-                  # Age-check: skip deleting runs that are newer than threshold to avoid 403 on active runs
-                  threshold_minutes=1
-                  threshold_seconds=$((threshold_minutes * 60))
-                  created_at=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.created_at' 2>/dev/null || true)
-                  if [ -z "${created_at:-}" ]; then
-                    echo "Could not determine created_at for run $runid; skipping deletion"
-                    skipped_recent_count=$((skipped_recent_count + 1))
-                  else
-                    created_epoch=$(date -d "$created_at" +%s)
-                    now_epoch=$(date +%s)
-                    age=$((now_epoch - created_epoch))
-                    if [ "$age" -lt "$threshold_seconds" ]; then
-                      echo "Skipping deletion of run $runid: age=${age}s < ${threshold_seconds}s (threshold ${threshold_minutes}m)"
-                      skipped_recent_count=$((skipped_recent_count + 1))
-                    else
-                      echo "Deleting run $runid (age=${age}s)"
-                      if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
-                        echo "Deleted run $runid: success"
-                      else
-                        echo "Deleted run $runid: FAILED (api error)"
-                      fi
-                    fi
-                  fi
-                fi
-              else
-                # No hasSHA marker present. Optionally attempt a retroactive check to see
-                # whether the run's head SHA exists upstream. This is controlled by
-                # RETRO_HASHA_CHECK and only runs for older runs (RETRO_OLDER_THAN_HOURS)
-                if [ "${RETRO_HASHA_CHECK}" = 'true' ]; then
-                  echo "Performing retro hasSHA check for run $runid"
-                  created_at_rt=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.created_at' 2>/dev/null || true)
-                  if [ -z "${created_at_rt:-}" ]; then
-                    echo "  Could not determine created_at for run $runid; skipping retro-check"
-                    skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
-                  else
-                    created_epoch_rt=$(date -d "$created_at_rt" +%s)
-                    now_epoch_rt=$(date +%s)
-                    age_rt=$((now_epoch_rt - created_epoch_rt))
-                    if [ "$age_rt" -lt "$RETRO_OLDER_THAN_SECONDS" ]; then
-                      echo "  Run $runid is only ${age_rt}s old (< ${RETRO_OLDER_THAN_SECONDS}s); skipping retro-check"
-                      skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
-                    else
-                      # Get the run's head sha and check upstream for it
-                      head_sha=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.head_sha' 2>/dev/null || true)
-                      head_sha=${head_sha:-}
-                      if [ -z "$head_sha" ]; then
-                        echo "  Could not determine head_sha for run $runid; skipping retro-check"
-                        skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
-                      else
-                        echo "  Found head_sha=$head_sha for run $runid; checking upstream ${UPSTREAM_REPO}"
-                        # Check whether upstream repo contains this commit
-                        if gh api repos/${{ env.UPSTREAM_REPO }}/commits/$head_sha >/dev/null 2>&1; then
-                          echo "  Retro-check: commit $head_sha exists upstream — treating as hasSHA=true"
-                          # Treat as hasSHA=true and fall through to deletion path by setting hassha
-                          hassha='true'
-                          deletable_count=$((deletable_count + 1))
-                          if [ "${DRY_RUN:-true}" = 'true' ]; then
-                            echo "  DRY-RUN: would delete run $runid (retro hasSHA)"
-                          else
-                            echo "  Deleting run $runid"
-                            if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
-                              echo "  Deleted run $runid: success"
-                            else
-                              echo "  Deleted run $runid: FAILED (api error)"
-                            fi
-                          fi
-                        else
-                          echo "  Retro-check: commit $head_sha NOT found upstream — keeping skipped"
-                          skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
-                        fi
-                      fi
-                    fi
-                  fi
-                else
-                  echo "Skipping $name: hasSHA=false or missing (no upstream sync)"
-                  skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
-                fi
-              fi
-            else
-              echo "Skipping $name: unknown pattern"
-              unknown_count=$((unknown_count + 1))
-            fi
-            if [ "${DEBUG}" = 'true' ]; then
-              echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count skipped_no_hasSHA=$skipped_no_hasSHA"
-            fi
-          done <<< "$artifact_list"
-
-          # Print summary
-          echo "---- summary ----"
-          echo "total artifacts inspected: $total_artifacts"
-          echo "deletable (hasSHA=true & hasRuns=false): $deletable_count"
-          echo "ignored (hasRuns=true): $ignored_count"
-          echo "skipped (no hasSHA present): $skipped_no_hasSHA"
-          echo "unknown pattern: $unknown_count"
-        shell: bash
-
-
-
-      - id: setup_node
-        name: Setup Node.js
-        # Use a single expression and explicit string comparisons so GitHub evaluates booleans
-        # correctly. Avoid using multiple ${{ }} blocks which can produce a non-empty string
-        # (e.g. "true && false") that is treated as truthy.
-        # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
-        if: 0 == 1
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-        # env:
-        #   NODE_OPTIONS: --trace-deprecation
-
-      # - run: |
-      #     npm install @actions/core @actions/github
-
-      - id: delete_workflow_run
-        name: Delete workflow run
-        # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
-        if: 0 == 1
-        env:
-          GITHUB_TOKEN: ${{ env.GH_TOKEN }}
-        uses: ./.github/actions/composite/delete-workflow-runs
+      # - id: delete_workflow_run
+      #   name: Delete workflow run
+      #   # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+      #   if: 0 == 1
+      #   env:
+      #     GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+      #   uses: ./.github/actions/composite/delete-workflow-runs
