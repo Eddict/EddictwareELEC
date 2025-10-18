@@ -13,7 +13,7 @@ env:
   UPSTREAM_REMOTE: 'upstream'
   UPSTREAM_BRANCH: 'master'
   FETCH_DEPTH: 100
-  DEBUG: ${DEBUG:-true}
+  DEBUG: true
 
 jobs:
   daily:
@@ -23,8 +23,6 @@ jobs:
     name: Jobs to run daily
     outputs:
       hasRuns: ${{ steps.cleanup_runs.outputs.hasRuns }}
-    env:
-      DEBUG: ${DEBUG:-false}
     steps:
       - name: Cleanup old workflow runs
         id: cleanup_runs
@@ -35,25 +33,25 @@ jobs:
           calcDateTime=$(date -d "$curDateTime - 1 day")
           calcEpoch=$(date -d "$calcDateTime" +%s)
 
-          [ $debug ] && echo "Current date and time: $curDateTime"
-          [ "$debug" = true ] && echo "Calculated date and time (24 hours ago): $calcDateTime"
-          [ "$debug" = true ] && echo "Calculated epoch time: $calcEpoch"
+          [ "${DEBUG:-}" ] && echo "Current date and time: $curDateTime"
+          [ "${DEBUG:-}" = true ] && echo "Calculated date and time (24 hours ago): $calcDateTime"
+          [ "${DEBUG:-}" = true ] && echo "Calculated epoch time: $calcEpoch"
 
           jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.creat_epoch < $calc_epoch) ]'
           # [ "$debug" = true ] && jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} | select(.id == 18605342624) ]'
 
           jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
-          [ "$debug" = true ] && echo "Updated JQ filter: $jq_filter"
+          [ "${DEBUG:-}" = true ] && echo "Updated JQ filter: $jq_filter"
 
           # workflowRuns=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter")
           # for runId in $(echo $workflowRuns | jq -r '.[].id'); do
 
           # pagination-safe: list matching run ids across pages and count lines
           run_ids=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter | .[] | .id" 2>/dev/null || true)
-          [ "$debug" = true ] && echo "run_ids: [$run_ids]"
+          [ "${DEBUG:-}" = true ] && echo "run_ids: [$run_ids]"
           # determine whether there are workflow runs to delete (count non-empty lines)
           count=$(printf '%s\n' "$run_ids" | sed '/^\s*$/d' | wc -l | tr -d ' ')
-          [ "$debug" = true ] && echo "count: $count"
+          [ "${DEBUG:-}" = true ] && echo "count: $count"
           hasRuns=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
           echo "hasRuns=$hasRuns" >> $GITHUB_OUTPUT
           echo "hasRuns=$hasRuns"
@@ -88,8 +86,6 @@ jobs:
     # if: 0 == 1
     needs: daily
     name: Jobs to run every N hours
-    env:
-      DEBUG: ${DEBUG:-false}
     steps:
       - name: Checkout repository scripts
         uses: actions/checkout@v5
@@ -214,19 +210,29 @@ jobs:
           deletable_count=0
           ignored_count=0
           unknown_count=0
+          skipped_no_hasSHA=0
 
           # prepare artifact list and iterate in the current shell (preserve counters)
           artifact_list=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d')
           while IFS= read -r name; do
-            # match marker name pattern: cleanup-marker-<runid>-hasSHA-<val>-hasRuns-<val>
-            case "$name" in
-              cleanup-marker-*-hasSHA-true-hasRuns-false)
-                # Extract run id from artifact name: cleanup-marker-<runid>-...
-                runid=$(echo "$name" | sed -E 's/^cleanup-marker-([0-9]+)-.*$/\1/')
-                echo "Found candidate run $runid (marker: $name)"
+            # flexible parsing: extract run id, optional hasSHA and hasRuns
+            # runid
+            runid=$(printf '%s' "$name" | sed -nE 's/^cleanup-marker-([0-9]+).*$/\1/p' || true)
+            hassha=$(printf '%s' "$name" | sed -nE 's/^.*-hasSHA-(true|false).*/\1/p' || true)
+            hasruns=$(printf '%s' "$name" | sed -nE 's/^.*-hasRuns-(true|false).*/\1/p' || true)
+            # default missing flags to 'false'
+            hassha=${hassha:-false}
+            hasruns=${hasruns:-false}
+
+            if [ -n "$runid" ]; then
+              echo "Found marker for run $runid (marker: $name) -> hasSHA=$hassha hasRuns=$hasruns"
+              if [ "$hasruns" = 'true' ]; then
+                echo "Skipping $name: hasRuns=true (other runs present)"
+                ignored_count=$((ignored_count + 1))
+              elif [ "$hassha" = 'true' ]; then
                 deletable_count=$((deletable_count + 1))
                 if [ "${DEBUG}" = 'true' ]; then
-                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count"
+                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count skipped_no_hasSHA=$skipped_no_hasSHA"
                 fi
                 if [ "${DRY_RUN:-true}" = 'true' ]; then
                   echo "DRY-RUN: would delete run $runid"
@@ -238,24 +244,17 @@ jobs:
                     echo "Deleted run $runid: FAILED (api error)"
                   fi
                 fi
-              ;;
-              cleanup-marker-*-hasRuns-true)
-                # ignore markers indicating hasRuns=true
-                echo "Skipping $name: hasRuns=true (other runs present)"
-                ignored_count=$((ignored_count + 1))
-                if [ "${DEBUG}" = 'true' ]; then
-                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count"
-                fi
-                ;;
-              *)
-                # ignore unknown artifact names
-                echo "Skipping $name: unknown pattern"
-                unknown_count=$((unknown_count + 1))
-                if [ "${DEBUG}" = 'true' ]; then
-                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count"
-                fi
-                ;;
-            esac
+              else
+                echo "Skipping $name: hasSHA=false or missing (no upstream sync)"
+                skipped_no_hasSHA=$((skipped_no_hasSHA + 1))
+              fi
+            else
+              echo "Skipping $name: unknown pattern"
+              unknown_count=$((unknown_count + 1))
+            fi
+            if [ "${DEBUG}" = 'true' ]; then
+              echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count skipped_no_hasSHA=$skipped_no_hasSHA"
+            fi
           done <<< "$artifact_list"
 
           # Print summary
@@ -263,6 +262,7 @@ jobs:
           echo "total artifacts inspected: $total_artifacts"
           echo "deletable (hasSHA=true & hasRuns=false): $deletable_count"
           echo "ignored (hasRuns=true): $ignored_count"
+          echo "skipped (no hasSHA present): $skipped_no_hasSHA"
           echo "unknown pattern: $unknown_count"
         shell: bash
 
