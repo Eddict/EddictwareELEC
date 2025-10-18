@@ -19,6 +19,8 @@ console.log(`INPOST: ${inpost}`);
 console.log(`RUN_ID: ${runId}`);
 
 if (inpost && runId) {
+	// Accept either GITHUB_TOKEN or GH_TOKEN (workflow may set GH_TOKEN in env)
+	// const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
 	const token = process.env.GITHUB_TOKEN;
 	if (!token) {
 		console.error("GITHUB_TOKEN not available; cannot delete workflow run.");

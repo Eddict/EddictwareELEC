@@ -135,5 +135,7 @@ jobs:
 
       - id: delete_workflow_run
         name: Delete workflow run
-        if: ${{ steps.setup_node.outcome == 'success' }}
+        if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ env.GH_TOKEN }}
         uses: ./.github/actions/composite/delete-workflow-runs
