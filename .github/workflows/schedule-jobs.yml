@@ -132,11 +132,18 @@ jobs:
           fi
         shell: bash
 
-      - name: Publish sync marker (every-n-hours)
+      - name: Compute marker hasSHA (every-n-hours)
         if: ${{ steps.sync_repo.outputs.hasSHA != 'true' }}
-        id: publish_sync_marker
+        id: compute_marker
         run: |
           set -euo pipefail
+          # Propagate the sync step's hasSHA output into the marker so the artifact reflects whether
+          # the repo already had the upstream SHA. This will be 'true' or 'false'.
+          sync_hasSHA='${{ steps.sync_repo.outputs.hasSHA }}'
+          daily_result='${{ needs.daily.result }}'
+          echo "compute_marker: sync_hasSHA=$sync_hasSHA"
+          echo "compute_marker: daily_result=$daily_result"
+          echo "MARKER_HASSHA=$sync_hasSHA" >> $GITHUB_OUTPUT
           echo marker > marker.txt
         shell: bash
 
@@ -144,7 +151,7 @@ jobs:
         if: ${{ steps.sync_repo.outputs.hasSHA != 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.sync_repo.outputs.hasSHA }}-hasRuns-${{ needs.daily.outputs.hasRuns }}
+          name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.compute_marker.outputs.MARKER_HASSHA }}-hasRuns-${{ needs.daily.outputs.hasRuns }}
           path: marker.txt
 
       - name: Inspect previous schedule runs via artifacts and delete matches
@@ -157,12 +164,30 @@ jobs:
 
           echo "Listing artifacts and parsing marker names..."
           # get artifact names excluding any artifact containing -<GITHUB_RUN_ID>- (skip current run)
-          artifact_names=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate 2>/dev/null \
-            | jq -r --arg curid "$GITHUB_RUN_ID" '.artifacts[] | select((.name | test("-" + $curid + "-")) | not) | .name' || true)
+          raw_artifacts=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate 2>/dev/null || true)
+          raw_len=$(printf '%s' "$raw_artifacts" | wc -c | tr -d ' ')
+          echo "raw artifacts payload length: $raw_len"
+
+          artifact_names=$(printf '%s' "$raw_artifacts" | jq -r --arg curid "$GITHUB_RUN_ID" '.artifacts[] | select((.name | test("-" + $curid + "-")) | not) | .name' 2>/dev/null || true)
+
+          # fallback if jq returned nothing (some runners / gh output formats can differ)
+          if [ -z "${artifact_names:-}" ]; then
+            echo "jq returned no artifact names; falling back to simple name listing"
+            artifact_names=$(printf '%s' "$raw_artifacts" | jq -r '.artifacts[] | .name' 2>/dev/null || true)
+            # if still empty, try gh --jq with simple field and strip quotes
+            if [ -z "${artifact_names:-}" ]; then
+              artifact_names=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate --jq '.artifacts[] | .name' 2>/dev/null || true)
+              artifact_names=$(printf '%s\n' "${artifact_names}" | sed 's/^"//; s/"$//' || true)
+            fi
+            # remove any names containing the current run id
+            artifact_names=$(printf '%s\n' "${artifact_names}" | sed 's/^"//; s/"$//' | grep -v -- "-${GITHUB_RUN_ID}-" || true)
+          fi
           if [ -z "${artifact_names:-}" ]; then
             echo "No artifacts found"
             exit 0
           fi
+          total_artifacts=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | wc -l | tr -d ' ')
+          echo "artifact candidate count: $total_artifacts"
 
           # iterate over filtered artifact names
           while IFS= read -r name; do
