@@ -104,7 +104,7 @@ jobs:
           # determine whether the local repo already has the upstream sha
           hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
           echo "hasSHA=$hasSHA" >> $GITHUB_OUTPUT
-          [ "$debug" = true ] && echo "hasSHA=$hasSHA"
+          [ "${DEBUG:-}" = true ] && echo "hasSHA=$hasSHA"
           if [ "${hasSHA:-}" = true ]; then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
