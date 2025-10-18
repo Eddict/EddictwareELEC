@@ -95,7 +95,7 @@ jobs:
 
   repo-vars:
     name: Repo-vars
-    needs: |
+    needs:
       - runner
       - pre-build
     runs-on: ${{ needs.runner.outputs.runner }}
@@ -206,8 +206,7 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         context: workflow
-        images: ${{ format('name={0}/{1}/{2},enable=true', secrets.REGISTRY_FQDN, github.repository_owner, env.DistroCodeName) }}
-        # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
+        images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
         tags: type=raw,value=latest
         # flavor: latest=true
 
