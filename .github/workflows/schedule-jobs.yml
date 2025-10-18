@@ -205,6 +205,11 @@ jobs:
           total_artifacts=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | wc -l | tr -d ' ')
           echo "artifact candidate count: $total_artifacts"
 
+          # Counters for summary
+          deletable_count=0
+          ignored_count=0
+          unknown_count=0
+
           # iterate over filtered artifact names (provide names via stdin)
           printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | while IFS= read -r name; do
             # match marker name pattern: cleanup-marker-<runid>-hasSHA-<val>-hasRuns-<val>
@@ -213,21 +218,37 @@ jobs:
                 # Extract run id from artifact name: cleanup-marker-<runid>-...
                 runid=$(echo "$name" | sed -E 's/^cleanup-marker-([0-9]+)-.*$/\1/')
                 echo "Found candidate run $runid (marker: $name)"
+                deletable_count=$((deletable_count + 1))
                 if [ "${DRY_RUN:-true}" = 'true' ]; then
                   echo "DRY-RUN: would delete run $runid"
                 else
                   echo "Deleting run $runid"
-                  gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE || echo "Failed to delete run $runid"
+                  if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
+                    echo "Deleted run $runid: success"
+                  else
+                    echo "Deleted run $runid: FAILED (api error)"
+                  fi
                 fi
               ;;
               cleanup-marker-*-hasRuns-true)
                 # ignore markers indicating hasRuns=true
+                echo "Skipping $name: hasRuns=true (other runs present)"
+                ignored_count=$((ignored_count + 1))
                 ;;
               *)
                 # ignore unknown artifact names
+                echo "Skipping $name: unknown pattern"
+                unknown_count=$((unknown_count + 1))
                 ;;
             esac
           done
+
+          # Print summary
+          echo "---- summary ----"
+          echo "total artifacts inspected: $total_artifacts"
+          echo "deletable (hasSHA=true & hasRuns=false): $deletable_count"
+          echo "ignored (hasRuns=true): $ignored_count"
+          echo "unknown pattern: $unknown_count"
         shell: bash
 
 
