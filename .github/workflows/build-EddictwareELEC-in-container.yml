@@ -190,15 +190,9 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         context: workflow
-        images: |
-          name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
-        flavor: |
-          latest=true
-          prefix=
-          suffix=
-        tags: |
-          type=raw,value=latest
-          # type=ref,event=tag
+        images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
+        tags: type=raw,value=latest
+        # flavor: latest=true
 
     - name: Echo Docker metadata
       id: echo-meta
