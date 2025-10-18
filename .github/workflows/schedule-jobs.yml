@@ -210,8 +210,9 @@ jobs:
           ignored_count=0
           unknown_count=0
 
-          # iterate over filtered artifact names (provide names via stdin)
-          printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | while IFS= read -r name; do
+          # prepare artifact list and iterate in the current shell (preserve counters)
+          artifact_list=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d')
+          while IFS= read -r name; do
             # match marker name pattern: cleanup-marker-<runid>-hasSHA-<val>-hasRuns-<val>
             case "$name" in
               cleanup-marker-*-hasSHA-true-hasRuns-false)
@@ -219,6 +220,9 @@ jobs:
                 runid=$(echo "$name" | sed -E 's/^cleanup-marker-([0-9]+)-.*$/\1/')
                 echo "Found candidate run $runid (marker: $name)"
                 deletable_count=$((deletable_count + 1))
+                if [ "${DEBUG}" = 'true' ]; then
+                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count"
+                fi
                 if [ "${DRY_RUN:-true}" = 'true' ]; then
                   echo "DRY-RUN: would delete run $runid"
                 else
@@ -234,14 +238,20 @@ jobs:
                 # ignore markers indicating hasRuns=true
                 echo "Skipping $name: hasRuns=true (other runs present)"
                 ignored_count=$((ignored_count + 1))
+                if [ "${DEBUG}" = 'true' ]; then
+                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count"
+                fi
                 ;;
               *)
                 # ignore unknown artifact names
                 echo "Skipping $name: unknown pattern"
                 unknown_count=$((unknown_count + 1))
+                if [ "${DEBUG}" = 'true' ]; then
+                  echo "counts so far: deletable=$deletable_count ignored=$ignored_count unknown=$unknown_count"
+                fi
                 ;;
             esac
-          done
+          done <<< "$artifact_list"
 
           # Print summary
           echo "---- summary ----"
