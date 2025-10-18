@@ -157,7 +157,7 @@ jobs:
       - name: Inspect previous schedule runs via artifacts and delete matches
         id: inspect_prev_runs
         env:
-          DRY_RUN: 'true' # set to 'false' to actually delete matching runs
+          DRY_RUN: 'false' # set to 'false' to actually delete matching runs
         run: |
           set -euo pipefail
           export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
