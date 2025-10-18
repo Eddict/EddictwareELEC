@@ -168,11 +168,12 @@ jobs:
       - name: Inspect previous schedule runs via artifacts and delete matches
         id: inspect_prev_runs
         env:
-          DRY_RUN: 'false' # set to 'false' to actually delete matching runs
+          # For live operation, enable actual deletions. Set to 'false' to actually delete matching runs.
+          DRY_RUN: 'false'
           # Opt-in: when true, for artifacts that lacked hasSHA we will perform a "retro" check
           # by asking the run for its head SHA and checking whether that commit exists in
           # the upstream repository. This is safe but causes extra API calls; disabled by default.
-          RETRO_HASHA_CHECK: 'false'
+          RETRO_HASHA_CHECK: 'true'
           # Only consider retro-checking runs older than this many hours (default 24)
           RETRO_OLDER_THAN_HOURS: '24'
         run: |
