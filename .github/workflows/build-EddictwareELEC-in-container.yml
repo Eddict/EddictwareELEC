@@ -55,7 +55,7 @@ jobs:
       - name: echo the runner
         id: echo_runner
         run: |
-          WF_RUNNER=${{ format('[{0}, {1}]', runner.environment, runner.name) }}"
+          WF_RUNNER="${{ format('[{0}, {1}]', runner.environment, runner.name) }}"
           echo "WF_RUNNER=$WF_RUNNER" | sudo tee -a $GITHUB_OUTPUT
           echo "selected runner: $WF_RUNNER"
         # runner: ${{ runner.name }}
