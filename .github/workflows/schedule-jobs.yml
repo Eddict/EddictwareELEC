@@ -79,12 +79,14 @@ jobs:
         id: sync_repo
         run: |
           set -euo pipefail
+          debug=false
+
           remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/${{ env.UPSTREAM_BRANCH }} | awk '{print substr($1,1,8)}') #  HEAD | awk '{print substr($1,1,8)} / awk '{print $1}'
           echo "Remote sha: $remote_sha"
           # determine whether the local repo already has the upstream sha
           hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
           echo "hasSHA=$hasSHA" >> $GITHUB_OUTPUT
-          echo "hasSHA=$hasSHA"
+          [ "$debug" = true ] && echo "hasSHA=$hasSHA"
           if [ "${hasSHA:-}" = "true" ]; then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
