@@ -152,19 +152,21 @@ jobs:
           export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
 
           echo "Listing artifacts and parsing marker names..."
-          # get artifact names (quoted strings)
-          artifact_names=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate --jq '.artifacts[] | .name' 2>/dev/null || true)
+          # get artifact names excluding any artifact containing -<GITHUB_RUN_ID>- (skip current run)
+          artifact_names=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate 2>/dev/null \
+            | jq -r --arg curid "$GITHUB_RUN_ID" '.artifacts[] | select((.name | test("-" + $curid + "-")) | not) | .name' || true)
           if [ -z "${artifact_names:-}" ]; then
             echo "No artifacts found"
             exit 0
           fi
 
-          # normalize names and iterate
-          printf '%s\n' "${artifact_names}" | sed 's/^"//; s/"$//' | while IFS= read -r name; do
+          # iterate over filtered artifact names
+          while IFS= read -r name; do
             # match marker name pattern: cleanup-marker-<runid>-hasSHA-<val>-hasRuns-<val>
             case "$name" in
               cleanup-marker-*-hasSHA-true-hasRuns-false)
-                runid=$(printf '%s' "$name" | awk -F'-' '{print $3}')
+                # Extract run id from artifact name: cleanup-marker-<runid>-...
+                runid=$(echo "$name" | sed -E 's/^cleanup-marker-([0-9]+)-.*$/\1/')
                 echo "Found candidate run $runid (marker: $name)"
                 if [ "${DRY_RUN:-true}" = 'true' ]; then
                   echo "DRY-RUN: would delete run $runid"
@@ -203,7 +205,8 @@ jobs:
 
       - id: delete_workflow_run
         name: Delete workflow run
-        if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+        # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+        if: 0 == 1
         env:
           GITHUB_TOKEN: ${{ env.GH_TOKEN }}
         uses: ./.github/actions/composite/delete-workflow-runs
