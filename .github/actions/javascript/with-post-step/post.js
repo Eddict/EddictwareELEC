@@ -9,8 +9,11 @@ import * as github from "@actions/github";
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
-const inpost = process.env.STATE_INPOST;
-const runId = process.env.STATE_RUN_ID || process.env.RUN_ID;
+// The main step writes STATE_<KEY> entries into GITHUB_STATE. Prefer STATE_ variables,
+// but fall back to runner env vars when necessary (GITHUB_RUN_ID).
+const inpost = process.env.STATE_INPOST || process.env.INPOST || false;
+// Accept either uppercase or lowercase keys and fall back to runner env var GITHUB_RUN_ID.
+const runId = (process.env.STATE_RUN_ID || process.env.STATE_run_id || process.env.GITHUB_RUN_ID || process.env.RUN_ID || '').toString();
 
 console.log(`INPOST: ${inpost}`);
 console.log(`RUN_ID: ${runId}`);
@@ -32,7 +35,8 @@ if (inpost && runId) {
 			console.log("Workflow run deleted successfully.");
 			// write an env-style output file the composite action can read
 			try {
-				const outPath = join(process.cwd(), '.github/actions/javascript/with-post-step/action_output.env');
+				const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
+				const outPath = join(workspace, '.github/actions/javascript/with-post-step/action_output.env');
 				writeFileSync(outPath, `run_deleted=true\nrun_id=${runId}\n`, { encoding: 'utf8' });
 			} catch (err) {
 				console.error('Failed to write action output file:', err);
@@ -46,7 +50,8 @@ if (inpost && runId) {
 	console.log("No run id or INPOST flag; skipping workflow run deletion.");
 	// still write output file so the composite action knows nothing was deleted
 	try {
-		const outPath = join(process.cwd(), '.github/actions/javascript/with-post-step/action_output.env');
+			const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
+			const outPath = join(workspace, '.github/actions/javascript/with-post-step/action_output.env');
 		writeFileSync(outPath, `run_deleted=false\nrun_id=\n`, { encoding: 'utf8' });
 	} catch (err) {
 		console.error('Failed to write action output file:', err);

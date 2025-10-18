@@ -17,7 +17,7 @@
 // const { spawn } = require("child_process");
 // const { appendFileSync } = require("fs");
 // const { EOL } = require("os");
-import { spawn } from "child_process";
+import { spawnSync } from "child_process";
 import { appendFileSync } from "fs";
 import { EOL } from "os";
 import { fileURLToPath } from "url";
@@ -26,10 +26,15 @@ import { resolve } from "path";
 import * as github from "@actions/github";
 
 function run(cmd) {
-  const subprocess = spawn(cmd, { stdio: "inherit", shell: true });
-  subprocess.on("exit", (exitCode) => {
-    process.exitCode = exitCode;
-  });
+  // Use spawnSync so the action main waits for the commanded script to finish.
+  // This prevents the workflow from advancing to subsequent steps before the
+  // child process (and the eventual post step) have completed.
+  const result = spawnSync(cmd, { stdio: "inherit", shell: true });
+  if (typeof result.status === 'number') process.exitCode = result.status;
+  if (result.error) {
+    console.error('Failed to spawn child process:', result.error);
+    process.exitCode = 1;
+  }
 }
 
 const key = process.env.INPUT_KEY.toUpperCase();
@@ -42,7 +47,13 @@ if ( process.env[`STATE_${key}`] !== undefined ) { // Are we in the 'post' step?
   // {{github.run_attempt}}
   console.log(`key: ${key}`);
   appendFileSync(process.env.GITHUB_STATE, `${key}=true${EOL}`);
-  const run_id=github.run_id;
+  // Prefer the environment-provided GITHUB_RUN_ID which is always available inside the runner.
+  // `github.run_id` is a convenience but may not be set in all runtimes; writing the env value
+  // guarantees the post step can read it via STATE_RUN_ID.
+  const run_id = process.env.GITHUB_RUN_ID || github.run_id;
+  // Write both uppercase and lowercase keys for compatibility: post step prefers STATE_RUN_ID
+  // but some callers/scripts may look for STATE_run_id. Having both prevents casing issues.
+  appendFileSync(process.env.GITHUB_STATE, `RUN_ID=${run_id}${EOL}`);
   appendFileSync(process.env.GITHUB_STATE, `run_id=${run_id}${EOL}`);
   // Guard: if INPUT_MAIN resolves to this action's main file, spawning it will recurse forever.
   // Detect common misconfiguration where the composite action passes the action's own main as the

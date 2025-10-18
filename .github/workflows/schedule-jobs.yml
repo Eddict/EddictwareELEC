@@ -27,7 +27,7 @@ jobs:
         id: cleanup_runs
         run: |
           set -euo pipefail
-          debug=true
+          debug=false
           curDateTime=$(date)
           calcDateTime=$(date -d "$curDateTime - 1 day")
           calcEpoch=$(date -d "$calcDateTime" +%s)
