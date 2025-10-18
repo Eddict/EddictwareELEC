@@ -161,17 +161,22 @@ jobs:
         run: |
           set -euo pipefail
           export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+          DEBUG=${DEBUG:-false}
 
           echo "Listing artifacts and parsing marker names..."
           # get artifact names excluding any artifact containing -<GITHUB_RUN_ID>- (skip current run)
           raw_artifacts=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate 2>/dev/null || true)
           raw_len=$(printf '%s' "$raw_artifacts" | wc -c | tr -d ' ')
-          echo "raw artifacts payload length: $raw_len"
+          if [ "${DEBUG}" = 'true' ]; then
+            echo "raw artifacts payload length: $raw_len"
+          fi
 
           artifact_names=$(printf '%s' "$raw_artifacts" | jq -r --arg curid "$GITHUB_RUN_ID" '.artifacts[] | select((.name | test("-" + $curid + "-")) | not) | .name' 2>/dev/null || true)
+          jq_path_used=true
 
           # fallback if jq returned nothing (some runners / gh output formats can differ)
           if [ -z "${artifact_names:-}" ]; then
+            jq_path_used=false
             echo "jq returned no artifact names; falling back to simple name listing"
             artifact_names=$(printf '%s' "$raw_artifacts" | jq -r '.artifacts[] | .name' 2>/dev/null || true)
             # if still empty, try gh --jq with simple field and strip quotes
@@ -182,6 +187,17 @@ jobs:
             # remove any names containing the current run id
             artifact_names=$(printf '%s\n' "${artifact_names}" | sed 's/^"//; s/"$//' | grep -v -- "-${GITHUB_RUN_ID}-" || true)
           fi
+          if [ "${DEBUG}" = 'true' ]; then
+            echo "artifact discovery: jq_path_used=$jq_path_used"
+            # list artifact names for debug with indices
+            echo "artifact names:"
+            # print indexed artifact names (skip blank lines)
+            printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | nl -ba -w1 -s' ' | while IFS= read -r line; do
+              num=$(printf '%s' "$line" | awk '{print $1}')
+              an=$(printf '%s' "$line" | cut -d' ' -f2-)
+              echo "  [$num] $an"
+            done
+          fi
           if [ -z "${artifact_names:-}" ]; then
             echo "No artifacts found"
             exit 0
@@ -189,8 +205,8 @@ jobs:
           total_artifacts=$(printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | wc -l | tr -d ' ')
           echo "artifact candidate count: $total_artifacts"
 
-          # iterate over filtered artifact names
-          while IFS= read -r name; do
+          # iterate over filtered artifact names (provide names via stdin)
+          printf '%s\n' "${artifact_names}" | sed '/^\s*$/d' | while IFS= read -r name; do
             # match marker name pattern: cleanup-marker-<runid>-hasSHA-<val>-hasRuns-<val>
             case "$name" in
               cleanup-marker-*-hasSHA-true-hasRuns-false)
