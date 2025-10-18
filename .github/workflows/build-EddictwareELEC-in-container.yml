@@ -271,7 +271,8 @@ jobs:
       NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      image: ${{ needs.repo-login.outputs.output_meta_tags }}
+      image: https://edregistry.main.eddict.nl:5000/eddict/noble:latest
+      # image: ${{ needs.repo-login.outputs.output_meta_tags }}
       # image: eu.gcr.io/path/to/image:tag
       # image: ${{ needs.build.outputs.image_tag }}
       # image: "${{ needs.repo-login.outputs.output_get_RFQDN }}/eddict/noble" # $EE_DT:latest
