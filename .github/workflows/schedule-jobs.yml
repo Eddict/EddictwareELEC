@@ -64,6 +64,19 @@ jobs:
           fi
           echo "Cleanup completed."
 
+      - name: Publish cleanup marker (daily)
+        id: publish_daily_marker
+        run: |
+          set -euo pipefail
+          echo "marker" > marker.txt
+        shell: bash
+
+      - name: Upload cleanup marker artifact (daily)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleanup-marker-${{ github.run_id }}-hasRuns-${{ steps.cleanup_runs.outputs.hasRuns }}
+          path: marker.txt
+
   every-n-hours:
     runs-on: ubuntu-latest #ubuntu-latest self-hosted
     if: github.event.schedule == '0 */8 * * *' || github.event_name == 'workflow_dispatch'
@@ -117,43 +130,56 @@ jobs:
           fi
         shell: bash
 
-      - name: Inspect previous schedule runs and delete if condition met
+      - name: Publish sync marker (every-n-hours)
+        id: publish_sync_marker
+        run: |
+          set -euo pipefail
+          echo marker > marker.txt
+        shell: bash
+
+      - name: Upload sync marker artifact (every-n-hours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.sync_repo.outputs.hasSHA }}-hasRuns-${{ needs.daily.outputs.hasRuns }}
+          path: marker.txt
+
+      - name: Inspect previous schedule runs via artifacts and delete matches
         id: inspect_prev_runs
         env:
           DRY_RUN: 'true' # set to 'false' to actually delete matching runs
         run: |
           set -euo pipefail
           export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
-          workflow_name='Schedule jobs for EddictwareELEC'
 
-          # list recent runs for this workflow by name
-          run_ids=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq '.workflow_runs[] | select(.name=="Schedule jobs for EddictwareELEC") | .id' 2>/dev/null || true)
-          if [ -z "${run_ids:-}" ]; then
-            echo "No previous runs found for workflow: ${workflow_name}"
+          echo "Listing artifacts and parsing marker names..."
+          # get artifact names (quoted strings)
+          artifact_names=$(gh api repos/${{ github.repository }}/actions/artifacts --paginate --jq '.artifacts[] | .name' 2>/dev/null || true)
+          if [ -z "${artifact_names:-}" ]; then
+            echo "No artifacts found"
             exit 0
           fi
 
-          for runId in $run_ids; do
-            if [ "$runId" = "$GITHUB_RUN_ID" ]; then
-              continue
-            fi
-
-            echo "Inspecting run $runId..."
-            logs=$(gh run view $runId --repo ${{ github.repository }} --log 2>/dev/null || true)
-            hasSHA=$(printf '%s\n' "$logs" | grep -m1 -o 'hasSHA=true' || true)
-            hasRuns=$(printf '%s\n' "$logs" | grep -m1 -o 'hasRuns=true' || true)
-
-            if [ -n "$hasSHA" ] && [ -z "$hasRuns" ]; then
-              echo "Run $runId matches condition (hasSHA=true && hasRuns!=true)"
-              if [ "${DRY_RUN:-true}" = 'true' ]; then
-                echo "DRY-RUN: would delete run $runId"
-              else
-                echo "Deleting run $runId"
-                gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE || echo "Failed to delete run $runId"
-              fi
-            else
-              echo "Run $runId does not match condition (hasSHA:$hasSHA hasRuns:$hasRuns)"
-            fi
+          # normalize names and iterate
+          printf '%s\n' "${artifact_names}" | sed 's/^"//; s/"$//' | while IFS= read -r name; do
+            # match marker name pattern: cleanup-marker-<runid>-hasSHA-<val>-hasRuns-<val>
+            case "$name" in
+              cleanup-marker-*-hasSHA-true-hasRuns-false)
+                runid=$(printf '%s' "$name" | awk -F'-' '{print $3}')
+                echo "Found candidate run $runid (marker: $name)"
+                if [ "${DRY_RUN:-true}" = 'true' ]; then
+                  echo "DRY-RUN: would delete run $runid"
+                else
+                  echo "Deleting run $runid"
+                  gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE || echo "Failed to delete run $runid"
+                fi
+              ;;
+              cleanup-marker-*-hasRuns-true)
+                # ignore markers indicating hasRuns=true
+                ;;
+              *)
+                # ignore unknown artifact names
+                ;;
+            esac
           done
         shell: bash
 
