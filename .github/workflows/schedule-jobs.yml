@@ -60,31 +60,14 @@ jobs:
             for runId in $run_ids; do
               echo "Deleting workflow run ID: $runId"
               gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE
-              # sleep 2s
-            done
-          fi
-          echo "Cleanup completed."
-
-      - name: Publish cleanup marker (daily)
-        if: ${{ steps.cleanup_runs.outputs.hasRuns != 'true' }}
-        id: publish_daily_marker
-        run: |
-          set -euo pipefail
-          DEBUG=${DEBUG:-false}
-          # Ensure repository is present so we can check for the upstream SHA
-          echo "Checking out repository for hasSHA detection"
-          git init .
-          git remote add origin "${{ github.server_url }}/${{ github.repository }}.git" || true
-          git fetch --no-tags --depth ${{ env.FETCH_DEPTH }} origin ${{ github.event.repository.default_branch }} || true
-          remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/${{ env.UPSTREAM_BRANCH }} | awk '{print substr($1,1,8)}')
-          echo "Remote sha: $remote_sha"
-          hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
-          echo "MARKER_HASSHA=$hasSHA" >> $GITHUB_OUTPUT
-          echo marker > marker.txt
-        shell: bash
-
-      - name: Upload cleanup marker artifact (daily)
-        if: ${{ steps.cleanup_runs.outputs.hasRuns != 'true' }}
+                else
+                  echo "Deleting run $runid"
+                  if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
+                    echo "Deleted run $runid: success"
+                  else
+                    echo "Deleted run $runid: FAILED (api error)"
+                  fi
+                fi
         uses: actions/upload-artifact@v4
         with:
           name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.publish_daily_marker.outputs.MARKER_HASSHA }}-hasRuns-${{ steps.cleanup_runs.outputs.hasRuns }}
@@ -261,7 +244,7 @@ jobs:
                   echo "DRY-RUN: would delete run $runid"
                 else
                   # Age-check: skip deleting runs that are newer than threshold to avoid 403 on active runs
-                  threshold_minutes=15
+                  threshold_minutes=1
                   threshold_seconds=$((threshold_minutes * 60))
                   created_at=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.created_at' 2>/dev/null || true)
                   if [ -z "${created_at:-}" ]; then
@@ -319,27 +302,11 @@ jobs:
                           if [ "${DRY_RUN:-true}" = 'true' ]; then
                             echo "  DRY-RUN: would delete run $runid (retro hasSHA)"
                           else
-                            threshold_minutes=15
-                            threshold_seconds=$((threshold_minutes * 60))
-                            created_at=$(gh api repos/${{ github.repository }}/actions/runs/$runid --jq '.created_at' 2>/dev/null || true)
-                            if [ -z "${created_at:-}" ]; then
-                              echo "  Could not determine created_at for run $runid; skipping deletion"
-                              skipped_recent_count=$((skipped_recent_count + 1))
+                            echo "  Deleting run $runid"
+                            if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
+                              echo "  Deleted run $runid: success"
                             else
-                              created_epoch=$(date -d "$created_at" +%s)
-                              now_epoch=$(date +%s)
-                              age=$((now_epoch - created_epoch))
-                              if [ "$age" -lt "$threshold_seconds" ]; then
-                                echo "  Skipping deletion of run $runid: age=${age}s < ${threshold_seconds}s (threshold ${threshold_minutes}m)"
-                                skipped_recent_count=$((skipped_recent_count + 1))
-                              else
-                                echo "  Deleting run $runid (age=${age}s)"
-                                if gh api repos/${{ github.repository }}/actions/runs/$runid -X DELETE; then
-                                  echo "  Deleted run $runid: success"
-                                else
-                                  echo "  Deleted run $runid: FAILED (api error)"
-                                fi
-                              fi
+                              echo "  Deleted run $runid: FAILED (api error)"
                             fi
                           fi
                         else
