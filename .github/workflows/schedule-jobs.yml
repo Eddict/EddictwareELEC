@@ -119,6 +119,7 @@ jobs:
 
       - id: setup_node
         name: Setup Node.js
+        if: ${{ steps.sync_repo.outputs.hasSHA && ! needs.daily.outputs.hasRuns }}
         uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -130,6 +131,10 @@ jobs:
 
       - id: delete_workflow_run
         name: Delete workflow run
-        if: ${{ steps.sync_repo.outputs.hasSHA }} && ${{ ! needs.daily.outputs.hasRuns }}
+        # Use a single expression and explicit string comparisons so GitHub evaluates booleans
+        # correctly. Avoid using multiple ${{ }} blocks which can produce a non-empty string
+        # (e.g. "true && false") that is treated as truthy.
+        # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+        if: ${{ steps.sync_repo.outputs.hasSHA && ! needs.daily.outputs.hasRuns }}
         # if: 0 == 1
         uses: ./.github/actions/composite/delete-workflow-runs
