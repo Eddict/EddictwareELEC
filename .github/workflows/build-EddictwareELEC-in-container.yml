@@ -48,7 +48,7 @@ jobs:
   runner:
     name: Set workflow runner
     if: ${{ always() }}
-    runs-on: [self-hosted, linux, x64, gpu] #self-hosted # github
+    runs-on: [self-hosted, linux, x64] #self-hosted # github
     outputs:
       runner: ${{ steps.echo_runner.outputs.WF_RUNNER }}
     steps:
