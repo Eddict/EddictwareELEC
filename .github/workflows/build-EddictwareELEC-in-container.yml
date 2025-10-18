@@ -223,7 +223,8 @@ jobs:
       NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver none --workdir /build # --user root
-      image: "${{ needs.repo-login.outputs.output_get_RFQDN }}/eddict/noble" # $EE_DT:latest
+      image: ${{ needs.build.outputs.image_tag }}
+      # image: "${{ needs.repo-login.outputs.output_get_RFQDN }}/eddict/noble" # $EE_DT:latest
       # image: '::add-mask::ghcr.io/owner/image' # $EE_DT:latest
       # image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       # image: ${{ needs.repo-login.outputs.output_get_RFQDN }}/eddict/noble
