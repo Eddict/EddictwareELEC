@@ -27,12 +27,12 @@ jobs:
         id: cleanup_runs
         run: |
           set -euo pipefail
-          debug=false
+          debug=true
           curDateTime=$(date)
           calcDateTime=$(date -d "$curDateTime - 1 day")
           calcEpoch=$(date -d "$calcDateTime" +%s)
 
-          [ "$debug" = true ] && echo "Current date and time: $curDateTime"
+          [ $debug ] && echo "Current date and time: $curDateTime"
           [ "$debug" = true ] && echo "Calculated date and time (24 hours ago): $calcDateTime"
           [ "$debug" = true ] && echo "Calculated epoch time: $calcEpoch"
 
