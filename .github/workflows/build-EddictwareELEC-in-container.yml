@@ -197,7 +197,8 @@ jobs:
           prefix=
           suffix=
         tags: |
-          # type=sha,prefix=
+          type=raw,value=latest
+          # type=ref,event=tag
 
     - name: Echo Docker metadata
       id: echo-meta
