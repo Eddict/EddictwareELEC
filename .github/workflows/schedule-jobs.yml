@@ -37,7 +37,7 @@ jobs:
           [ "$debug" = true ] && echo "Calculated epoch time: $calcEpoch"
 
           jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.creat_epoch < $calc_epoch) ]'
-          jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} | select(.id == 18605342624) ]'
+          # [ "$debug" = true ] && jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} | select(.id == 18605342624) ]'
 
           jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
           [ "$debug" = true ] && echo "Updated JQ filter: $jq_filter"
@@ -50,11 +50,11 @@ jobs:
           [ "$debug" = true ] && echo "run_ids: [$run_ids]"
           # determine whether there are workflow runs to delete (count non-empty lines)
           count=$(printf '%s\n' "$run_ids" | sed '/^\s*$/d' | wc -l | tr -d ' ')
-          [ "$debug" = true ] && echo "count: [$count]"
+          [ "$debug" = true ] && echo "count: $count"
           hasRuns=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
           echo "hasRuns=$hasRuns" >> $GITHUB_OUTPUT
           echo "hasRuns=$hasRuns"
-          if [ "${hasRuns:-}" = "true" ]; then
+          if [ "${hasRuns:-}" = true ]; then
             echo "Found $count workflow run(s) to delete"
             for runId in $run_ids; do
               echo "Deleting workflow run ID: $runId"
@@ -89,7 +89,7 @@ jobs:
           hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
           echo "hasSHA=$hasSHA" >> $GITHUB_OUTPUT
           [ "$debug" = true ] && echo "hasSHA=$hasSHA"
-          if [ "${hasSHA:-}" = "true" ]; then
+          if [ "${hasSHA:-}" = true ]; then
             echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
             exit 0
           else
@@ -130,6 +130,6 @@ jobs:
 
       - id: delete_workflow_run
         name: Delete workflow run
-        # if: ${{ steps.sync_repo.outputs.hasSHA }} && ${{ ! needs.daily.outputs.hasRuns }}
-        if: 0 == 1
+        if: ${{ steps.sync_repo.outputs.hasSHA }} && ${{ ! needs.daily.outputs.hasRuns }}
+        # if: 0 == 1
         uses: ./.github/actions/composite/delete-workflow-runs
