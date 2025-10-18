@@ -45,10 +45,20 @@ env:
   # HOME: ""
 
 jobs:
+  runner:
+    name: Set and get the runner to use for this workflow
+    if: ${{ always() }}
+    runs-on: self-hosted #g ithub
+    outputs:
+      runner: ${{ runner.name }}
+    steps:
+      - name: echo the runner
+        run: echo "selected runner = ${{ runner.name }}"
+
   pre-build:
     name: Pre-build
-#    runs-on: github
-    runs-on: self-hosted
+    needs: runner
+    runs-on: ${{ needs.runner.outputs.runner }}
     if: github.event.head_commit.author.username != '${{ github.repository_owner }}' || github.event.head_commit.message == 'Merge branch ''LibreELEC:master'' into master-entw' || github.event_name == 'workflow_dispatch'
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
@@ -85,8 +95,10 @@ jobs:
 
   repo-vars:
     name: Repo-vars
-    needs: pre-build
-    runs-on: self-hosted
+    needs: |
+      - runner
+      - pre-build
+    runs-on: ${{ needs.runner.outputs.runner }}
     permissions:
       actions: write
     env:
@@ -154,8 +166,10 @@ jobs:
 
   repo-login:
     name: Repo-login
-    needs: repo-vars
-    runs-on: self-hosted
+    needs:
+      - runner 
+      - repo-vars
+    runs-on: ${{ needs.runner.outputs.runner }}
     permissions:
       actions: write
     env:
@@ -192,7 +206,8 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         context: workflow
-        images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
+        images: ${{ format('name={0}/{1}/{2},enable=true', secrets.REGISTRY_FQDN, github.repository_owner, env.DistroCodeName) }}
+        # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
         tags: type=raw,value=latest
         # flavor: latest=true
 
@@ -225,8 +240,9 @@ jobs:
 
   build:
     name: Build
-    runs-on: self-hosted
+    runs-on: ${{ needs.runner.outputs.runner }}
     needs:
+      - runner
       - repo-vars
       - repo-login
     env:
@@ -280,15 +296,17 @@ jobs:
         NB_CORES=${{ env.NB_CORES }}
         [ "$NB_CORES" -lt 1 ] && NB_CORES=1
         echo "NB_CORES=$NB_CORES"
-        # # run the build
-        # export
-        # # exit 1
-        # make -j$((NB_CORES+1)) -l${NB_CORES} image
+        # run the build
+        export
+        # exit 1
+        make -j$((NB_CORES+1)) -l${NB_CORES} image
 
   post-build:
     name: Post-build
-    runs-on: self-hosted
-    needs: build
+    runs-on: ${{ needs.runner.outputs.runner }}
+    needs:
+      - runner 
+      - build
     steps:
     - name: Copy built ${{ env.EE_Distro }} image to archive
       id: archive-image
@@ -333,8 +351,10 @@ jobs:
   secrets:
     name: Accessing JSON secret
     permissions: write-all
-    runs-on: self-hosted #ubuntu-latest
-    needs: post-build
+    runs-on: ${{ needs.runner.outputs.runner }}
+    needs:
+      - runner 
+      - post-build
     env:
       encSCP_INFO: ${{ secrets.SCP_INFO }}
     steps:
