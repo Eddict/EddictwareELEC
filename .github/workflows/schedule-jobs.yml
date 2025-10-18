@@ -65,6 +65,7 @@ jobs:
           echo "Cleanup completed."
 
       - name: Publish cleanup marker (daily)
+        if: ${{ steps.cleanup_runs.outputs.hasRuns != 'true' }}
         id: publish_daily_marker
         run: |
           set -euo pipefail
@@ -72,6 +73,7 @@ jobs:
         shell: bash
 
       - name: Upload cleanup marker artifact (daily)
+        if: ${{ steps.cleanup_runs.outputs.hasRuns != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: cleanup-marker-${{ github.run_id }}-hasRuns-${{ steps.cleanup_runs.outputs.hasRuns }}
@@ -131,6 +133,7 @@ jobs:
         shell: bash
 
       - name: Publish sync marker (every-n-hours)
+        if: ${{ steps.sync_repo.outputs.hasSHA != 'true' }}
         id: publish_sync_marker
         run: |
           set -euo pipefail
@@ -138,6 +141,7 @@ jobs:
         shell: bash
 
       - name: Upload sync marker artifact (every-n-hours)
+        if: ${{ steps.sync_repo.outputs.hasSHA != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: cleanup-marker-${{ github.run_id }}-hasSHA-${{ steps.sync_repo.outputs.hasSHA }}-hasRuns-${{ needs.daily.outputs.hasRuns }}
