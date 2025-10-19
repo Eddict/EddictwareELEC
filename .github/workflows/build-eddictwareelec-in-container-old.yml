@@ -8,7 +8,7 @@ on:
   #   branches: [ "master-entw" ]
 
 env:
-  DistroCodeName: noble
+  DistroCodeName: plucky
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
