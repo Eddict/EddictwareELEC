@@ -43,14 +43,13 @@ env:
   NB_CORES: 1
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # HOME: ""
+  ACTIONS_RUNNER_DEBUG: true
 
 jobs:
   runner:
     name: Set workflow runner
     if: ${{ always() }}
     runs-on: self-hosted #self-hosted # github
-    env:
-      ACTIONS_RUNNER_DEBUG: true
     outputs:
       # runner: ${{ steps.echo_runner.outputs.WF_RUNNER }}
       runner: ${{ runner.environment }}
