@@ -1,4 +1,4 @@
-name: Build EddictwareELEC image in container
+name: Build EddictwareELEC image in container (old)
 
 on:
   workflow_dispatch:
