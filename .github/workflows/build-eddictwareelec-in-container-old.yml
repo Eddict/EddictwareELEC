@@ -92,7 +92,7 @@ jobs:
         # echo "$value" | sed 's/./& /g'
         value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
         echo "Trick to echo reg_fqdn:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
+        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
         # echo "$value" | sed 's/./& /g'
 
     # - uses: docker://${{ needs.init.outputs.output_ee_distro_tag }}:latest       
@@ -136,7 +136,7 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "eddict/${DistroCodeName}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          "${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName}" make -j$((NB_CORES+1)) -l${NB_CORES} image
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
