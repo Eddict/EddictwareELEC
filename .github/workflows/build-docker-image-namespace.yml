@@ -21,7 +21,8 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # namespace-profile-default # nscloud
+    # runs-on: ubuntu-latest # namespace-profile-default # nscloud # namespace-profile-linux-max
+    runs-on: namespace-profile-linux-max
     permissions:
       id-token: write
       contents: read
