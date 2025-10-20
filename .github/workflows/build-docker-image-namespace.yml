@@ -53,7 +53,7 @@ jobs:
         # context: .
         file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
         # tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
-        context: .
+        # context: .
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
         # build-args: |
