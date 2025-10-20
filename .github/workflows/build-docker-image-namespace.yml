@@ -34,6 +34,7 @@ jobs:
         # dTag="${{ env.DistroCodeName }}"
         dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest"
         dTag="${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest"
+        dtag="nscr.io/t51tpordmjhrc/${dTag}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
