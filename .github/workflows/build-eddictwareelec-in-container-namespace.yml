@@ -144,9 +144,11 @@ jobs:
         # fi
         
         # run the container
+        #  --user "$(id -u)":"$(id -g)" \
+        #  --user root \
         docker run --rm \
           --log-driver local \
-          --user "$(id -u)":"$(id -g)" \
+           --user "$(id -u)":"$(id -g)" \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           -w /build \
