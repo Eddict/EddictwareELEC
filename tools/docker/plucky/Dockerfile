@@ -14,8 +14,8 @@ ENV LANG=en_US.UTF-8 \
 
 RUN useradd docker -U -G sudo -m -s /bin/bash \
  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-RUN useradd runner -U -G sudo -m -s /bin/bash \
- && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# RUN useradd runner -U -G sudo -m -s /bin/bash \
+#  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 RUN apt-get update
 
@@ -43,4 +43,4 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
 RUN update-alternatives --config gcc
 
 USER docker
-USER runner
+# USER runner
