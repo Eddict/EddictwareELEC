@@ -115,7 +115,7 @@ jobs:
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
 
         # pull the image
-        docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ secrets.REGISTRY_FQDN }}
+        docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} "https://${{ secrets.REGISTRY_FQDN }}:5000"
         docker --debug image pull "${{ secrets.REGISTRY_FQDN }}/eddict/$DistroCodeName"
         if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
             # cleanup
