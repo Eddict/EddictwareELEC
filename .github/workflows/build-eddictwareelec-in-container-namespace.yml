@@ -50,18 +50,9 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        # echo "DistroCodeName=${DistroCodeName}"
-        # echo "DistroCodeName@L=${DistroCodeName@L}"
-        # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
         dTag="${NSC_CONTAINER_REGISTRY}/${{ env.DistroCodeName }}:latest"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
-
-    -
-      name: Checkout repository
-      uses: actions/checkout@v5
-      with:
-        ref: 'master-entw'
 
   build:
 #    runs-on: github
@@ -70,6 +61,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     # container:
     #   image: ${{ needs.init.outputs.output_ee_distro_tag }}
     #   credentials:
@@ -93,6 +86,7 @@ jobs:
     #     restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
 
     - name: Echo out to the logs
+      shell: bash
       run: |
         value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
         echo "Trick to echo output_ee_distro_tag:"
@@ -108,14 +102,22 @@ jobs:
 
     - uses: namespacelabs/nscloud-setup@v0
     - uses: namespacelabs/nscloud-setup-buildx-action@v0
-        
+
+
+    -
+      name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
+
     -
       name: Build ${{ env.EE_Distro }} image
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: bash
       run: |
         debug=true
         pwd && ls -al
+        echo $GITHUB_WORKSPACE
+        ls -al $GITHUB_WORKSPACE
         # chown -R docker:docker $PWD
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -128,7 +130,7 @@ jobs:
 
         # pull the image
         # docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} "https://${{ secrets.REGISTRY_FQDN }}:5000"
-        # docker --debug image pull "${{ secrets.REGISTRY_FQDN }}/eddict/$DistroCodeName"
+        docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
