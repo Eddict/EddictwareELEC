@@ -36,6 +36,8 @@ jobs:
         # dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest"
         # dTag="${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest"
         # dtag="nscr.io/t51tpordmjhrc/${dTag}"
+        dtag="nscr.io/tenant_t51tpordmjhrc"
+        echo "dTag: $dTag"
         dTag="${{ env.DistroCodeName }}:latest"
         echo "dTag: $dTag"
         dtag="nscr.io/tenant_t51tpordmjhrc/$dTag"
