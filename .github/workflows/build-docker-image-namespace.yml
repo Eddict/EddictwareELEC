@@ -35,9 +35,8 @@ jobs:
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
 
-    -
-      name: Set up nscloud Buildx
-      uses: namespacelabs/nscloud-setup-buildx-action@v0
+    - uses: namespacelabs/nscloud-setup@v0
+    - uses: namespacelabs/nscloud-setup-buildx-action@v0
       
     - name: Build and export to (local/private) registry
       # uses: depot/build-push-action@v1
@@ -45,7 +44,7 @@ jobs:
       with:
         # project: 4qqpxt59lq
         # context: .
-        # file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
+        file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
         # tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
         context: .
         push: true
