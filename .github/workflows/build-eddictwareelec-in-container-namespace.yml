@@ -170,12 +170,11 @@ jobs:
           && echo "gid: $(id -g)" \
           && make -j$((NB_CORES+1)) -l${NB_CORES} image'
 
-      # && echo "PATH: $PATH" \
-      # && ls -al /usr \
-      # && ls -al /usr/bin \
-      # && ls -al /usr/bin/mkfontdir \
-      # && file /usr/bin/mkfontdir \
-      # && dpkg -L xfonts-utils \
+    - uses: namespace-actions/upload-artifact@v1
+      with:
+        name: "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-$(date +%Y%m%d) image"
+        path: $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz
+        compression-level: 0 # no compression
 
     # -
     #   name: Copy built ${{ env.EE_Distro }} image to archive
