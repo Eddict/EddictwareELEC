@@ -12,7 +12,7 @@ on:
           - jammy
           - noble
           - plucky
-        default: noble
+        default: plucky
 
 run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
 
@@ -28,7 +28,8 @@ jobs:
     - name: Compose image tag
       id: compose-image-tag
       run: |
-        dTag="${{ env.DistroCodeName }}"
+        # dTag="${{ env.DistroCodeName }}"
+        dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
@@ -47,6 +48,6 @@ jobs:
         # tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
         context: .
         push: true
-        tags: ${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
         # build-args: |
         #   USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
