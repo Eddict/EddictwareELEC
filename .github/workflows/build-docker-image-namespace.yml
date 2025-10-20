@@ -47,6 +47,16 @@ jobs:
           tools/docker/${{ env.DistroCodeName }}/Dockerfile
         sparse-checkout-cone-mode: false
 
+    # - name: Checkout repository
+    #   uses: namespacelabs/nscloud-checkout-action@v7
+    #   with:
+    #     ref: ${{ github.ref_name }}
+
+    - name: Set up APT cache
+      uses: namespacelabs/nscloud-cache-action@v1
+      with:
+        cache: apt
+
     - name: Build and export to (local/private) registry
       uses: docker/build-push-action@v6
       with:
