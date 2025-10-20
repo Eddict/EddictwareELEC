@@ -19,7 +19,7 @@ env:
 jobs:
   init:
 #    runs-on: github
-    runs-on: namespace-profile-default
+    runs-on: namespace-profile-linux-max
     if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
@@ -47,9 +47,11 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        echo "DistroCodeName=${DistroCodeName}"
-        echo "DistroCodeName@L=${DistroCodeName@L}"
-        echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+        # echo "DistroCodeName=${DistroCodeName}"
+        # echo "DistroCodeName@L=${DistroCodeName@L}"
+        # echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+        dTag="${NSC_CONTAINER_REGISTRY}/${{ env.DistroCodeName }}:latest"
+        echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
 
     -
