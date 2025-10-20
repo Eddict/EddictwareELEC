@@ -17,8 +17,8 @@ RUN useradd docker -U -G sudo -m -s /bin/bash \
 
 RUN apt-get update \
  && apt-get install -y software-properties-common \
- && echo "deb http://archive.canonical.com/ $(lsb_release -sc) partner" \
- && add-apt-repository "deb http://archive.canonical.com/ $(lsb_release -sc) partner"
+ && echo "deb http://archive.canonical.com/ubuntu $(lsb_release -cs) partner" \
+ && add-apt-repository "deb http://archive.canonical.com/ubuntu $(lsb_release -cs) partner"
 
 RUN apt-get update
 
