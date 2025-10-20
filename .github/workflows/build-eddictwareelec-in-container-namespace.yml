@@ -115,6 +115,7 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         debug=true
+        pwd && ls -al
         # chown -R docker:docker $PWD
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -151,7 +152,7 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          ${{ needs.init.outputs.output_ee_distro_tag }} make -j$((NB_CORES+1)) -l${NB_CORES} image
+          ${{ needs.init.outputs.output_ee_distro_tag }} pwd && ls -al && make -j$((NB_CORES+1)) -l${NB_CORES} image
 
     # -
     #   name: Copy built ${{ env.EE_Distro }} image to archive
