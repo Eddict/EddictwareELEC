@@ -15,12 +15,6 @@ ENV LANG=en_US.UTF-8 \
 RUN useradd docker -U -G sudo -m -s /bin/bash \
  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-RUN apt-get update \
- && apt-get install -y lsb-release software-properties-common \
- && echo "lsb_release: $(lsb_release -cs)" \
- && echo "deb http://archive.canonical.com/ubuntu $(lsb_release -cs) partner" \
- && add-apt-repository "deb http://archive.canonical.com/ubuntu $(lsb_release -cs) partner"
-
 RUN apt-get update
 
 RUN apt-get install -y \
@@ -28,7 +22,7 @@ RUN apt-get install -y \
       unzip diffutils lzop make file g++-15 xfonts-utils xsltproc default-jre-headless python3 \
       libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
       golang-1.24-go git openssh-client rsync upx-ucl \
-    --no-install-recommends \
+      --install-recommends \
     && ln -s /usr/lib/go-1.24 /usr/lib/go \
     && ln -s /usr/lib/go-1.24/bin/go /usr/bin/go \
     && ln -s /usr/lib/go-1.24/bin/gofmt /usr/bin/gofmt
