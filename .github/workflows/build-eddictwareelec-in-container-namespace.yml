@@ -18,16 +18,11 @@ env:
 
 jobs:
   init:
-#    runs-on: github
     runs-on: namespace-profile-linux-amd64-max
     if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
-      # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     permissions:
       id-token: write
       contents: read
-    env:
-      BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
-    # Expose step outputs as job outputs
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
     steps:
@@ -36,9 +31,6 @@ jobs:
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-        echo "pwd=$(pwd)"
-        echo "github.workspace=${{ github.workspace }}"
-        exit 1
       shell: bash
 
     - name: Get docker guid
@@ -164,7 +156,7 @@ jobs:
           --log-driver local \
           --user "$(id -u)":"$(id -g)" \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
-          -v $PWD:/build \
+          -v ${{ github.workspace }}:/build \
           -w /build \
           -e DISABLE_COLORS=yes \
           -e LOGCOMBINE=fail \
@@ -183,20 +175,20 @@ jobs:
           && echo "uid: $(id -u)" \
           && echo "gid: $(id -g)" \
           && echo "find .ccache" \
-          && find $PWD -type d -iname ".ccache" \
+          && find ${{ github.workspace }} -type d -iname ".ccache" \
           && echo "find .img.gz" \
-          && find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" \
+          && find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" \
           && echo "run make" \
           && make -j$((NB_CORES+1)) -l${NB_CORES} image \
           && echo "find .ccache" \
-          && find $PWD -type d -iname ".ccache" \
+          && find ${{ github.workspace }} -type d -iname ".ccache" \
           && echo "find .img.gz" \
-          && find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"'
+          && find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"'
 
     - uses: namespace-actions/upload-artifact@v1
       with:
         name: "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-$(date +%Y%m%d) image"
-        path: $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz
+        path: "${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"
         compression-level: 0 # no compression
 
     # - name: Copy built ${{ env.EE_Distro }} image to archive
