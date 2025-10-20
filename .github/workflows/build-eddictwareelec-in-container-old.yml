@@ -120,7 +120,7 @@ jobs:
 
         # run the container
         docker run --rm \
-          --log-driver none \
+          --log-driver local \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           -w /build \

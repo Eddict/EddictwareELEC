@@ -271,7 +271,7 @@ jobs:
       EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}
       NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
-      options: --user docker --log-driver none --workdir /build # --user root
+      options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
       image: registry.main.eddict.nl:5000/eddict/plucky
       # image: ${{ needs.repo-login.outputs.output_meta_tags }}
       # image: eu.gcr.io/path/to/image:tag
@@ -284,11 +284,11 @@ jobs:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
       env:
+        # DEBUG: no
+        # LOCAL_CCACHE: yes
         DISABLE_COLORS: yes
         LOGCOMBINE: fail
         MTIMMEDIATE: no
-        DEBUG: yes
-        LOCAL_CCACHE: yes
         MTDEBUG: yes
         MTVERBOSE: yes
         MTPROGRESS: yes
