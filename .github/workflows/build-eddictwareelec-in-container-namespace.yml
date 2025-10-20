@@ -148,7 +148,7 @@ jobs:
         #  --user root \
         docker run --rm \
           --log-driver local \
-           --user "$(id -u)":"$(id -g)" \
+          --user "$(id -u)":"$(id -g)" \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           -w /build \
@@ -164,7 +164,17 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          ${{ needs.init.outputs.output_ee_distro_tag }} echo $PATH && ls -al /usr/bin/mkfontdir && file /usr/bin/mkfontdir && dpkg -L xfonts-utils && make -j$((NB_CORES+1)) -l${NB_CORES} image
+          ${{ needs.init.outputs.output_ee_distro_tag }} /bin/bash -c ' \
+          echo "whoami: $(whoami)" \
+          && echo "uid: $(id -u)" \
+          && echo "gid: $(id -g)" \
+          && echo "PATH: $PATH" \
+          && ls -al /usr \
+          && ls -al /usr/bin \
+          && ls -al /usr/bin/mkfontdir \
+          && file /usr/bin/mkfontdir \
+          && dpkg -L xfonts-utils \
+          && make -j$((NB_CORES+1)) -l${NB_CORES} image'
 
     # -
     #   name: Copy built ${{ env.EE_Distro }} image to archive
