@@ -16,6 +16,7 @@ RUN useradd docker -U -G sudo -m -s /bin/bash \
  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 RUN apt-get update \
+ && echo "lsb_release: $(lsb_release -cs)" \
  && apt-get install -y software-properties-common \
  && echo "deb http://archive.canonical.com/ubuntu $(lsb_release -cs) partner" \
  && add-apt-repository "deb http://archive.canonical.com/ubuntu $(lsb_release -cs) partner"
