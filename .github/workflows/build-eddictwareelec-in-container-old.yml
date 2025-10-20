@@ -109,6 +109,10 @@ jobs:
         # set some build performance flags
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
+
+        # pull the image
+        docker --debug image pull "${{ secrets.REGISTRY_FQDN }}/eddict/$DistroCodeName"
+
         # run the container
         docker run --rm \
           --log-driver none \
