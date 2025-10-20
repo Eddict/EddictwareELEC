@@ -31,23 +31,20 @@ jobs:
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
     steps:
-    -
-      name: Get Date
+    - name: Get Date
       id: get-date
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
       shell: bash
 
-    -
-      name: Get docker guid
+    - name: Get docker guid
       id: get-docker-guid
       run: |
         echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
       shell: bash
 
-    -
-      name: Compose image tag
+    - name: Compose image tag
       id: compose-image-tag
       run: |
         dTag="${NSC_CONTAINER_REGISTRY}/${{ env.DistroCodeName }}:latest"
@@ -103,15 +100,25 @@ jobs:
     - uses: namespacelabs/nscloud-setup@v0
     - uses: namespacelabs/nscloud-setup-buildx-action@v0
 
+    # - name: Checkout repository
+    #   uses: actions/checkout@v5
+    #   with:
+    #     ref: ${{ github.ref_name }}
 
-    -
-      name: Checkout repository
-      uses: actions/checkout@v5
+    - name: Checkout repository
+      uses: namespacelabs/nscloud-checkout-action@v7
       with:
-        ref: 'master-entw'
+        ref: ${{ github.ref_name }}
 
-    -
-      name: Build ${{ env.EE_Distro }} image
+    - name: Set up cache
+      uses: namespacelabs/nscloud-cache-action@v1
+      with:
+        fail-on-cache-miss: true
+        path: |
+          /home/runner/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
+          /home/runner/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+        
+    - name: Build ${{ env.EE_Distro }} image
       shell: bash
       run: |
         debug=true
@@ -176,8 +183,7 @@ jobs:
         path: $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz
         compression-level: 0 # no compression
 
-    # -
-    #   name: Copy built ${{ env.EE_Distro }} image to archive
+    # - name: Copy built ${{ env.EE_Distro }} image to archive
     #   id: image-path
     #   run: |
     #     debug=true
