@@ -21,7 +21,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # namespace-profile-default
+    runs-on: ubuntu-latest # namespace-profile-default # nscloud
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - uses: actions/checkout@v5
 
