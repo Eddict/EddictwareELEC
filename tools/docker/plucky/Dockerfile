@@ -15,6 +15,11 @@ ENV LANG=en_US.UTF-8 \
 RUN useradd docker -U -G sudo -m -s /bin/bash \
  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
+RUN apt-get update \
+ && apt-get install -y software-properties-common \
+ && echo "deb http://archive.canonical.com/ $(lsb_release -sc) partner" \
+ && add-apt-repository "deb http://archive.canonical.com/ $(lsb_release -sc) partner"
+
 RUN apt-get update
 
 RUN apt-get install -y \
