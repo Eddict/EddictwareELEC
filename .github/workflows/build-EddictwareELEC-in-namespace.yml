@@ -1,0 +1,70 @@
+name: Build EddictwareELEC image on Arm64 (namespace)
+
+on:
+  workflow_dispatch:
+
+env:
+  DISTRO: EddictwareELEC
+  PROJECT: RPi
+  DEVICE: RPi4
+  ARCH: aarch64
+  BUILDER_NAME: Eddict
+  BUILDER_VERSION: "13.0"
+  BUILD_NAME:
+
+  # -e DISABLE_COLORS=yes \
+  # -e LOGCOMBINE=fail \
+  # -e MTIMMEDIATE=no \
+  # -e MTDEBUG=no \
+  # -e MTVERBOSE=no \
+  # -e MTPROGRESS=yes \
+  # -e DISTRO=${{ env.Distro }} \
+  # -e PROJECT=${{ env.Project }} \
+  # -e DEVICE=${{ env.Device }} \
+  # -e ARCH=${{ env.Arch }} \
+  # -e BUILDER_NAME=Eddict \
+  # -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
+
+jobs:
+  build:
+    runs-on: namespace-profile-linux-arm64-libreelec-max
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+    # - name: Set BUILDER_VERSION with date
+    #   shell: bash
+    #   run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+
+    - name: Set BUILD_NAME
+      shell: bash
+      run: echo "BUILD_NAME=${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}" >> $GITHUB_OUTPUT
+
+    - name: Checkout repository
+      uses: namespacelabs/nscloud-checkout-action@v7
+
+    - name: Set up cache
+      uses: namespacelabs/nscloud-cache-action@v1
+      with:
+        fail-on-cache-miss: false
+        path: |
+          $PWD/sources
+          $PWD/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.ccache
+          $PWD/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.stamps
+
+    - name: Download and cache package sources
+      shell: bash
+      run: tools/download-tool
+
+    - name: Compile the build
+      shell: bash
+      run: |
+        make image
+        find $PWD -type d -iname "".ccache" \
+        find $PWD/target -maxdepth 1 -type f -iname "${{ env.BUILD_NAME }}*.img.gz'
+
+    - uses: namespace-actions/upload-artifact@v1
+      with:
+        name: "${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }} image"
+        path: $PWD/target/${{ env.BUILD_NAME }}*.img.gz
+        compression-level: 0
