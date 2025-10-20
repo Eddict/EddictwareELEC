@@ -38,6 +38,7 @@ jobs:
         dTag="${{ env.DistroCodeName }}:latest"
         dtag="nscr.io/tenant_t51tpordmjhrc/${dTag}"
         # Use ,, to convert all characters to lowercase
+        echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
 
