@@ -19,7 +19,7 @@ env:
 jobs:
   init:
 #    runs-on: github
-    runs-on: namespace-profile-linux-max
+    runs-on: namespace-profile-linux-amd64-max
     if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     permissions:
@@ -53,7 +53,7 @@ jobs:
 
   build:
 #    runs-on: github
-    runs-on: namespace-profile-linux-max
+    runs-on: namespace-profile-linux-amd64-max
     needs: init
     permissions:
       id-token: write
@@ -118,7 +118,10 @@ jobs:
           $PWD/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
           $PWD/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
           # /home/runner/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
-        
+
+    # - name: Set up turbo caching
+    #   uses: namespace-actions/setup-turbocache@v0
+
     - name: Build ${{ env.EE_Distro }} image
       shell: bash
       run: |
@@ -176,9 +179,16 @@ jobs:
           echo "whoami: $(whoami)" \
           && echo "uid: $(id -u)" \
           && echo "gid: $(id -g)" \
+          && echo "find .ccache" \
+          && find $PWD -type d -iname ".ccache" \
+          && echo "find .img.gz" \
+          && find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" \
+          && echo "run make" \
           && make -j$((NB_CORES+1)) -l${NB_CORES} image \
-          && find $PWD -type d -iname "".ccache" \
-          && find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz'
+          && echo "find .ccache" \
+          && find $PWD -type d -iname ".ccache" \
+          && echo "find .img.gz" \
+          && find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"'
 
     - uses: namespace-actions/upload-artifact@v1
       with:
