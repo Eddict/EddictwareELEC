@@ -63,7 +63,7 @@ jobs:
     runs-on: self-hosted
     needs: init
     # container:
-    #   image: ${{needs.init.outputs.output_ee_distro_tag}}
+    #   image: ${{ needs.init.outputs.output_ee_distro_tag }}
     #   credentials:
     #     username: ${{ secrets.REGISTRY_USER }}
     #     password: ${{ secrets.REGISTRY_PWD }}
@@ -87,7 +87,11 @@ jobs:
     - name: Echo out to the logs
       run: |
         value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "Trick to echo:"
+        echo "Trick to echo output_ee_distro_tag:"
+        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
+        # echo "$value" | sed 's/./& /g'
+        value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        echo "Trick to echo reg_fqdn:"
         echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
         # echo "$value" | sed 's/./& /g'
 
