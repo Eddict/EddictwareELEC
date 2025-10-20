@@ -27,18 +27,11 @@ jobs:
       id-token: write
       contents: read
     steps:
-    - uses: actions/checkout@v5
-
     - name: Compose image tag
       id: compose-image-tag
       run: |
-        # dTag="${{ env.DistroCodeName }}"
-        # dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest"
-        # dTag="${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest"
         dTag="${NSC_CONTAINER_REGISTRY}/${{ env.DistroCodeName }}:latest"
-        # echo "dTag: $dTag"
         # Use ,, to convert all characters to lowercase
-        # echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
 
@@ -49,11 +42,9 @@ jobs:
       # uses: depot/build-push-action@v1
       uses: docker/build-push-action@v6
       with:
-        # project: 4qqpxt59lq
         # context: .
         file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
         # tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
-        # context: .
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
         # build-args: |

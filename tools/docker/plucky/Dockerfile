@@ -22,7 +22,7 @@ RUN apt-get install -y \
       unzip diffutils lzop make file g++-15 xfonts-utils xsltproc default-jre-headless python3 \
       libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
       golang-1.24-go git openssh-client rsync upx-ucl \
-      --install-recommends \
+      --no-install-recommends \
     && ln -s /usr/lib/go-1.24 /usr/lib/go \
     && ln -s /usr/lib/go-1.24/bin/go /usr/bin/go \
     && ln -s /usr/lib/go-1.24/bin/gofmt /usr/bin/gofmt
