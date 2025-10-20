@@ -115,9 +115,9 @@ jobs:
       shell: bash
       run: |
         debug=true
-        echo "whoami: $(whoami)"
-        echo "uid: $(id -u)"
-        echo "gid: $(id -g)"
+        # echo "whoami: $(whoami)"
+        # echo "uid: $(id -u)"
+        # echo "gid: $(id -g)"
         # echo "PATH: $PATH"
         # ls -al /usr
         # ls -al /usr/bin
@@ -168,13 +168,14 @@ jobs:
           echo "whoami: $(whoami)" \
           && echo "uid: $(id -u)" \
           && echo "gid: $(id -g)" \
-          && echo "PATH: $PATH" \
-          && ls -al /usr \
-          && ls -al /usr/bin \
-          && ls -al /usr/bin/mkfontdir \
-          && file /usr/bin/mkfontdir \
-          && dpkg -L xfonts-utils \
           && make -j$((NB_CORES+1)) -l${NB_CORES} image'
+
+      # && echo "PATH: $PATH" \
+      # && ls -al /usr \
+      # && ls -al /usr/bin \
+      # && ls -al /usr/bin/mkfontdir \
+      # && file /usr/bin/mkfontdir \
+      # && dpkg -L xfonts-utils \
 
     # -
     #   name: Copy built ${{ env.EE_Distro }} image to archive
