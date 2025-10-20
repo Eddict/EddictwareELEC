@@ -42,7 +42,7 @@ jobs:
         echo "dTag: $dTag"
         echo "NSC_CONTAINER_REGISTRY: $NSC_CONTAINER_REGISTRY"
         echo "{NSC_CONTAINER_REGISTRY}: ${NSC_CONTAINER_REGISTRY}"
-        dtag="${NSC_CONTAINER_REGISTRY}/${dTag}"
+        dTag="${NSC_CONTAINER_REGISTRY}/${dTag}"
         echo "dTag: $dTag"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}"
