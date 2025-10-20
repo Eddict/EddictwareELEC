@@ -41,6 +41,8 @@ jobs:
     - name: Checkout repository scripts
       uses: actions/checkout@v5
       with:
+        show-progress: false
+        fetch-tags: false
         sparse-checkout: |
           tools/docker/${{ env.DistroCodeName }}/Dockerfile
         sparse-checkout-cone-mode: false
