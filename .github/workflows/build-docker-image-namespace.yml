@@ -21,29 +21,9 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    # Permissions to use OIDC token authentication
-    permissions:
-      contents: read
-      id-token: write
-      # # Allows pushing to the GitHub Container Registry
-      # packages: write
+    runs-on: namespace-profile-default
     steps:
     - uses: actions/checkout@v5
-    # - uses: depot/setup-action@v1
-      # with:
-      #   version: 'latest'
-      #   # version: '0.10.3'
-      #   # version: '0.9.1'
-      #   # registry-url: ${{ secrets.DEPOT_REGISTRY_URL }}
-      #   # token: ${{ secrets.DEPOT_TOKEN }}
-      #   # token: ${{ secrets.DEPOT_READONLY_TOKEN }}
-      #   token: ${{ secrets.DEPOT_WRITE_TOKEN }}
-      #   # token: ${{ secrets.DEPOT_ADMIN_TOKEN }}
-      #   install-depotctl: true
-    - name: Configure access to Namespace
-      id: nscloud # Needed to access its outputs
-      uses: namespacelabs/nscloud-setup@v0
 
     - name: Compose image tag
       id: compose-image-tag
@@ -53,6 +33,10 @@ jobs:
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
 
+    -
+      name: Set up nscloud Buildx
+      uses: namespacelabs/nscloud-setup-buildx-action@v0
+      
     - name: Build and export to (local/private) registry
       # uses: depot/build-push-action@v1
       uses: docker/build-push-action@v6
@@ -63,6 +47,6 @@ jobs:
         # tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
         context: .
         push: true
-        tags: ${{ steps.nscloud.outputs.registry-address }}/eddict/${DistroCodeName}:latest
+        tags: ${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}:latest
         # build-args: |
         #   USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
