@@ -36,6 +36,9 @@ jobs:
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+        echo "pwd=$(pwd)"
+        echo "github.workspace=${{ github.workspace }}"
+        exit 1
       shell: bash
 
     - name: Get docker guid
@@ -115,8 +118,8 @@ jobs:
       with:
         fail-on-cache-miss: false
         path: |
-          $PWD/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
-          $PWD/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+          ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
+          ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
           # /home/runner/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
 
     # - name: Set up turbo caching
