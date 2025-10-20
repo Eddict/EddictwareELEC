@@ -33,8 +33,8 @@ RUN if [ "$(uname -m)" = "aarch64" ]; then \
 
 RUN rm -rf /var/lib/apt/lists/*
 
+RUN update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-15 100
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 \
-    --slave /usr/bin/cpp cpp /usr/bin/cpp-15 \
     --slave /usr/bin/g++ g++ /usr/bin/g++-15 \
     --slave /usr/bin/gcov gcov /usr/bin/gcov-15
 RUN update-alternatives --config gcc
