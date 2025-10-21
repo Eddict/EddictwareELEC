@@ -87,6 +87,7 @@ jobs:
         sudo apt update
         sudo apt -y upgrade
         sudo apt -y install bc curl g++ gcc git gperf make openjdk-11-jre-headless rsync unzip xfonts-utils xsltproc xz-utils zip
+        sudo apt -y install rdfind libparse-yapp-perl patchutils lzop
 
     - name: Download and cache package sources
       shell: bash
