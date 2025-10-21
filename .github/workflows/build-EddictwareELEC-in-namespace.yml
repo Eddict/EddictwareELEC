@@ -68,6 +68,11 @@ jobs:
       shell: bash
       run: echo "BUILD_NAME=${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}" >> $GITHUB_OUTPUT
 
+    - name: Set MTU for eth0
+      shell: bash
+      run: |
+        sudo ip link set mtu 1450 eth0
+
     - name: Checkout repository
       uses: namespacelabs/nscloud-checkout-action@v7
 
@@ -88,11 +93,6 @@ jobs:
         sudo apt -y upgrade
         sudo apt -y install bc curl g++ gcc git gperf make openjdk-11-jre-headless rsync unzip xfonts-utils xsltproc xz-utils zip
         sudo apt -y install rdfind libparse-yapp-perl patchutils lzop
-
-    - name: Set MTU for eth0
-      shell: bash
-      run: |
-        sudo ip link set mtu 1450 eth0
 
     # - name: Download and cache package sources
     #   shell: bash
