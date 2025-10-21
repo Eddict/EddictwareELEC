@@ -1,4 +1,4 @@
-name: Build Container on Namespace for building EddictwareELEC images
+name: Build build  Container on Namespace
 
 on:
   workflow_dispatch:

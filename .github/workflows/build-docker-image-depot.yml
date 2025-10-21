@@ -1,4 +1,4 @@
-name: Build Container on Depot for building EddictwareELEC images
+name: Build build Container on Depot
 
 on:
   workflow_dispatch:

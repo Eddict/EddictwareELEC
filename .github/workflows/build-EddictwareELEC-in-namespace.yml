@@ -1,4 +1,4 @@
-name: Build EddictwareELEC image on Arm64 (namespace)
+name: Build image on Arm64 (namespace)
 
 on:
   workflow_dispatch:
