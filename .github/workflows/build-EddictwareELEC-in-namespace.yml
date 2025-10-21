@@ -48,9 +48,9 @@ jobs:
       with:
         fail-on-cache-miss: false
         path: |
-          $PWD/sources
-          $PWD/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.ccache
-          $PWD/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.stamps
+          ${{ github.workspace }}/sources
+          ${{ github.workspace }}/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.ccache
+          ${{ github.workspace }}/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.stamps
 
     - name: Download and cache package sources
       shell: bash
@@ -60,11 +60,11 @@ jobs:
       shell: bash
       run: |
         make image
-        find $PWD -type d -iname "".ccache" \
-        find $PWD/target -maxdepth 1 -type f -iname "${{ env.BUILD_NAME }}*.img.gz'
+        find ${{ github.workspace }} -type d -iname ".ccache" \
+        find ${{ github.workspace }} -maxdepth 3 -type f -iname "${{ env.BUILD_NAME }}*.img.gz"
 
     - uses: namespace-actions/upload-artifact@v1
       with:
         name: "${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }} image"
-        path: $PWD/target/${{ env.BUILD_NAME }}*.img.gz
+        path: "${{ github.workspace }}/target/${{ env.BUILD_NAME }}*.img.gz"
         compression-level: 0
