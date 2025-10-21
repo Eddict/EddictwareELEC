@@ -1,4 +1,4 @@
-name: Build build  Container on Namespace
+name: Build build Container on Namespace
 
 on:
   workflow_dispatch:
