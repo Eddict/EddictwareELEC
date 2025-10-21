@@ -22,7 +22,7 @@ on:
           - arm64
         default: amd64
 
-run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
+run-name: ${{ format('{0} ({1}/{2}-{3})', github.workflow, inputs.os, inputs.arch, '-libreelec-max') }}
 
 env:
   DISTRO: EddictwareELEC
