@@ -12,7 +12,7 @@ on:
           - jammy
           - noble
           - plucky
-        default: plucky
+        default: noble
 
 run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
 
