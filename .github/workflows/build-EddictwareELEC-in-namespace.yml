@@ -59,6 +59,14 @@ jobs:
           ${{ github.workspace }}/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.ccache
           ${{ github.workspace }}/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.stamps
 
+    - name: Install LibreELEC dependencies
+      shell: bash
+      run: |
+        export DEBIAN_FRONTEND="noninteractive"
+        sudo apt update
+        sudo apt -y upgrade
+        sudo apt -y install bc curl g++ gcc git gperf make openjdk-11-jre-headless rsync unzip xfonts-utils xsltproc xz-utils zip
+
     - name: Download and cache package sources
       shell: bash
       run: |
