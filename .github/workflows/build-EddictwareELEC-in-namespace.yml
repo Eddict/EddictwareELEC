@@ -54,7 +54,9 @@ jobs:
 
     - name: Download and cache package sources
       shell: bash
-      run: tools/download-tool
+      run: |
+        tools/download-cleaner
+        tools/download-tool
 
     - name: Compile the build
       shell: bash
