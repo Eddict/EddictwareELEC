@@ -31,7 +31,6 @@ env:
   ARCH: aarch64
   BUILDER_NAME: Eddict
   BUILDER_VERSION: "13.0"
-  BUILD_NAME:
 
   # -e DISABLE_COLORS=yes \
   # -e LOGCOMBINE=fail \
@@ -65,6 +64,7 @@ jobs:
     #   run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
     - name: Set BUILD_NAME
+      id: set-build-name
       shell: bash
       run: echo "BUILD_NAME=${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}" >> $GITHUB_OUTPUT
 
@@ -91,8 +91,8 @@ jobs:
         fail-on-cache-miss: false
         path: |
           ${{ github.workspace }}/sources
-          ${{ github.workspace }}/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.ccache
-          ${{ github.workspace }}/build.${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.stamps
+          ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.ccache
+          ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-${{ env.BUILDER_VERSION }}-devel/.stamps
 
     # - name: Download and cache package sources
     #   shell: bash
@@ -109,11 +109,11 @@ jobs:
         echo "MAKEFLAGS=${MAKEFLAGS}"
         V=0 make image
         find ${{ github.workspace }} -type d -iname ".ccache"
-        find ${{ github.workspace }} -maxdepth 3 -type f -iname "${{ env.BUILD_NAME }}*.img.gz"
+        find ${{ github.workspace }} -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz"
         find ${{ github.workspace }} -type f -iname ccache.conf
 
     - uses: namespace-actions/upload-artifact@v1
       with:
-        name: "${{ env.BUILD_NAME }}-${{ env.BUILDER_VERSION }} image"
-        path: "${{ github.workspace }}/target/${{ env.BUILD_NAME }}*.img.gz"
+        name: "${{ steps.set-build-name.outputs.BUILD_NAME }}-${{ env.BUILDER_VERSION }} image"
+        path: "${{ github.workspace }}/target/${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz"
         compression-level: 0
