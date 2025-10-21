@@ -20,10 +20,7 @@ on:
     paths: &include_paths
       - 'tools/docker/noble/Dockerfile'
 
-run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
-
-env:
-  DistroCodeName: ${{ inputs.environment }}
+run-name: '${{ github.workflow }} (${{ inputs.environment }})'
 
 jobs:
   build:
@@ -44,7 +41,7 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
+        dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
@@ -84,7 +81,7 @@ jobs:
       name: Build and export to (local/private) registry
       uses: docker/build-push-action@v6
       with:
-        file: tools/docker/${{ env.DistroCodeName }}/Dockerfile
+        file: tools/docker/${{ inputs.environment }}/Dockerfile
         # outputs: type=cacheonly # build without pushing
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
