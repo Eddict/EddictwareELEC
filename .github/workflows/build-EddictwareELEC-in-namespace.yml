@@ -31,9 +31,10 @@ jobs:
       # - nscloud-ubuntu-22.04-arm64-32x64-with-cache
     runs-on: 
       - nscloud-ubuntu-22.04-arm64-4x16-with-cache
+      - nscloud-git-mirror-5gb
       - nscloud-cache-tag-ee-cache
       - nscloud-cache-size-50gb
-      - nscloud-container-image-cache
+      # - nscloud-container-image-cache
     permissions:
       id-token: write
       contents: read
