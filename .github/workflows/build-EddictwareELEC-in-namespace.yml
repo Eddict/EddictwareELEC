@@ -104,6 +104,9 @@ jobs:
     - name: Compile the build
       shell: bash
       run: |
+        uname -a
+        export MAKEFLAGS="${MAKEFLAGS} --silent"
+        echo "MAKEFLAGS=${MAKEFLAGS}"
         V=0 make image
         find ${{ github.workspace }} -type d -iname ".ccache" \
         find ${{ github.workspace }} -maxdepth 3 -type f -iname "${{ env.BUILD_NAME }}*.img.gz" \
