@@ -130,6 +130,8 @@ jobs:
           && make -j$((NB_CORES+1)) -l${NB_CORES} image \
           && echo "find .ccache" \
           && find $curpwd -type d -iname ".ccache" \
+          && echo "find ccache.conf" \
+          && find $curpwd -type f -iname ccache.conf \
           && echo "find .img.gz" \
           && find $curpwd -maxdepth 3 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"'
 
