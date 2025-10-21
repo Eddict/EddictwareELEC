@@ -49,11 +49,14 @@ jobs:
   build:
     # runs-on: namespace-profile-linux-arm64-libreelec # namespace-profile-linux-arm64-libreelec-max
       # - nscloud-ubuntu-22.04-arm64-32x64-with-cache
-    runs-on: 
-      - nscloud-ubuntu-22.04-${{ inputs.arch }}-8x16-with-cache
-      - nscloud-git-mirror-5gb
-      - nscloud-cache-tag-ee-${{ inputs.os }}-${{ inputs.arch }}-cache
-      - nscloud-cache-size-50gb
+    runs-on: namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max
+    # cannot use namespace-actions/upload-artifact with nscloud runners
+    # https://namespace.so/docs/reference/github-actions/upload-artifact#prerequisites
+    # runs-on: 
+    #   - nscloud-ubuntu-22.04-${{ inputs.arch }}-8x16-with-cache
+    #   - nscloud-git-mirror-5gb
+    #   - nscloud-cache-tag-ee-${{ inputs.os }}-${{ inputs.arch }}-cache
+    #   - nscloud-cache-size-50gb
       # - nscloud-container-image-cache
     permissions:
       id-token: write
