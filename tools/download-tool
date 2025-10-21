@@ -24,9 +24,26 @@ case $1 in
     ;;
 esac
 
-for package in $(find packages/ -name package.mk); do
-  if [ -n "$(echo $package | grep addons)" -a -z "$ALL_PACKAGES" ]; then
+# for package in $(find packages/ -name package.mk); do
+#   if [ -n "$(echo $package | grep addons)" -a -z "$ALL_PACKAGES" ]; then
+#     continue
+#   fi
+#   ./scripts/get $(basename $(dirname $package))
+# done
+# compute total (respecting ALL_PACKAGES)
+if [ -z "${ALL_PACKAGES:-}" ]; then
+  total=$(find packages/ -name package.mk | grep -v '/addons/' | wc -l)
+else
+  total=$(find packages/ -name package.mk | wc -l)
+fi
+
+i=0
+find packages/ -name package.mk | while read -r pkgfile; do
+  if [ -z "${ALL_PACKAGES:-}" ] && echo "$pkgfile" | grep -q '/addons/'; then
     continue
   fi
-  ./scripts/get $(basename $(dirname $package))
+  i=$((i+1))
+  pkg=$(basename "$(dirname "$pkgfile")")
+  printf '[%d/%d] Downloading %s\n' "$i" "$total" "$pkg"
+  ./scripts/get "$pkg"
 done
