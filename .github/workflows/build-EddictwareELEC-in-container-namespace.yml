@@ -73,7 +73,7 @@ jobs:
 
   build:
 #    runs-on: github
-    runs-on: namespace-profile-linux-amd64-max
+    runs-on: namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max
     needs: init
     permissions:
       id-token: write
