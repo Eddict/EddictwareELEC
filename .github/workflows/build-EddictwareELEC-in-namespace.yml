@@ -92,7 +92,7 @@ jobs:
     - name: Set MTU for eth0
       shell: bash
       run: |
-        ip link set mtu 1450 eth0
+        sudo ip link set mtu 1450 eth0
 
     # - name: Download and cache package sources
     #   shell: bash
