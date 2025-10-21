@@ -1,7 +1,22 @@
-name: Build image on Arm64 (namespace)
+name: Build image on namespace
 
 on:
   workflow_dispatch:
+    inputs:
+      os:
+        description: 'OS to run against'
+        required: true
+        type: string
+        default: jammy
+      arch:
+        description: 'Arch to run against'
+        required: true
+        type: string
+        default: amd64
+
+run-name: '${{ github.workflow }} (${{ github.event.inputs.os }})'
+
+# run-name: ${{ format('{0} ({1} - {2})', github.workflow, inputs.environment || 'noble', github.event_name) }}
 
 env:
   DISTRO: EddictwareELEC
@@ -30,7 +45,7 @@ jobs:
     # runs-on: namespace-profile-linux-arm64-libreelec # namespace-profile-linux-arm64-libreelec-max
       # - nscloud-ubuntu-22.04-arm64-32x64-with-cache
     runs-on: 
-      - nscloud-ubuntu-22.04-amd64-4x16-with-cache
+      - nscloud-ubuntu-22.04-${{ github.event.inputs.arch }}-4x16-with-cache
       - nscloud-git-mirror-5gb
       - nscloud-cache-tag-ee-cache
       - nscloud-cache-size-50gb
