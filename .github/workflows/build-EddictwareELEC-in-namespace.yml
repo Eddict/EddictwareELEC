@@ -51,9 +51,9 @@ jobs:
     # runs-on: namespace-profile-linux-arm64-libreelec # namespace-profile-linux-arm64-libreelec-max
       # - nscloud-ubuntu-22.04-arm64-32x64-with-cache
     runs-on: 
-      - nscloud-ubuntu-22.04-${{ github.event.inputs.arch }}-4x16-with-cache
+      - nscloud-ubuntu-22.04-${{ github.event.inputs.arch }}-8x16-with-cache
       - nscloud-git-mirror-5gb
-      - nscloud-cache-tag-ee-cache
+      - nscloud-cache-tag-ee-${{ github.event.inputs.arch }}-cache
       - nscloud-cache-size-50gb
       # - nscloud-container-image-cache
     permissions:
