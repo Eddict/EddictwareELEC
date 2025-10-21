@@ -155,15 +155,17 @@ jobs:
           && echo "uid: $(id -u)" \
           && echo "gid: $(id -g)" \
           && echo "find .ccache" \
-          && find ${{ github.workspace }} -type d -iname ".ccache" \
+          && curpwd=$(pwd) \
+          && echo "curpwd: $curpwd" \
+          && find $curpwd -type d -iname ".ccache" \
           && echo "find .img.gz" \
-          && find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" \
+          && find $curpwd/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" \
           && echo "run make" \
           && make -j$((NB_CORES+1)) -l${NB_CORES} image \
           && echo "find .ccache" \
-          && find ${{ github.workspace }} -type d -iname ".ccache" \
+          && find $curpwd -type d -iname ".ccache" \
           && echo "find .img.gz" \
-          && find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"'
+          && find $curpwd/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"'
 
     - uses: namespace-actions/upload-artifact@v1
       with:
