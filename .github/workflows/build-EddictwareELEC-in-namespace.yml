@@ -94,11 +94,11 @@ jobs:
       run: |
         ip link set mtu 1450 eth0
 
-    - name: Download and cache package sources
-      shell: bash
-      run: |
-        tools/download-cleaner
-        tools/download-tool
+    # - name: Download and cache package sources
+    #   shell: bash
+    #   run: |
+    #     tools/download-cleaner
+    #     tools/download-tool
 
     - name: Compile the build
       shell: bash
