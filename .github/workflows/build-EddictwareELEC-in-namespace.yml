@@ -30,7 +30,7 @@ jobs:
     # runs-on: namespace-profile-linux-arm64-libreelec # namespace-profile-linux-arm64-libreelec-max
       # - nscloud-ubuntu-22.04-arm64-32x64-with-cache
     runs-on: 
-      - nscloud-ubuntu-22.04-arm64-4x16-with-cache
+      - nscloud-ubuntu-22.04-amd64-4x16-with-cache
       - nscloud-git-mirror-5gb
       - nscloud-cache-tag-ee-cache
       - nscloud-cache-size-50gb
