@@ -12,7 +12,7 @@ on:
           - jammy
           - noble
           - plucky
-        default: noble
+        default: jammy
 
 run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
 
@@ -22,7 +22,7 @@ env:
 jobs:
   build:
     # runs-on: ubuntu-latest # namespace-profile-default # nscloud # namespace-profile-linux-amd64-max
-    runs-on: namespace-profile-linux-arm64-max
+    runs-on: namespace-profile-yammy-amd64-max
     permissions:
       id-token: write
       contents: read
