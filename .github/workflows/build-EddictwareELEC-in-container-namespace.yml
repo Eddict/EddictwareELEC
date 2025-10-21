@@ -29,7 +29,7 @@ on:
 run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
 
 env:
-  DistroCodeName: ${{ inputs.os}}
+  DistroCodeName: ${{ inputs.os }}
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
