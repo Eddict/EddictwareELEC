@@ -100,7 +100,8 @@ jobs:
       run: |
         make image
         find ${{ github.workspace }} -type d -iname ".ccache" \
-        find ${{ github.workspace }} -maxdepth 3 -type f -iname "${{ env.BUILD_NAME }}*.img.gz"
+        find ${{ github.workspace }} -maxdepth 3 -type f -iname "${{ env.BUILD_NAME }}*.img.gz" \
+        find ${{ github.workspace }} -type f -iname ccache.conf
 
     - uses: namespace-actions/upload-artifact@v1
       with:
