@@ -77,10 +77,10 @@ jobs:
     - name: Checkout repository
       uses: namespacelabs/nscloud-checkout-action@v7
 
-    - name: Set up APT cache
-      uses: namespacelabs/nscloud-cache-action@v1
-      with:
-        cache: apt
+    # - name: Set up APT cache
+    #   uses: namespacelabs/nscloud-cache-action@v1
+    #   with:
+    #     cache: apt
 
     - name: Install LibreELEC dependencies
       shell: bash
