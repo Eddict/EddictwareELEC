@@ -22,11 +22,11 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    if: >-
-      ${{ (github.event.head_commit != null &&
-      github.event.head_commit.author != null &&
-      github.event.head_commit.author.username != 'Eddict') ||
-      (github.event_name == 'workflow_dispatch') }}
+    # if: >-
+    #   ${{ (contains(github.event, 'head_commit') &&
+    #   contains(github.event.head_commit, 'author') &&
+    #   github.event.head_commit.author.username == 'Eddict') ||
+    #   (github.event_name == 'workflow_dispatch') }}
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
     steps:
@@ -61,25 +61,8 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
 
-    # - name: Echo out to the logs
-    #   shell: bash
-    #   run: |
-    #     value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-    #     echo "Trick to echo output_ee_distro_tag:"
-    #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
-    #     # echo "$value" | sed 's/./& /g'
-    #     # value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-    #     # echo "Trick to echo reg_fqdn:"
-    #     # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
-    #     # echo "$value" | sed 's/./& /g'
-
     - uses: namespacelabs/nscloud-setup@v0
     - uses: namespacelabs/nscloud-setup-buildx-action@v0
-
-    # - name: Checkout repository
-    #   uses: actions/checkout@v5
-    #   with:
-    #     ref: ${{ github.ref_name }}
 
     - name: Checkout repository
       uses: namespacelabs/nscloud-checkout-action@v7
@@ -100,30 +83,13 @@ jobs:
     - name: Build ${{ env.EE_Distro }} image
       shell: bash
       run: |
-        debug=true
-        # echo "whoami: $(whoami)"
-        # echo "uid: $(id -u)"
-        # echo "gid: $(id -g)"
-        # echo "PATH: $PATH"
-        # ls -al /usr
-        # ls -al /usr/bin
-        # ls -al /usr/bin/mkfontdir
-        # pwd && ls -al
-        # echo $GITHUB_WORKSPACE
-        # ls -al $GITHUB_WORKSPACE
-        # chown -R docker:docker $PWD
-        # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
-        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
-        #     # cleanup
-        #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
-        # fi
-        # set some build performance flags
+        debug=false
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
 
         # pull the image
         # docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} "https://${{ secrets.REGISTRY_FQDN }}:5000"
-        docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
+        docker image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
