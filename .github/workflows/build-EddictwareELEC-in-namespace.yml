@@ -31,6 +31,8 @@ env:
   ARCH: aarch64
   BUILDER_NAME: Eddict
   BUILDER_VERSION: "13.0"
+  INPUT_OS: ${{ inputs.os }}
+  INPUT_ARCH: ${{ inputs.arch }}
 
   # -e DISABLE_COLORS=yes \
   # -e LOGCOMBINE=fail \
@@ -49,7 +51,7 @@ jobs:
   build:
     # runs-on: namespace-profile-linux-arm64-libreelec # namespace-profile-linux-arm64-libreelec-max
       # - nscloud-ubuntu-22.04-arm64-32x64-with-cache
-    runs-on: namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max
+    runs-on: "namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max"
     # cannot use namespace-actions/upload-artifact with nscloud runners
     # https://namespace.so/docs/reference/github-actions/upload-artifact#prerequisites
     # runs-on: 
