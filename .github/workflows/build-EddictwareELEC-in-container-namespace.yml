@@ -82,6 +82,11 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
 
+    - name: Set BUILD_NAME
+      id: set-build-name
+      shell: bash
+      run: echo "BUILD_NAME=${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}" >> $GITHUB_OUTPUT
+
     - uses: namespacelabs/nscloud-setup@v0
     - uses: namespacelabs/nscloud-setup-buildx-action@v0
 
@@ -96,8 +101,8 @@ jobs:
         fail-on-cache-miss: false
         path: |
           ${{ github.workspace }}/sources
-          ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
-          ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+          ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.ccache
+          ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.stamps
 
     # - name: Set up turbo caching
     #   uses: namespace-actions/setup-turbocache@v0
@@ -147,7 +152,7 @@ jobs:
           && echo "curpwd: $curpwd" \
           && find $curpwd -type d -iname ".ccache" \
           && echo "find .img.gz" \
-          && find $curpwd -maxdepth 3 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" \
+          && find $curpwd -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz" \
           && echo "run make" \
           && make -j$((NB_CORES+1)) -l${NB_CORES} image \
           && echo "find .ccache" \
@@ -155,12 +160,12 @@ jobs:
           && echo "find ccache.conf" \
           && find $curpwd -type f -iname ccache.conf \
           && echo "find .img.gz" \
-          && find $curpwd -maxdepth 3 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"'
+          && find $curpwd -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz"'
 
     - uses: namespace-actions/upload-artifact@v1
       with:
-        name: "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-$(date +%Y%m%d) image"
-        path: "${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz"
+        name: "${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-$(date +%Y%m%d) image"
+        path: "${{ github.workspace }}/target/${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz"
         compression-level: 0 # no compression
 
     # - name: Copy built ${{ env.EE_Distro }} image to archive
@@ -169,10 +174,10 @@ jobs:
     #     debug=true
     #     [ "$debug" = true ] && echo "[pwd]: $PWD"
     #     if [ -d $PWD/target ]; then
-    #       lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+    #       lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz" 2>/dev/null | wc -l)
     #       [ "$debug" = true ] && echo "[lines]: $lines"
     #       if [ $lines -ne 0 ]; then
-    #         pathfilename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
+    #         pathfilename=$(ls -t $PWD/target/${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz | head --lines=1)
     #         [ "$debug" = true ] && echo "[EE_image_pathfilename]: $pathfilename"
     #         echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
     #         filename="${pathfilename##*/}"
