@@ -6,17 +6,23 @@ on:
       os:
         description: 'OS to run against'
         required: true
-        type: string
+        type: choice
+        options:
+          - bookworm
+          - jammy
+          - noble
+          - plucky
         default: jammy
       arch:
         description: 'Arch to run against'
         required: true
-        type: string
+        type: choice
+        options:
+          - amd64
+          - arm64
         default: amd64
 
-run-name: '${{ github.workflow }} (${{ github.event.inputs.os }})'
-
-# run-name: ${{ format('{0} ({1} - {2})', github.workflow, inputs.environment || 'noble', github.event_name) }}
+run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
 
 env:
   DISTRO: EddictwareELEC
