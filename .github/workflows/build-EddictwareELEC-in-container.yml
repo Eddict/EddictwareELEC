@@ -82,6 +82,12 @@ jobs:
     #     username: ${{ secrets.REGISTRY_USER }}
     #     password: ${{ secrets.REGISTRY_PWD }}
     steps:
+    - name: Login to (private) Registry
+      uses: docker/login-action@v3
+      with:
+        registry: "https://${{ secrets.REGISTRY_FQDN }}:5000"
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PWD }}
 
     # -
     #   name: Compose image tag
