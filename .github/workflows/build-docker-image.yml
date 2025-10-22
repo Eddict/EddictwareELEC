@@ -50,7 +50,7 @@ jobs:
       name: Log in to (local/private) registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #"${{ secrets.REGISTRY_FQDN }}"
+        registry: "${{ secrets.REGISTRY_PRIVATE_FQDN }}:5000" #"${{ secrets.REGISTRY_FQDN }}"
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
 
@@ -65,7 +65,7 @@ jobs:
         # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
         buildkitd-config-inline: |
           debug = false
-          [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}"]
+          [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}:5000"]
             http = false
 #        buildkitd-flags: '"--progress ''plain''"'
 
