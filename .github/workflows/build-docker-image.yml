@@ -41,7 +41,7 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        dTag="${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
+        dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
@@ -50,7 +50,7 @@ jobs:
       name: Log in to (local/private) registry
       uses: docker/login-action@v3
       with:
-        registry: "${{ secrets.REGISTRY_FQDN }}"
+        registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #"${{ secrets.REGISTRY_FQDN }}"
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
 
@@ -65,7 +65,7 @@ jobs:
         # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
         buildkitd-config-inline: |
           debug = false
-          [registry."${{ secrets.REGISTRY_FQDN }}"]
+          [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}]
             http = false
 #        buildkitd-flags: '"--progress ''plain''"'
 
