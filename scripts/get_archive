@@ -63,7 +63,7 @@ done
 
 [ "${VERBOSE}" != "yes" ] && GET_OPT="--silent --show-error"
 GET_CMD="curl ${GET_OPT} --fail --connect-timeout 30 --retry 3 --continue-at - --location --max-redirs 5 --output ${PACKAGE}"
-GET_CMD="curl ${GET_OPT} --fail --connect-timeout 5 --retry 5 --continue-at - --location --max-redirs 5 --output ${PACKAGE}"
+GET_CMD="curl ${GET_OPT} --insecure --fail --connect-timeout 5 --retry 5 --continue-at - --location --max-redirs 5 --output ${PACKAGE}"
 GET_CMD_WGET="wget ${GET_OPT} --tries=4 --connect-timeout=30 --continue --max-redirect=5 --output-document=${PACKAGE}"
 
 # unset LD_LIBRARY_PATH to stop wget from using toolchain/lib and loading libssl.so/libcrypto.so instead of host libraries
