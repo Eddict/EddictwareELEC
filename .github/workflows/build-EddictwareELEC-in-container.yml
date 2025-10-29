@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       os:
-        description: 'OS to run against'
+        description: 'OS of build container'
         required: true
         type: choice
         options:
@@ -14,22 +14,24 @@ on:
           - plucky
         default: jammy
       arch:
-        description: 'Arch to run against'
+        description: 'Arch of build target'
         required: true
         type: choice
         options:
           - amd64
-          - arm64
-        default: amd64
+          - aarch64
+          - arm
+          - x86_64
+        default: aarch64
 
-run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
+run-name: ${{ format('{0} ({1})', github.workflow, inputs.os) }}
 
 env:
   DistroCodeName: ${{ github.event.inputs.os }}
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
-  EE_Arch: aarch64
+  EE_Arch: ${{ github.event.inputs.arch }}
   EE_image_pathfilename: ""
   EE_image_filename: ""
 
