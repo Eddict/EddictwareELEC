@@ -82,6 +82,17 @@ jobs:
     #     username: ${{ secrets.REGISTRY_USER }}
     #     password: ${{ secrets.REGISTRY_PWD }}
     steps:
+    - name: Echo out to the logs
+      run: |
+        value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        echo "Trick to echo output_ee_distro_tag:"
+        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
+        # echo "$value" | sed 's/./& /g'
+        value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        echo "Trick to echo reg_fqdn:"
+        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
+        # echo "$value" | sed 's/./& /g'
+
     - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
@@ -103,17 +114,6 @@ jobs:
     #     path: /tmp/.buildx-cache-2
     #     key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}--${{ github.ref_sha }}
     #     restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
-
-    - name: Echo out to the logs
-      run: |
-        value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "Trick to echo output_ee_distro_tag:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
-        # echo "$value" | sed 's/./& /g'
-        value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "Trick to echo reg_fqdn:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
-        # echo "$value" | sed 's/./& /g'
 
     # - uses: docker://${{ needs.init.outputs.output_ee_distro_tag }}:latest       
     # - uses: docker://ghcr.io/<my-org>/<some-private-repo>/<some-private-image>:<tag>        
