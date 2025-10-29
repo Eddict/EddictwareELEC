@@ -13,7 +13,7 @@ env:
   UPSTREAM_REMOTE: 'upstream'
   UPSTREAM_BRANCH: 'master'
   FETCH_DEPTH: 100
-  DEBUG: false
+  DEBUG: true
 
 jobs:
   daily:
