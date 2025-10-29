@@ -13,6 +13,11 @@ on:
           - noble
           - plucky
         default: jammy
+      custom_os:
+        description: 'Use the LE version of the OS?'
+        required: true
+        type: boolean
+        default: false
       arch:
         description: 'Arch to run against'
         required: true
@@ -22,12 +27,13 @@ on:
           - arm64
         default: amd64
 
-run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
+run-name: ${{ format('{0} ({1}{3}/{2})', github.workflow, inputs.os, inputs.arch, (inputs.custom_os && '-libreelec' || '')) }}
 
 jobs:
   build:
     # runs-on: ubuntu-latest # namespace-profile-default # nscloud # namespace-profile-linux-amd64-max
-    runs-on: namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max
+    runs-on: ${{ format('namespace-profile-{0}-{1}{2}-max', inputs.os, inputs.arch, (inputs.custom_os && '-libreelec' || '')) }}
+    # runs-on: namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max
     permissions:
       id-token: write
       contents: read
