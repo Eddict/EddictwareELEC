@@ -13,6 +13,11 @@ on:
           - noble
           - plucky
         default: jammy
+      custom_os:
+        description: 'Use the LE version of the OS?'
+        required: true
+        type: boolean
+        default: false
       arch:
         description: 'Arch to run against'
         required: true
@@ -22,7 +27,7 @@ on:
           - arm64
         default: amd64
 
-run-name: ${{ format('{0} ({1}/{2}-{3})', github.workflow, inputs.os, inputs.arch, 'libreelec-max') }}
+run-name: ${{ format('{0} ({1}{3}/{2})', github.workflow, inputs.os, inputs.arch, (inputs.custom_os && '-libreelec' || '')) }}
 
 env:
   DISTRO: EddictwareELEC
@@ -51,7 +56,8 @@ jobs:
   build:
     # runs-on: namespace-profile-linux-arm64-libreelec # namespace-profile-linux-arm64-libreelec-max
       # - nscloud-ubuntu-22.04-arm64-32x64-with-cache
-    runs-on: "namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-libreelec-max"
+    runs-on: ${{ format('namespace-profile-{0}-{1}{2}-max', inputs.os, inputs.arch, (inputs.custom_os && '-libreelec' || '')) }}
+    # runs-on: "namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-libreelec-max"
     # runs-on: "namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max"
     # cannot use namespace-actions/upload-artifact with nscloud runners
     # https://namespace.so/docs/reference/github-actions/upload-artifact#prerequisites
