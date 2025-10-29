@@ -203,6 +203,14 @@ jobs:
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
+    - name: OAuth2 token retrieval
+      id: oauth-token
+      uses: ./.github/actions/composite/oauth-token-retrieval
+      with:
+        registry-fqdn: ${{ secrets.REGISTRY_FQDN }}
+        registry-user: ${{ secrets.REGISTRY_USER }}
+        registry-pwd: ${{ secrets.REGISTRY_PWD }}
+
     - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
