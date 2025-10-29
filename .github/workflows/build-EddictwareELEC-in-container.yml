@@ -21,6 +21,9 @@ on:
           - amd64
           - arm64
         default: amd64
+
+run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
+
 env:
   DistroCodeName: ${{ github.event.inputs.os }}
   EE_Distro: EddictwareELEC
