@@ -13,15 +13,15 @@ on:
           - noble
           - plucky
         default: noble
-  push:
-    branches: [ "master-entw" ]
-    paths-ignore: &exclude_paths # set YAML anchors for reuse
-      - '*'
-      - '.github/actions/**'
-      - '.github/actions/javascript/**'
-      - '.github/workflows/**'
-      - '!.github/workflows/build-EddictwareELEC-in-container.yml'
-      - 'tools/docker/**'
+  # push:
+  #   branches: [ "master-entw" ]
+  #   paths-ignore: &exclude_paths # set YAML anchors for reuse
+  #     - '*'
+  #     - '.github/actions/**'
+  #     - '.github/actions/javascript/**'
+  #     - '.github/workflows/**'
+  #     - '!.github/workflows/build-EddictwareELEC-in-container.yml'
+  #     - 'tools/docker/**'
   pull_request:
     branches: [ "master-entw" ]
     paths-ignore: *exclude_paths
