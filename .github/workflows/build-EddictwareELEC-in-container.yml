@@ -34,6 +34,7 @@ env:
   EE_Arch: ${{ github.event.inputs.arch }}
   EE_image_pathfilename: ""
   EE_image_filename: ""
+  EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
 
 jobs:
   init:
@@ -68,7 +69,7 @@ jobs:
       run: |
         echo "DistroCodeName=${DistroCodeName}"
         echo "DistroCodeName@L=${DistroCodeName@L}"
-        EE_Distro_tag="${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}"
+        EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
         echo "EE_Distro_tag=${EE_Distro_tag}" >> $GITHUB_OUTPUT
 
         value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
@@ -109,7 +110,7 @@ jobs:
         echo "Trick to echo output_ee_distro_tag:"
         echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
         # echo "$value" | sed 's/./& /g'
-        value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        value=$(printf '%s' "${{ env.EE_Registry }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
         echo "Trick to echo reg_fqdn:"
         echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
         # echo "$value" | sed 's/./& /g'
@@ -117,7 +118,7 @@ jobs:
     - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ secrets.REGISTRY_FQDN }} #"https://${{ secrets.REGISTRY_FQDN }}:5000"
+        registry: ${{ env.EE_Registry }} #"https://${{ secrets.REGISTRY_FQDN }}:5000"
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PWD }}
 
@@ -156,8 +157,8 @@ jobs:
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
 
         # pull the image
-        docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ secrets.REGISTRY_FQDN }}
-        docker --debug image pull "${{ secrets.REGISTRY_FQDN }}/eddict/$DistroCodeName"
+        docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ env.EE_Registry }}
+        docker --debug image pull "${{ env.EE_Registry }}/eddict/$DistroCodeName"
         if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
             # cleanup
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
@@ -181,7 +182,7 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          "${{ env.EE_Registry }}/eddict/${DistroCodeName}" make -j$((NB_CORES+1)) -l${NB_CORES} image
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
