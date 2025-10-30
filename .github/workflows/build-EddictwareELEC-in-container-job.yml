@@ -13,6 +13,10 @@ on:
           - noble
           - plucky
         default: noble
+  pull_request:
+    branches: [ "master-entw" ]
+    paths-ignore: *exclude_paths
+
   # push:
   #   branches: [ "master-entw" ]
   #   paths-ignore: &exclude_paths # set YAML anchors for reuse
@@ -22,10 +26,7 @@ on:
   #     - '.github/workflows/**'
   #     - '!.github/workflows/build-EddictwareELEC-in-container.yml'
   #     - 'tools/docker/**'
-  pull_request:
-    branches: [ "master-entw" ]
-    paths-ignore: *exclude_paths
-
+    
 run-name: ${{ format('{0} ({1} - {2})', github.workflow, inputs.environment || 'noble', github.event_name) }}
 
 env:
