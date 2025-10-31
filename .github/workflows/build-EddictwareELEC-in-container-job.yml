@@ -281,7 +281,7 @@ jobs:
       NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
-      image: registry.main.eddict.nl:5000/eddict/plucky
+      image: edregistry.main.eddict.nl/noble
       # image: ${{ needs.repo-login.outputs.output_meta_tags }}
       # image: eu.gcr.io/path/to/image:tag
       # image: ${{ needs.build.outputs.image_tag }}
