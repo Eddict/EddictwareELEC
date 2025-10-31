@@ -69,7 +69,7 @@ jobs:
       run: |
         echo "DistroCodeName=${DistroCodeName}"
         echo "DistroCodeName@L=${DistroCodeName@L}"
-        EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
+        EE_Distro_tag="${{ env.EE_Registry }}/${DistroCodeName@L}"
         echo "EE_Distro_tag=${EE_Distro_tag}" >> $GITHUB_OUTPUT
 
         value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
@@ -126,7 +126,7 @@ jobs:
     #   name: Compose image tag
     #   id: compose-image-tag
     #   run: |
-    #     echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+    #     echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/${DistroCodeName@L}" >> $GITHUB_OUTPUT
     #   shell: bash
 
     # -
@@ -158,7 +158,7 @@ jobs:
 
         # pull the image
         docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ env.EE_Registry }}
-        docker --debug image pull "${{ env.EE_Registry }}/eddict/$DistroCodeName"
+        docker --debug image pull "${{ env.EE_Registry }}/$DistroCodeName"
         if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
             # cleanup
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
@@ -182,7 +182,7 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "${{ env.EE_Registry }}/eddict/${DistroCodeName}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          "${{ env.EE_Registry }}/${DistroCodeName}" make -j$((NB_CORES+1)) -l${NB_CORES} image
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
