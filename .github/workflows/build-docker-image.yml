@@ -87,9 +87,9 @@ jobs:
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
         # target: custom
-        no-cache: false
-        cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
-        cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
+        no-cache: true
+        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
+        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
         # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
         # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
         # cache-from: type=local,src=/tmp/.buildx-cache
