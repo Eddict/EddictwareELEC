@@ -13,9 +13,9 @@ on:
           - noble
           - plucky
         default: noble
-  pull_request:
-    branches: [ "master-entw" ]
-    paths-ignore: *exclude_paths
+  # pull_request:
+  #   branches: [ "master-entw" ]
+  #   paths-ignore: *exclude_paths
 
   # push:
   #   branches: [ "master-entw" ]
