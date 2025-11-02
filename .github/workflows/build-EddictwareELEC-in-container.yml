@@ -185,6 +185,7 @@ jobs:
         # run the container
         docker run --rm \
           --log-driver local \
+          --user docker \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           --volumes-from ${{ env.DistroCodeName }}-ccache \
