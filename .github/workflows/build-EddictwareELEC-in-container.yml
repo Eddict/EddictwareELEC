@@ -172,17 +172,18 @@ jobs:
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         fi
 
-        # docker volume create ${{ env.DistroCodeName }}-ccache
-        docker create \
-          --name ${{ env.DistroCodeName }}-${{ env.EE_Distro }}-ccache \
-          -v ${{ env.DistroCodeName }}-ccache:/ccache/${{ env.EE_Distro }}
+        docker volume create ${{ env.DistroCodeName }}-ccache
+        # docker create \
+        #   --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
+        #   -v ${{ env.DistroCodeName }}-ccache:/ccache/${{ env.EE_Distro }} \
+        #   debian
         
         # run the container
         docker run --rm \
           --log-driver local \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
-          --volumes-from ${{ env.DistroCodeName }}-${{ env.EE_Distro }}-ccache \
+          --volumes-from ${{ env.DistroCodeName }}-ccache \
           -w /build \
           -e CCACHE_DIR=/ccache/${{ env.EE_Distro }} \
           -e DISABLE_COLORS=yes \
