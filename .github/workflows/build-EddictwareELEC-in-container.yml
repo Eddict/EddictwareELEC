@@ -172,11 +172,11 @@ jobs:
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         fi
 
-        docker volume create ${{ env.DistroCodeName }}-ccache
-        # docker create \
-        #   --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
-        #   -v ${{ env.DistroCodeName }}-ccache:/ccache/${{ env.EE_Distro }} \
-        #   debian
+        # docker volume create ${{ env.DistroCodeName }}-ccache
+        docker create \
+          --name "${{ env.DistroCodeName }}-ccache" \
+          -v ${{ env.DistroCodeName }}-ccache:/ccache/${{ env.EE_Distro }} \
+          debian
         
         # run the container
         docker run --rm \
