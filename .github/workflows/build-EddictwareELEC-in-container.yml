@@ -175,8 +175,12 @@ jobs:
         # docker volume create ${{ env.DistroCodeName }}-ccache
         docker create \
           --name "${{ env.DistroCodeName }}-ccache" \
-          -v ${{ env.DistroCodeName }}-ccache:/ccache/${{ env.EE_Distro }} \
+          -v ${{ env.DistroCodeName }}-ccache:${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           debian
+          # run: echo "BUILD_NAME=${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}" >> $GITHUB_OUTPUT
+          # ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.ccache
+          # ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.stamps
+          # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
         
         # run the container
         docker run --rm \
@@ -185,7 +189,7 @@ jobs:
           -v $PWD:/build \
           --volumes-from ${{ env.DistroCodeName }}-ccache \
           -w /build \
-          -e CCACHE_DIR=/ccache/${{ env.EE_Distro }} \
+          -e CCACHE_DIR=${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           -e DISABLE_COLORS=yes \
           -e LOGCOMBINE=fail \
           -e MTIMMEDIATE=no \
