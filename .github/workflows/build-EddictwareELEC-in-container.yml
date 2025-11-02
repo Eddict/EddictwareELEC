@@ -181,7 +181,7 @@ jobs:
           # ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.ccache
           # ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.stamps
           # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
-        
+          # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
         # run the container
         docker run --rm \
           --log-driver local \
@@ -189,7 +189,7 @@ jobs:
           -v $PWD:/build \
           --volumes-from ${{ env.DistroCodeName }}-ccache \
           -w /build \
-          -e CCACHE_DIR=${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
+          -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           -e DISABLE_COLORS=yes \
           -e LOGCOMBINE=fail \
           -e MTIMMEDIATE=no \
