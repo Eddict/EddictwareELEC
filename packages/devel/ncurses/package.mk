@@ -3,7 +3,7 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="ncurses"
-PKG_VERSION="6.5-20250517"
+PKG_VERSION="6.5-20251101"
 PKG_SHA256="13e78548b31adef93e3b9735bf728fac5a84969873333c7833614db61891353e"
 PKG_LICENSE="MIT"
 PKG_SITE="http://www.gnu.org/software/ncurses/"
