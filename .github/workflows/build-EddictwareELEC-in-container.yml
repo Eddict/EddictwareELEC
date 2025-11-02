@@ -152,9 +152,9 @@ jobs:
       run: |
         debug=true
         [ "$debug" = true ] && echo "[pwd]: $PWD"
-        ls -al $PWD
+        # ls -al $PWD
         chown -R docker:docker $PWD
-        ls -al $PWD
+        # ls -al $PWD
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         #     # cleanup
@@ -167,7 +167,8 @@ jobs:
         # pull the image
         docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ env.EE_Registry }}
         docker --debug image pull "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}"
-        if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
             # cleanup
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         fi
