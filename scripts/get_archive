@@ -22,49 +22,49 @@ pkg_lock_status "GETPKG" "${PKG_NAME}" "unpack" "downloading package..."
 
 PACKAGE_MIRROR="${DISTRO_MIRROR}/${PKG_NAME}/${PKG_SOURCE_NAME}"
 
-# ensure PKG_URL is defined (avoids set -u failure)
-PKG_URL=${PKG_URL:-}
-PACKAGE_ALT=${PACKAGE_ALT:-}
-# parallel arrays: OLD_URL[i] -> NEW_URL[i]
-OLD_URL=(
-  'busybox.net/downloads'
-  'xorg.freedesktop.org/archive/individual/lib'
-)
-NEW_URL=(
-  'mirrors.slackware.com/slackware/slackware64-current/source/a/mkinitrd'
-  'ftp.slackware.com/pub/slackware/slackware-current/source/x/x11/src/lib'
-)
-# iterate indices
-for i in "${!OLD_URL[@]}"; do
-  old=${OLD_URL[i]}
-  new=${NEW_URL[i]}
+# # ensure PKG_URL is defined (avoids set -u failure)
+# PKG_URL=${PKG_URL:-}
+# PACKAGE_ALT=${PACKAGE_ALT:-}
+# # parallel arrays: OLD_URL[i] -> NEW_URL[i]
+# OLD_URL=(
+#   'busybox.net/downloads'
+#   'xorg.freedesktop.org/archive/individual/lib'
+# )
+# NEW_URL=(
+#   'mirrors.slackware.com/slackware/slackware64-current/source/a/mkinitrd'
+#   'ftp.slackware.com/pub/slackware/slackware-current/source/x/x11/src/lib'
+# )
+# # iterate indices
+# for i in "${!OLD_URL[@]}"; do
+#   old=${OLD_URL[i]}
+#   new=${NEW_URL[i]}
 
-  # fast literal substring test (safe for arbitrary strings)
-  if printf '%s' "$PKG_URL" | grep -F -- "$old" >/dev/null 2>&1; then
-    # skip if NEW already present (avoid double-replace)
-    if printf '%s' "$PKG_URL" | grep -F -- "$new" >/dev/null 2>&1; then
-      printf 'PKG_URL already contains "%s" — skipping replacement\n' "$new"
-      continue
-    fi
+#   # fast literal substring test (safe for arbitrary strings)
+#   if printf '%s' "$PKG_URL" | grep -F -- "$old" >/dev/null 2>&1; then
+#     # skip if NEW already present (avoid double-replace)
+#     if printf '%s' "$PKG_URL" | grep -F -- "$new" >/dev/null 2>&1; then
+#       printf 'PKG_URL already contains "%s" — skipping replacement\n' "$new"
+#       continue
+#     fi
 
-    # escape for sed delimiter safety (slashes and ampersands)
-    esc_old=$(printf '%s' "$old" | sed 's/[\/&]/\\&/g')
-    esc_new=$(printf '%s' "$new" | sed 's/[\/&]/\\&/g')
+#     # escape for sed delimiter safety (slashes and ampersands)
+#     esc_old=$(printf '%s' "$old" | sed 's/[\/&]/\\&/g')
+#     esc_new=$(printf '%s' "$new" | sed 's/[\/&]/\\&/g')
 
-    # perform global replacement
-    PACKAGE_ALT=$(printf '%s' "$PKG_URL" | sed "s/${esc_old}/${esc_new}/g")
-    printf 'PACKAGE_ALT: "%s" -> "%s": %s\n' "$old" "$new" "$PACKAGE_ALT"
+#     # perform global replacement
+#     PACKAGE_ALT=$(printf '%s' "$PKG_URL" | sed "s/${esc_old}/${esc_new}/g")
+#     printf 'PACKAGE_ALT: "%s" -> "%s": %s\n' "$old" "$new" "$PACKAGE_ALT"
 
-    # If you only want to replace the first matching mapping, uncomment next line:
-    break
-    # otherwise the loop continues and can perform additional replacements
-  fi
-done
+#     # If you only want to replace the first matching mapping, uncomment next line:
+#     break
+#     # otherwise the loop continues and can perform additional replacements
+#   fi
+# done
 
 [ "${VERBOSE}" != "yes" ] && GET_OPT="--silent --show-error"
 GET_CMD="curl ${GET_OPT} --fail --connect-timeout 30 --retry 3 --continue-at - --location --max-redirs 5 --output ${PACKAGE}"
-GET_CMD="curl ${GET_OPT} --insecure --fail --connect-timeout 5 --retry 5 --continue-at - --location --max-redirs 5 --output ${PACKAGE}"
-GET_CMD_WGET="wget ${GET_OPT} --tries=4 --connect-timeout=30 --continue --max-redirect=5 --output-document=${PACKAGE}"
+# GET_CMD="curl ${GET_OPT} --insecure --fail --connect-timeout 5 --retry 5 --continue-at - --location --max-redirs 5 --output ${PACKAGE}"
+# GET_CMD_WGET="wget ${GET_OPT} --tries=4 --connect-timeout=30 --continue --max-redirect=5 --output-document=${PACKAGE}"
 
 # unset LD_LIBRARY_PATH to stop wget from using toolchain/lib and loading libssl.so/libcrypto.so instead of host libraries
 unset LD_LIBRARY_PATH
@@ -74,7 +74,8 @@ rm -f "${STAMP_URL}" "${STAMP_SHA}"
 NBGET=10
 NBCHKS=2
 while [ ${NBGET} -gt 0 ] && [ ${NBCHKS} -gt 0 ]; do
-  for url in "${PKG_URL}" "${PACKAGE_ALT}" "${PACKAGE_MIRROR}"; do
+  # for url in "${PKG_URL}" "${PACKAGE_ALT}" "${PACKAGE_MIRROR}"; do
+  for url in "${PKG_URL}"  "${PACKAGE_MIRROR}"; do
     rm -f "${PACKAGE}"
     if ${GET_CMD} "${url}"; then
       CALC_SHA256=$(sha256sum "${PACKAGE}" | cut -d" " -f1)
