@@ -175,7 +175,7 @@ jobs:
         # docker volume create ${{ env.DistroCodeName }}-ccache
         docker create \
           --name "${{ env.DistroCodeName }}-ccache" \
-          -v ${{ env.DistroCodeName }}-ccache:${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
+          -v ${{ env.DistroCodeName }}-ccache:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           debian
           # run: echo "BUILD_NAME=${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}" >> $GITHUB_OUTPUT
           # ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.ccache
