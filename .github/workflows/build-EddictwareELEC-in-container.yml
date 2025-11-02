@@ -171,13 +171,20 @@ jobs:
             # cleanup
             docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         fi
+
+        # docker volume create ${{ env.DistroCodeName }}-ccache
+        docker create \
+          --name ${{ env.DistroCodeName }}-${{ env.EE_Distro }}-ccache \
+          -v ${{ env.DistroCodeName }}-ccache:/ccache/${{ env.EE_Distro }}
         
         # run the container
         docker run --rm \
           --log-driver local \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
+          --volumes-from ${{ env.DistroCodeName }}-${{ env.EE_Distro }}-ccache \
           -w /build \
+          -e CCACHE_DIR=/ccache/${{ env.EE_Distro }} \
           -e DISABLE_COLORS=yes \
           -e LOGCOMBINE=fail \
           -e MTIMMEDIATE=no \
