@@ -182,8 +182,8 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "${{ env.EE_Registry }}/eddict/${DistroCodeName@L}" make -j$((NB_CORES+1)) -l${NB_CORES} image
-          "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          # "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
