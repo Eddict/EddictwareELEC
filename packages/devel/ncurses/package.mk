@@ -4,7 +4,7 @@
 
 PKG_NAME="ncurses"
 PKG_VERSION="6.5-20251101"
-PKG_SHA256="13e78548b31adef93e3b9735bf728fac5a84969873333c7833614db61891353e"
+PKG_SHA256="22b1c9e74ed60cea62e5f6c593d2ac20d7232f68701bf588347af91633647b25"
 PKG_LICENSE="MIT"
 PKG_SITE="http://www.gnu.org/software/ncurses/"
 PKG_URL="http://invisible-mirror.net/archives/ncurses/current/ncurses-${PKG_VERSION}.tgz"
