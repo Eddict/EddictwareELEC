@@ -95,20 +95,8 @@ jobs:
         DEBIAN_FRONTEND=noninteractive sudo apt-get -y update
         DEBIAN_FRONTEND=noninteractive sudo apt-get -y upgrade
         DEBIAN_FRONTEND=noninteractive sudo apt-get -y install bc curl g++ gcc git gperf make openjdk-11-jre-headless rsync unzip xfonts-utils xsltproc xz-utils zip
-        DEBIAN_FRONTEND=noninteractive sudo apt-get -y install rdfind libparse-yapp-perl libxml-parser-perl patchutils lzop gawk ccache lld
-
-    - name: Install mold Linker
-      # if: inputs.os == 'sid'
-      shell: bash
-      run: |
-        MOLD_VERSION=$(curl -s "https://api.github.com/repos/rui314/mold/releases/latest" | grep -Po '"tag_name": "v\K[0-9.]+')
-        echo "MOLD_VERSION=${MOLD_VERSION}"
-        wget -qO mold.tar.gz https://github.com/rui314/mold/releases/latest/download/mold-${MOLD_VERSION}-x86_64-linux.tar.gz
-        sudo mkdir /opt/mold
-        sudo tar xf mold.tar.gz --strip-components=1 -C /opt/mold
-        export PATH=$PATH:/opt/mold/bin
-        mold --version
-        rm -rf mold.tar.gz
+        DEBIAN_FRONTEND=noninteractive sudo apt-get -y install rdfind libparse-yapp-perl libxml-parser-perl patchutils lzop gawk
+        DEBIAN_FRONTEND=noninteractive sudo apt-get -y install build-essential binutils binutils-gold mold ccache lld ca-certificates
 
     - name: Set up cache
       uses: namespacelabs/nscloud-cache-action@v1
