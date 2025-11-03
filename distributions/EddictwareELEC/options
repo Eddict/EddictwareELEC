@@ -37,7 +37,7 @@
   GOLD_SUPPORT="yes"
 
 # MOLD (Modern Linker) support
-  MOLD_SUPPORT="no"
+  MOLD_SUPPORT="yes"
 
 # default linker (bfd / gold / mold)
   DEFAULT_LINKER="gold"
