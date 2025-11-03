@@ -3,8 +3,8 @@ FROM debian:sid
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
- && apt-get dist-upgrade -y \
- && apt-get install -y locales sudo
+ && apt-get dist-upgrade -y -q \
+ && apt-get install -y -q locales sudo
 
 RUN echo 'en_US.UTF-8 UTF-8' >> /etc/locale.gen \
  && locale-gen en_US.UTF-8 \
@@ -16,7 +16,7 @@ ENV LANG=en_US.UTF-8 \
 RUN useradd docker -U -G sudo -m -s /bin/bash \
  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-RUN apt-get install -y \
+RUN apt-get install -y -q \
     curl bash bc gcc sed patch patchutils tar bzip2 gzip xz-utils zstd perl gawk gperf zip \
       unzip diffutils lzop make file g++ xfonts-utils xsltproc default-jre-headless python3 \
       libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
