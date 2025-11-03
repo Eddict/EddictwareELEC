@@ -192,7 +192,6 @@ jobs:
           --memory-swap="-1" \
           --ipc="host" \
           --log-driver local \
-          --user docker \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           -w /build \
@@ -216,6 +215,7 @@ jobs:
           # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           # --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
           # -e THREADCOUNT=75% \
+          # --user docker \
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
