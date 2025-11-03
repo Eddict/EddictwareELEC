@@ -20,35 +20,46 @@ ARG USER_UID
 ENV USER_UID=${USER_UID:-1234}
 # make sure any user/group in image do not use the UUID/GUID of the host docker user/group
 RUN <<EOF
-# https://www.kevinguay.com/posts/next-uid-gid/
-newid=$(cat /etc/group /etc/passwd | cut -d ":" -f 3 | grep "^1...$" | sort -n | tail -n 1 | awk '{ print $1+1 }')
-echo ${newid}
-# do we have a group with same GID
-if groupname=$(getent group ${USER_UID}); then
-  echo ${groupname}
-  groupmod --gid ${newid} ${groupname}
-fi
-# do we have a user with same UID
-if username=$(getent passwd ${USER_UID}); then
-  echo ${username}
-  usermod --uid ${newid} ${username}
-fi
-#groupadd --gid ${USER_UID} docker
-#useradd docker --uid ${USER_UID} --no-user-group --groups docker,sudo --create-home --shell /bin/bash
-useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shell /bin/bash
-echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+  # https://www.kevinguay.com/posts/next-uid-gid/
+  newid=$(cat /etc/group /etc/passwd | cut -d ":" -f 3 | grep "^1...$" | sort -n | tail -n 1 | awk '{ print $1+1 }')
+  echo ${newid}
+  # do we have a group with same GID
+  if groupname=$(getent group ${USER_UID}); then
+    echo ${groupname}
+    groupmod --gid ${newid} ${groupname}
+  fi
+  # do we have a user with same UID
+  if username=$(getent passwd ${USER_UID}); then
+    echo ${username}
+    usermod --uid ${newid} ${username}
+  fi
+  #groupadd --gid ${USER_UID} docker
+  #useradd docker --uid ${USER_UID} --no-user-group --groups docker,sudo --create-home --shell /bin/bash
+  useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shell /bin/bash
+  echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 EOF
 
 RUN apt-get install -y -q \
     curl bash bc gcc sed patch patchutils tar bzip2 gzip xz-utils zstd perl gawk gperf zip \
       unzip diffutils lzop make file g++ xfonts-utils xsltproc default-jre-headless python3 \
       libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
-      golang-1.25-go git openssh-client rsync \
+      golang-1.25-go git openssh-client rsync lld-21 \
     --no-install-recommends \
     && ln -s /usr/lib/go-1.25 /usr/lib/go \
     && ln -s /usr/lib/go-1.25/bin/go /usr/bin/go \
     && ln -s /usr/lib/go-1.25/bin/gofmt /usr/bin/gofmt
 
 RUN rm -rf /var/lib/apt/lists/*
+
+RUN <<EOF
+  MOLD_VERSION=$(curl -s "https://api.github.com/repos/rui314/mold/releases/latest" | grep -Po '"tag_name": "v\K[0-9.]+')
+  echo "MOLD_VERSION=${MOLD_VERSION}"
+  wget -qO mold.tar.gz https://github.com/rui314/mold/releases/latest/download/mold-${MOLD_VERSION}-x86_64-linux.tar.gz
+  sudo mkdir /opt/mold
+  sudo tar xf mold.tar.gz --strip-components=1 -C /opt/mold
+  export PATH=$PATH:/opt/mold/bin
+  mold --version
+  rm -rf mold.tar.gz
+EOF
 
 USER docker
