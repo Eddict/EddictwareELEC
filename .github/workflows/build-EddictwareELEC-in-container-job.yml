@@ -401,10 +401,9 @@ jobs:
         id: decode-secrets
         run: |
           if [ ! -x "$(command -v jq)" ]; then
-            export DEBIAN_FRONTEND="noninteractive"
             echo "jq not found, installing..."
-            sudo apt-get update
-            sudo apt-get install -y jq
+            DEBIAN_FRONTEND=noninteractive sudo apt-get update
+            DEBIAN_FRONTEND=noninteractive sudo apt-get install -y jq
           fi
 
           echo "${{ env.encSCP_INFO }}" |
