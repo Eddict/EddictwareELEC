@@ -187,12 +187,13 @@ jobs:
           # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
         # run the container
         docker run --rm \
+          --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
+          --user docker \
           --cpus="12" \
           --memory="12g" \
           --memory-swap="-1" \
           --ipc="host" \
           --log-driver local \
-          --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           -w /build \
           -e DISABLE_COLORS=no \
