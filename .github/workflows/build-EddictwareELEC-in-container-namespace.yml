@@ -132,17 +132,23 @@ jobs:
         #  --user "$(id -u)":"$(id -g)" \
         #  --user root \
         docker run --rm \
-          --log-driver local \
-          --user "$(id -u)":"$(id -g)" \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
+          --user "$(id -u)":"$(id -g)" \
+          --cpus="8" \
+          --memory="16g" \
+          --memory-swap="-1" \
+          --ipc="host" \
+          --log-driver local \
           -v ${{ github.workspace }}:/build \
           -w /build \
-          -e DISABLE_COLORS=yes \
+          -e DISABLE_COLORS=no \
+          -e MTCOLORS=auto \
+          -e ONELOG=no \
           -e LOGCOMBINE=fail \
           -e MTIMMEDIATE=no \
-          -e MTDEBUG=yes \
-          -e MTVERBOSE=yes \
-          -e MTPROGRESS=yes \
+          -e MTDEBUG=no \
+          -e MTVERBOSE=no \
+          -e MTPROGRESS=no \
           -e DISTRO=${{ env.EE_Distro }} \
           -e PROJECT=${{ env.EE_Project }} \
           -e DEVICE=${{ env.EE_Device }} \
