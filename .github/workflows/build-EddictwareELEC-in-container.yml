@@ -194,12 +194,15 @@ jobs:
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           -w /build \
-          -e DISABLE_COLORS=yes \
+          -e THREADCOUNT=75% \
+          -e DISABLE_COLORS=no \
+          -e MTCOLORS=auto \
+          -e ONELOG=no \
           -e LOGCOMBINE=fail \
           -e MTIMMEDIATE=no \
           -e MTDEBUG=no \
           -e MTVERBOSE=no \
-          -e MTPROGRESS=yes \
+          -e MTPROGRESS=no \
           -e DISTRO=${{ env.EE_Distro }} \
           -e PROJECT=${{ env.EE_Project }} \
           -e DEVICE=${{ env.EE_Device }} \
