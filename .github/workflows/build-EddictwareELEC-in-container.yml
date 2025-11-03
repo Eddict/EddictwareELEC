@@ -12,7 +12,7 @@ on:
           - jammy
           - noble
           - plucky
-        default: jammy
+        default: noble
       arch:
         description: 'Arch of build target'
         required: true
@@ -67,30 +67,30 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        echo "DistroCodeName=${DistroCodeName}"
-        echo "DistroCodeName@L=${DistroCodeName@L}"
+        # echo "DistroCodeName=${DistroCodeName}"
+        # echo "DistroCodeName@L=${DistroCodeName@L}"
         EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
         echo "EE_Distro_tag=${EE_Distro_tag}" >> $GITHUB_OUTPUT
 
-        value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "value=$value"
-        echo "Trick to echo EE_Distro_tag:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+        # value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo EE_Distro_tag:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
 
-        value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "value=$value"
-        echo "Trick to echo REGISTRY_FQDN:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+        # value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo REGISTRY_FQDN:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
 
-        value=$(printf '%s' "${{ secrets.REGISTRY_PRIVATE_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "value=$value"
-        echo "Trick to echo REGISTRY_PRIVATE_FQDN:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+        # value=$(printf '%s' "${{ secrets.REGISTRY_PRIVATE_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo REGISTRY_PRIVATE_FQDN:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
 
-        value=$(printf '%s' "${{ secrets.REGISTRY_USER }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "value=$value"
-        echo "Trick to echo REGISTRY_USER:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+        # value=$(printf '%s' "${{ secrets.REGISTRY_USER }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo REGISTRY_USER:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
       shell: bash
 
     -
@@ -109,16 +109,16 @@ jobs:
     #     username: ${{ secrets.REGISTRY_USER }}
     #     password: ${{ secrets.REGISTRY_PWD }}
     steps:
-    - name: Echo out to the logs
-      run: |
-        value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "Trick to echo output_ee_distro_tag:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
-        # echo "$value" | sed 's/./& /g'
-        value=$(printf '%s' "${{ env.EE_Registry }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        echo "Trick to echo reg_fqdn:"
-        echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
-        # echo "$value" | sed 's/./& /g'
+    # - name: Echo out to the logs
+    #   run: |
+    #     value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+    #     echo "Trick to echo output_ee_distro_tag:"
+    #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
+    #     # echo "$value" | sed 's/./& /g'
+    #     value=$(printf '%s' "${{ env.EE_Registry }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+    #     echo "Trick to echo reg_fqdn:"
+    #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
+    #     # echo "$value" | sed 's/./& /g'
 
     - name: Login to (private) Registry
       uses: docker/login-action@v3
