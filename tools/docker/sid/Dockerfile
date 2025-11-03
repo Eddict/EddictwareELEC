@@ -16,6 +16,8 @@ ENV LANG=en_US.UTF-8 \
 RUN useradd docker -U -G sudo -m -s /bin/bash \
  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
+RUN apt-cache -q policy; exit 1
+
 RUN echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/sid.list
 
 RUN apt-get update
