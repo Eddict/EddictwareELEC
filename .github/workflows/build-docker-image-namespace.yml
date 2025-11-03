@@ -32,8 +32,8 @@ run-name: ${{ format('{0} ({1}{3}/{2})', github.workflow, inputs.os, inputs.arch
 
 jobs:
   build:
-    # runs-on: ubuntu-latest # namespace-profile-default # nscloud # namespace-profile-linux-amd64-max
-    runs-on: ${{ format('namespace-profile-{0}-{1}{2}-max', inputs.os, inputs.arch, (inputs.custom_os && '-libreelec' || '')) }}
+    runs-on: namespace-profile-linux-amd64-max # ubuntu-latest # namespace-profile-default # nscloud # namespace-profile-linux-amd64-max
+    # runs-on: ${{ format('namespace-profile-{0}-{1}{2}-max', inputs.os, inputs.arch, (inputs.custom_os && '-libreelec' || '')) }}
     # runs-on: namespace-profile-${{ inputs.os }}-${{ inputs.arch }}-max
     permissions:
       id-token: write
