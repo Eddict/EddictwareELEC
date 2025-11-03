@@ -43,23 +43,16 @@ RUN apt-get install -y -q \
     curl bash bc gcc sed patch patchutils tar bzip2 gzip xz-utils zstd perl gawk gperf zip \
       unzip diffutils lzop make file g++ xfonts-utils xsltproc default-jre-headless python3 \
       libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
-      golang-1.25-go git openssh-client rsync lld-21 \
+      golang-1.25-go git openssh-client rsync \
     --no-install-recommends \
     && ln -s /usr/lib/go-1.25 /usr/lib/go \
     && ln -s /usr/lib/go-1.25/bin/go /usr/bin/go \
     && ln -s /usr/lib/go-1.25/bin/gofmt /usr/bin/gofmt
 
-RUN rm -rf /var/lib/apt/lists/*
+RUN apt-get install -y -q \
+    build-essential binutils binutils-gold lld mold ca-certificates \
+    --no-install-recommends
 
-RUN <<EOF
-  MOLD_VERSION=$(curl -s "https://api.github.com/repos/rui314/mold/releases/latest" | grep -Po '"tag_name": "v\K[0-9.]+')
-  echo "MOLD_VERSION=${MOLD_VERSION}"
-  wget -qO mold.tar.gz https://github.com/rui314/mold/releases/latest/download/mold-${MOLD_VERSION}-x86_64-linux.tar.gz
-  sudo mkdir /opt/mold
-  sudo tar xf mold.tar.gz --strip-components=1 -C /opt/mold
-  export PATH=$PATH:/opt/mold/bin
-  mold --version
-  rm -rf mold.tar.gz
-EOF
+RUN rm -rf /var/lib/apt/lists/*
 
 USER docker
