@@ -185,6 +185,10 @@ jobs:
           # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
         # run the container
         docker run --rm \
+          --cpus=$((NB_CORES+1)) \
+          --memory=12g \
+          --memory-swap=-1 \
+          --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
           --log-driver local \
           --user docker \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
