@@ -194,7 +194,6 @@ jobs:
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v $PWD:/build \
           -w /build \
-          -e THREADCOUNT=75% \
           -e DISABLE_COLORS=no \
           -e MTCOLORS=auto \
           -e ONELOG=no \
@@ -214,6 +213,7 @@ jobs:
           # --volumes-from ${{ env.DistroCodeName }}-ccache \
           # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           # --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
+          # -e THREADCOUNT=75% \
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
