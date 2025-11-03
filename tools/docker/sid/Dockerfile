@@ -13,8 +13,31 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-RUN useradd docker -U -G sudo -m -s /bin/bash \
- && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# RUN useradd docker -U -G sudo -m -s /bin/bash \
+#  && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+# ---- EF: Custom part ----
+ARG USER_UID
+ENV USER_UID=${USER_UID:-1234}
+# make sure any user/group in image do not use the UUID/GUID of the host docker user/group
+RUN <<EOF
+# https://www.kevinguay.com/posts/next-uid-gid/
+newid=$(cat /etc/group /etc/passwd | cut -d ":" -f 3 | grep "^1...$" | sort -n | tail -n 1 | awk '{ print $1+1 }')
+echo ${newid}
+# do we have a group with same GID
+if groupname=$(getent group ${USER_UID}); then
+  echo ${groupname}
+  groupmod --gid ${newid} ${groupname}
+fi
+# do we have a user with same UID
+if username=$(getent passwd ${USER_UID}); then
+  echo ${username}
+  usermod --uid ${newid} ${username}
+fi
+#groupadd --gid ${USER_UID} docker
+#useradd docker --uid ${USER_UID} --no-user-group --groups docker,sudo --create-home --shell /bin/bash
+useradd docker --uid ${USER_UID} --user-group --groups sudo --create-home --shell /bin/bash
+echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+EOF
 
 RUN apt-get install -y -q \
     curl bash bc gcc sed patch patchutils tar bzip2 gzip xz-utils zstd perl gawk gperf zip \
