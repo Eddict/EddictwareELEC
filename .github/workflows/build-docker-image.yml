@@ -13,6 +13,7 @@ on:
           - jammy
           - noble
           - plucky
+          - sid
         default: noble
   # deployment:
   push:

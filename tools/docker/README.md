@@ -7,6 +7,7 @@
   - plucky    (Ubuntu 25.04)
 - Debian
   - bookworm  (Debian 12)
+  - sid       (Debian 13?)
 
 **Build docker image**
 

@@ -12,6 +12,7 @@ on:
           - jammy
           - noble
           - plucky
+          - sid
         default: noble
 
 run-name: '${{ github.workflow }} (${{ github.event.inputs.environment }})'
