@@ -185,10 +185,10 @@ jobs:
           # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
         # run the container
         docker run --rm \
-          --cpus=$((NB_CORES+1)) \
-          --memory=12g \
-          --memory-swap=-1 \
-          --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
+          --cpus="12" \
+          --memory="12g" \
+          --memory-swap="-1" \
+          --ipc="host" \
           --log-driver local \
           --user docker \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
@@ -210,6 +210,7 @@ jobs:
           # "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
           # --volumes-from ${{ env.DistroCodeName }}-ccache \
           # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
+          # --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
