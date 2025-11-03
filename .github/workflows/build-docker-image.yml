@@ -43,8 +43,9 @@ jobs:
       id: compose-image-tag
       run: |
         dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
-        dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
+        # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
         # Use ,, to convert all characters to lowercase
+        echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
 
