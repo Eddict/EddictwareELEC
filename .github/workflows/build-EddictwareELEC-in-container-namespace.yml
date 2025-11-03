@@ -116,7 +116,7 @@ jobs:
     - name: Build ${{ env.EE_Distro }} image
       shell: bash
       run: |
-        debug=false
+        debug=true
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
 
@@ -156,23 +156,23 @@ jobs:
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
           ${{ needs.init.outputs.output_ee_distro_tag }} /bin/bash -c ' \
-          echo "whoami: $(whoami)" \
-          && echo "uid: $(id -u)" \
-          && echo "gid: $(id -g)" \
-          && echo "find .ccache" \
-          && curpwd=$(pwd) \
-          && echo "curpwd: $curpwd" \
-          && find $curpwd -type d -iname ".ccache" \
-          && echo "find .img.gz" \
-          && find $curpwd -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz" \
+          [ "$debug" = true ] && echo "whoami: $(whoami)" \
+          && [ "$debug" = true ] && echo "uid: $(id -u)" \
+          && [ "$debug" = true ] && echo "gid: $(id -g)" \
+          && [ "$debug" = true ] && echo "find .ccache" \
+          && [ "$debug" = true ] && curpwd=$(pwd) \
+          && [ "$debug" = true ] && echo "curpwd: $curpwd" \
+          && [ "$debug" = true ] && find $curpwd -type d -iname ".ccache" \
+          && [ "$debug" = true ] && echo "find .img.gz" \
+          && [ "$debug" = true ] && find $curpwd -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz" \
           && echo "run make" \
           && make -j$((NB_CORES+1)) -l${NB_CORES} image \
-          && echo "find .ccache" \
-          && find $curpwd -type d -iname ".ccache" \
-          && echo "find ccache.conf" \
-          && find $curpwd -type f -iname ccache.conf \
-          && echo "find .img.gz" \
-          && find $curpwd -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz"'
+          && [ "$debug" = true ] && echo "find .ccache" \
+          && [ "$debug" = true ] && find $curpwd -type d -iname ".ccache" \
+          && [ "$debug" = true ] && echo "find ccache.conf" \
+          && [ "$debug" = true ] && find $curpwd -type f -iname ccache.conf \
+          && [ "$debug" = true ] && echo "find .img.gz" \
+          && [ "$debug" = true ] && find $curpwd -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz"'
 
     - uses: namespace-actions/upload-artifact@v1
       with:
