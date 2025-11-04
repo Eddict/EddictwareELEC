@@ -155,6 +155,7 @@ jobs:
       run: |
         debug=true
         [ "$debug" = true ] && echo "[pwd]: $PWD"
+        [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
         # ls -al $PWD
         chown -R docker:docker $PWD
         # ls -al $PWD
@@ -195,7 +196,7 @@ jobs:
           --memory-swap="-1" \
           --ipc="host" \
           --log-driver local \
-          -v $PWD:/build \
+          -v ${{ github.workspace }}:/build \
           -w /build \
           -e DISABLE_COLORS=no \
           -e MTCOLORS=auto \
@@ -224,12 +225,12 @@ jobs:
       id: image-path
       run: |
         debug=true
-        [ "$debug" = true ] && echo "[pwd]: $PWD"
-        if [ -d $PWD/target ]; then
-          lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+        [ "$debug" = true ] && echo "[pwd]: ${{ github.workspace }}"
+        if [ -d ${{ github.workspace }}/target ]; then
+          lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
           [ "$debug" = true ] && echo "[lines]: $lines"
           if [ $lines -ne 0 ]; then
-            pathfilename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
+            pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
             [ "$debug" = true ] && echo "[EE_image_pathfilename]: $pathfilename"
             echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
             filename="${pathfilename##*/}"
