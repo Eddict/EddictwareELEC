@@ -40,7 +40,7 @@
   MOLD_SUPPORT="yes"
 
 # default linker (bfd / gold / mold)
-  DEFAULT_LINKER="gold"
+  DEFAULT_LINKER="mold"
 
 # HARDENING (security relevant linker and compiler flags) support
   HARDENING_SUPPORT="no"
@@ -83,7 +83,7 @@
   SWAP_SUPPORT="yes"
 
 # swap support enabled per default (yes / no)
-  SWAP_ENABLED_DEFAULT="no"
+  SWAP_ENABLED_DEFAULT="yes"
 
 # swapfile size if SWAP_SUPPORT=yes in MB
   SWAPFILESIZE="128"
@@ -95,7 +95,7 @@
   LOCAL_LOGIN="no"
 
 # Enable SSH on boot (yes / no)
-  SSH_ENABLED_DEFAULT="no"
+  SSH_ENABLED_DEFAULT="yes"
 
 ### KODI SETTINGS ###
 # Mediacenter to use (kodi / no)
@@ -244,7 +244,7 @@
   IR_REMOTE_KEYMAPS="rc6_mce xbox_360 xbox_one"
 
 # build and install Joystick support (yes / no)
-  JOYSTICK_SUPPORT="yes"
+  JOYSTICK_SUPPORT="no"
 
 # build and install CEC adapter support (yes / no)
   CEC_SUPPORT="yes"
@@ -253,7 +253,7 @@
   CEC_FRAMEWORK_SUPPORT="no"
 
 # OEM packages for OEM's (yes / no)
-  OEM_SUPPORT="no"
+  OEM_SUPPORT="yes"
 
 # build and install ALSA Audio support (yes / no)
   ALSA_SUPPORT="yes"
