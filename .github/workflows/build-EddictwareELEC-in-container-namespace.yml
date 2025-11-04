@@ -22,10 +22,7 @@ on:
       arch:
         description: 'Arch to run against'
         required: true
-        type: choice
-        options:
-          - amd64
-          - arm64
+        type: string
         default: amd64
   # push:
   #   branches: [ "master-entw" ]
