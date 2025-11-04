@@ -156,9 +156,6 @@ jobs:
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
           ${{ needs.init.outputs.output_ee_distro_tag }} /bin/bash -c ' \
-          echo "whoami: $(whoami)" \
-          && echo "uid: $(id -u)" \
-          && echo "gid: $(id -g)" \
           && echo "find .ccache" \
           && curpwd=$(pwd) \
           && echo "curpwd: $curpwd" \
@@ -173,6 +170,9 @@ jobs:
           && find $curpwd -type f -iname ccache.conf \
           && echo "find .img.gz" \
           && find $curpwd -maxdepth 3 -type f -iname "${{ steps.set-build-name.outputs.BUILD_NAME }}*.img.gz"'
+          # echo "whoami: $(whoami)" \
+          # && echo "uid: $(id -u)" \
+          # && echo "gid: $(id -g)" \
 
     - uses: namespace-actions/upload-artifact@v1
       with:
