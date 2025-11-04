@@ -156,7 +156,7 @@ jobs:
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
           ${{ needs.init.outputs.output_ee_distro_tag }} /bin/bash -c ' \
-          && echo "find .ccache" \
+          echo "find .ccache" \
           && curpwd=$(pwd) \
           && echo "curpwd: $curpwd" \
           && find $curpwd -type d -iname ".ccache" \
