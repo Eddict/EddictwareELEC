@@ -2,8 +2,8 @@
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="pv"
-PKG_VERSION="1.9.42"
-PKG_SHA256="fbd7d1b04efee62c8241255a3fe1c5f5236f1a6e1ed85f02730b0c6448810175"
+PKG_VERSION="1.9.44"
+PKG_SHA256="e130c9e18b1e6e9e2ef95bec6117c72cb9be27a1b8ffe97fca787e4c8e014562"
 PKG_LICENSE="GNU"
 PKG_SITE="http://www.ivarch.com/programs/pv.shtml"
 PKG_URL="http://www.ivarch.com/programs/sources/pv-${PKG_VERSION}.tar.gz"
