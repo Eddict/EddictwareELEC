@@ -12,6 +12,7 @@ on:
           - bookworm
           - jammy
           - noble
+          - noble-custom
           - plucky
           - sid
         default: noble
