@@ -54,7 +54,7 @@ RUN if [ "$(uname -m)" = "aarch64" ]; then \
  fi
 
 RUN apt-get install -y -q \
-    build-essential binutils binutils-gold lld mold ca-certificates \
+    build-essential binutils binutils-gold lld mold ca-certificates libtinyxml2-11 \
     --no-install-recommends
 
 RUN rm -rf /var/lib/apt/lists/*
