@@ -49,6 +49,10 @@ RUN apt-get install -y -q \
     && ln -s /usr/lib/go-1.25/bin/go /usr/bin/go \
     && ln -s /usr/lib/go-1.25/bin/gofmt /usr/bin/gofmt
 
+RUN if [ "$(uname -m)" = "aarch64" ]; then \
+  apt-get install -y libc6-amd64-cross qemu-user-binfmt crossbuild-essential-amd64 --no-install-recommends; \
+ fi
+
 RUN apt-get install -y -q \
     build-essential binutils binutils-gold lld mold ca-certificates \
     --no-install-recommends
