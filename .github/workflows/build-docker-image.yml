@@ -3,6 +3,14 @@ name: Build build Container
 on:
   workflow_dispatch:
     inputs:
+      runner:
+        description: 'Runner to run against'
+        required: true
+        type: choice
+        options:
+          - self-hosted
+          - github
+        default: github
       environment:
         description: 'Environment to run against'
         required: true
@@ -28,7 +36,8 @@ run-name: '${{ github.workflow }} (${{ inputs.environment }})'
 jobs:
   build:
 #    runs-on: github
-    runs-on: self-hosted
+#    runs-on: self-hosted
+    runs-on: ${{ inputs.runner }}
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
