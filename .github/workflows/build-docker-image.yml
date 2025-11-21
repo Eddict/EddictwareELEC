@@ -33,13 +33,23 @@ on:
 
 run-name: '${{ github.workflow }} (${{ inputs.environment }})'
 
+env:
+  REGISTRY: ghcr.io
+
 jobs:
   build:
     runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
-    steps:
 
+    steps:
     -
       name: Get docker guid
       id: get-docker-guid
@@ -53,18 +63,28 @@ jobs:
       run: |
         dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
+        dTag="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ github.repository }}-${{ inputs.environment }}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
       shell: bash
 
     -
-      name: Log in to (local/private) registry
+      name: Log in to registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
-        username: ${{ secrets.REGISTRY_USER }}
-        password: ${{ secrets.REGISTRY_PWD }}
+        # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
+        # username: ${{ secrets.REGISTRY_USER }}
+        # password: ${{ secrets.REGISTRY_PWD }}
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
 
     -
       name: Set up Docker Buildx
@@ -75,10 +95,10 @@ jobs:
         keep-state: true
         cleanup: false
         # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
-        buildkitd-config-inline: |
-          debug = false
-          [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}"]
-            http = false
+        # buildkitd-config-inline: |
+        #   debug = false
+        #   [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}"]
+        #     http = false
 #        buildkitd-flags: '"--progress ''plain''"'
 
     # -
@@ -91,8 +111,10 @@ jobs:
 
     -
       name: Build and export to (local/private) registry
+      id: push
       uses: docker/build-push-action@v6
       with:
+        context: .
         file: tools/docker/${{ inputs.environment }}/Dockerfile
         # outputs: type=cacheonly # build without pushing
         push: true
@@ -118,3 +140,10 @@ jobs:
     #   run: |
     #     rm -rf /tmp/.buildx-cache
     #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+    - name: Generate artifact attestation
+      uses: actions/attest-build-provenance@v3
+      with:
+        subject-name: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        subject-digest: ${{ steps.push.outputs.digest }}
+        push-to-registry: true
