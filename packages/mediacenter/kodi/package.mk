@@ -3,8 +3,8 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="kodi"
-PKG_VERSION="1ddb8c8283cc5c87bd2d61e7d350a9b3fae4c927"
-PKG_SHA256="ab33020b9a3968d224b34aafe14d8bf1965db0cf2ca0b13621cee61f4f02d378"
+PKG_VERSION="8c500d501e711f313d0d68fcb759a624f25494f8"
+PKG_SHA256="148450936185886295d9aed6517982d6f5307d03d31a378ed21bd125f2f69e44"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/xbmc/xbmc/archive/${PKG_VERSION}.tar.gz"
@@ -215,13 +215,6 @@ configure_package() {
     KODI_NEON=""
   fi
 
-  if [ "${VDPAU_SUPPORT}" = "yes" -a "${DISPLAYSERVER}" = "x11" ]; then
-    PKG_DEPENDS_TARGET+=" libvdpau"
-    KODI_VDPAU="-DENABLE_VDPAU=ON"
-  else
-    KODI_VDPAU="-DENABLE_VDPAU=OFF"
-  fi
-
   if [ "${VAAPI_SUPPORT}" = yes ]; then
     PKG_DEPENDS_TARGET+=" libva"
     KODI_VAAPI="-DENABLE_VAAPI=ON"
@@ -274,7 +267,6 @@ configure_package() {
                          ${PKG_KODI_LINKER} \
                          ${KODI_ARCH} \
                          ${KODI_NEON} \
-                         ${KODI_VDPAU} \
                          ${KODI_VAAPI} \
                          ${KODI_CEC} \
                          ${KODI_PLATFORM} \
