@@ -12,6 +12,7 @@ on:
           - jammy
           - noble
           - plucky
+          - questing
           - sid
         default: jammy
       custom_os:

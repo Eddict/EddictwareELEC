@@ -14,6 +14,7 @@ on:
           - noble
           - noble-custom
           - plucky
+          - questing
           - sid
         default: noble
   # deployment:
