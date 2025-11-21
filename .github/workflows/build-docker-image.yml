@@ -35,9 +35,7 @@ run-name: '${{ github.workflow }} (${{ inputs.environment }})'
 
 jobs:
   build:
-#    runs-on: github
-#    runs-on: self-hosted
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:
