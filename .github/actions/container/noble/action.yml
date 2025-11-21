@@ -1,0 +1,65 @@
+name: 'noble'
+inputs:
+  make-args:
+    description: 'Arguments for make command to run inside container'
+    required: false
+    default: ''
+  gh-token:
+    required: true
+  disable-colors:
+    required: true
+  logcombine:
+    required: true
+  mtimmediate:
+    required: true
+  debug:
+    required: true
+  mtdebug:
+    required: true
+  mtverbose:
+    required: true
+  mtprogress:
+    required: true
+  distro:
+    required: true
+  project:
+    required: true
+  device:
+    required: true
+  arch:
+    required: true
+  builder-name:
+    required: true
+  builder-version:
+    required: true
+  build-base:
+    required: true
+
+# https://docs.github.com/en/actions/reference/workflows-and-actions/metadata-syntax#runs-for-docker-container-actions
+runs:
+  using: 'docker'
+  image: '../../../../tools/docker/noble/Dockerfile'
+  # entrypoint: 'make'
+  entrypoint: '/bin/sh'
+  args: 
+    - '-c'
+    - 'git config --global --add safe.directory /github/workspace && make image'
+  # args: 
+  #   - ${{ inputs.make-args }}
+  env:
+    GH_TOKEN: ${{ inputs.gh-token }}
+    DISABLE_COLORS: ${{ inputs.disable-colors }}
+    LOGCOMBINE: ${{ inputs.logcombine }}
+    MTIMMEDIATE: ${{ inputs.mtimmediate }}
+    DEBUG: ${{ inputs.debug }}
+    # LOCAL_CCACHE: ${{ inputs.local-ccache }}
+    MTDEBUG: ${{ inputs.mtdebug }}
+    MTVERBOSE: ${{ inputs.mtverbose }}
+    MTPROGRESS: ${{ inputs.mtprogress }}
+    DISTRO: ${{ inputs.distro }}
+    PROJECT: ${{ inputs.project }}
+    DEVICE: ${{ inputs.device }}
+    ARCH: ${{ inputs.arch }}
+    BUILDER_NAME: ${{ inputs.builder-name }}
+    BUILDER_VERSION: ${{ inputs.builder-version }}
+    BUILD_BASE: "build.${{ inputs.build-base }}"

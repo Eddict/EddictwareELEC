@@ -1,0 +1,42 @@
+--- a/src/libcec/cmake/SetBuildInfo.cmake 2025-06-23 12:57:23.000000000 +0200
++++ b/src/libcec/cmake/SetBuildInfo.cmake 2025-11-04 01:00:00.000000000 +0100
+@@ -17,7 +17,7 @@
+   find_program(GIT_BIN git /bin /usr/bin /usr/local/bin)
+   if(GIT_BIN)
+     execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cmake/git-rev.sh OUTPUT_VARIABLE GIT_REVISION)
+-    string(STRIP ${GIT_REVISION} GIT_REVISION)
++    string(STRIP "${GIT_REVISION}" GIT_REVISION)
+     message(STATUS "git found: ${GIT_REVISION}")
+   endif()
+   if (GIT_REVISION)
+@@ -35,7 +35,7 @@
+   else()
+     if(WHOAMI_BIN)
+       execute_process(COMMAND "${WHOAMI_BIN}" OUTPUT_VARIABLE BUILD_USER)
+-      string(STRIP ${BUILD_USER} BUILD_USER)
++      string(STRIP "${BUILD_USER}" BUILD_USER)
+       set(LIB_INFO "${LIB_INFO} by ${BUILD_USER}")
+     else()
+       set(LIB_INFO "${LIB_INFO} by (unknown user)")
+@@ -52,7 +52,7 @@
+       if (RETURN_HOST)
+         execute_process(COMMAND ${HOSTNAME_BIN} OUTPUT_VARIABLE BUILD_HOST)
+       endif()
+-      string(STRIP ${BUILD_HOST} BUILD_HOST)
++      string(STRIP "${BUILD_HOST}" BUILD_HOST)
+       set(LIB_INFO "${LIB_INFO}@${BUILD_HOST}")
+     endif()
+   endif()
+@@ -63,9 +63,9 @@
+     execute_process(COMMAND "${UNAME_BIN}" -s OUTPUT_VARIABLE BUILD_SYSNAME)
+     execute_process(COMMAND "${UNAME_BIN}" -r OUTPUT_VARIABLE BUILD_SYSVER)
+     execute_process(COMMAND "${UNAME_BIN}" -m OUTPUT_VARIABLE BUILD_SYSARCH)
+-    string(STRIP ${BUILD_SYSNAME} BUILD_SYSNAME)
+-    string(STRIP ${BUILD_SYSVER} BUILD_SYSVER)
+-    string(STRIP ${BUILD_SYSARCH} BUILD_SYSARCH)
++    string(STRIP "${BUILD_SYSNAME}" BUILD_SYSNAME)
++    string(STRIP "${BUILD_SYSVER}" BUILD_SYSVER)
++    string(STRIP "${BUILD_SYSARCH}" BUILD_SYSARCH)
+ 
+     set(LIB_INFO "${LIB_INFO} on ${BUILD_SYSNAME} ${BUILD_SYSVER} (${BUILD_SYSARCH})")
+   endif()

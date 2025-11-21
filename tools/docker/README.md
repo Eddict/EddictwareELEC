@@ -7,6 +7,7 @@
   - questing  (Ubuntu 25.10)
 - Debian
   - bookworm  (Debian 12)
+  - sid       (Debian 13?)
 
 **Build docker image**
 

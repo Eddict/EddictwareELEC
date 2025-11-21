@@ -1,0 +1,36 @@
+name: Async jobs for EddictwareELEC
+
+on:
+  workflow_dispatch:
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  async-test:
+    name: Async Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Regular way to trigger another workflow
+        if: 0 == 0
+        run: |
+          gh workflow run build-eddictwareelec-in-containerX.yml
+
+      - name: Using github-script to trigger another workflow
+        uses: actions/github-script@v8
+        if: 0 == 1
+        with:
+          result-encoding: string
+          script: |
+            // const exitCode = await exec.exec('echo', ['hello'])
+            // console.log(exitCode)
+
+            const {
+              exitCode,
+              stdout,
+              stderr
+            } = await exec.getExecOutput('gh workflow run', ['build-eddictwareelec-in-containerX.yml']);
+
+            console.log(exitCode, stdout, stderr)

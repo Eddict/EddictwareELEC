@@ -1,0 +1,112 @@
+name: Build build Container
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run against'
+        required: true
+        # type: environment
+        type: choice
+        options:
+          - bookworm
+          - jammy
+          - noble
+          - noble-custom
+          - plucky
+          - sid
+        default: noble
+  # deployment:
+  push:
+    branches: [ "master-entw" ]
+    paths: &include_paths
+      - 'tools/docker/noble/Dockerfile'
+
+run-name: '${{ github.workflow }} (${{ inputs.environment }})'
+
+jobs:
+  build:
+#    runs-on: github
+    runs-on: self-hosted
+    env:
+      BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
+    steps:
+
+    -
+      name: Get docker guid
+      id: get-docker-guid
+      run: |
+        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Compose image tag
+      id: compose-image-tag
+      run: |
+        dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
+        # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
+        # Use ,, to convert all characters to lowercase
+        echo "EE_Distro_tag=${dTag,,}"
+        echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Log in to (local/private) registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PWD }}
+
+    -
+      name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        name: builder-eddictwareelec
+        version: latest
+        keep-state: true
+        cleanup: false
+        # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
+        buildkitd-config-inline: |
+          debug = false
+          [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}"]
+            http = false
+#        buildkitd-flags: '"--progress ''plain''"'
+
+    # -
+    #   name: Cache Docker layers
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: /tmp/.buildx-cache
+    #     key: ${{ runner.os }}-${{ env.DistroCodeName }}
+    #     # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
+
+    -
+      name: Build and export to (local/private) registry
+      uses: docker/build-push-action@v6
+      with:
+        file: tools/docker/${{ inputs.environment }}/Dockerfile
+        # outputs: type=cacheonly # build without pushing
+        push: true
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        # target: custom
+        no-cache: true
+        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
+        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
+        # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
+        # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
+        # cache-from: type=local,src=/tmp/.buildx-cache
+        # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+        # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
+        # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+        build-args: |
+          USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
+#          --progress=plain
+#          DOCKER_BUILDKIT=0
+
+    # - # Temp fix to prevent cache size keeps growing
+    #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
+    #   name: Move cache
+    #   run: |
+    #     rm -rf /tmp/.buildx-cache
+    #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache

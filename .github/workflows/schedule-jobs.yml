@@ -1,0 +1,147 @@
+name: Schedule jobs for EddictwareELEC
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */8 * * *'  # every 8 hours
+    - cron: '0 18 * * *' # daily at 18:00
+
+run-name: ${{ github.workflow }} (${{ github.event_name }} / ${{ github.event.schedule || 'manual' }})
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  THIS_REMOTE: 'origin'
+  UPSTREAM_REPO: 'LibreELEC/LibreELEC.tv'
+  UPSTREAM_REMOTE: 'upstream'
+  UPSTREAM_BRANCH: 'master'
+  FETCH_DEPTH: 100
+  DEBUG: true
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest #ubuntu-latest self-hosted
+    if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
+    # if: 0 == 1
+    name: Jobs to run daily
+    outputs:
+      hasRuns: ${{ steps.cleanup_runs.outputs.hasRuns }}
+    steps:
+      - name: Cleanup old workflow runs
+        id: cleanup_runs
+        run: |
+          set -euo pipefail
+          DEBUG=${DEBUG:-false}
+          curDateTime=$(date)
+          calcDateTime=$(date -d "$curDateTime - 1 day")
+          calcEpoch=$(date -d "$calcDateTime" +%s)
+
+          [ "${DEBUG:-}" ] && echo "Current date and time: $curDateTime"
+          [ "${DEBUG:-}" = true ] && echo "Calculated date and time (24 hours ago): $calcDateTime"
+          [ "${DEBUG:-}" = true ] && echo "Calculated epoch time: $calcEpoch"
+
+          jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.creat_epoch < $calc_epoch) ]'
+          # [ "$debug" = true ] && jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} | select(.id == 18605342624) ]'
+
+          jq_filter=$(echo $jq_filter | sed "s/\$calc_epoch/$calcEpoch/")
+          [ "${DEBUG:-}" = true ] && echo "Updated JQ filter: $jq_filter"
+
+          # workflowRuns=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter")
+          # for runId in $(echo $workflowRuns | jq -r '.[].id'); do
+
+          # pagination-safe: list matching run ids across pages and count lines
+          run_ids=$(gh api repos/${{ github.repository }}/actions/runs --paginate --jq "$jq_filter | .[] | .id" 2>/dev/null || true)
+          [ "${DEBUG:-}" = true ] && echo "run_ids: [$run_ids]"
+          # determine whether there are workflow runs to delete (count non-empty lines)
+          count=$(printf '%s\n' "$run_ids" | sed '/^\s*$/d' | wc -l | tr -d ' ')
+          [ "${DEBUG:-}" = true ] && echo "count: $count"
+          hasRuns=$( [ "${count:-0}" -gt 0 ] && echo true || echo false )
+          echo "hasRuns=$hasRuns" >> $GITHUB_OUTPUT
+          echo "hasRuns=$hasRuns"
+          if [ "${hasRuns:-}" = true ]; then
+            echo "Found $count workflow run(s) to delete"
+            for runId in $run_ids; do
+              echo "Deleting run $runId"
+              if gh api repos/${{ github.repository }}/actions/runs/$runId -X DELETE; then
+                echo "Deleted run $runId: success"
+              else
+                echo "Deleted run $runId: FAILED (api error)"
+              fi
+              # sleep 2s
+            done
+          fi
+          echo "Cleanup completed."
+
+
+  every-n-hours:
+    runs-on: ubuntu-latest #ubuntu-latest self-hosted
+    if: github.event.schedule == '0 */8 * * *' || github.event_name == 'workflow_dispatch'
+    # if: 0 == 1
+    needs: daily
+    name: Jobs to run every N hours
+    steps:
+      - name: Checkout repository scripts
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: ${{ env.FETCH_DEPTH }}
+
+      - name: Sync from LibreELEC master
+        id: sync_repo
+        run: |
+          set -euo pipefail
+          DEBUG=${DEBUG:-false}
+
+          remote_sha=$(git ls-remote https://github.com/${{ env.UPSTREAM_REPO }}.git refs/heads/${{ env.UPSTREAM_BRANCH }} | awk '{print substr($1,1,8)}') #  HEAD | awk '{print substr($1,1,8)} / awk '{print $1}'
+          echo "Remote sha: $remote_sha"
+          # determine whether the local repo already has the upstream sha
+          hasSHA=$(git show $remote_sha --oneline &> /dev/null && echo true || echo false)
+          echo "hasSHA=$hasSHA" >> $GITHUB_OUTPUT
+          [ "${DEBUG:-}" = true ] && echo "hasSHA=$hasSHA"
+          if [ "${hasSHA:-}" = true ]; then
+            echo "Already up to date with ${{ env.UPSTREAM_REPO }}"
+            exit 0
+          else
+            echo "Not up to date with ${{ env.UPSTREAM_REPO }}, syncing..."
+            last_sha=$(git rev-parse --short @)
+            echo "Current sha: $last_sha"
+            if gh repo sync ${{ github.repository }} -b ${{ github.event.repository.default_branch }}; then
+              # new_sha=$(git rev-parse --short @)
+              echo "gh repo sync successful"
+              # git config --global user.name '${{ github.repository_owner }}'
+              # git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
+              # git remote add -t ${{ env.UPSTREAM_BRANCH }} --tags ${{ env.UPSTREAM_REMOTE }} 'https://github.com/${{ env.UPSTREAM_REPO }}.git'
+              # git remote set-url --push ${{ env.UPSTREAM_REMOTE }} NO_PUSH
+              # git fetch --depth ${{ env.FETCH_DEPTH }} ${{ env.UPSTREAM_REMOTE }}
+              # git checkout -B ${{ github.event.repository.default_branch }} ${{ env.THIS_REMOTE }}/${{ github.event.repository.default_branch }}
+              # git merge --no-edit ${{ env.UPSTREAM_REMOTE }}/${{ env.UPSTREAM_BRANCH }}
+              # git push ${{ env.THIS_REMOTE }} ${{ github.event.repository.default_branch }} #--follow-tags
+              # # git push ${{ env.THIS_REMOTE }} --tags
+
+              gh workflow run build-eddictwareelec-in-containerX.yml
+            else
+              echo "gh repo sync failed"
+              # exit 1
+            fi
+          fi
+        shell: bash
+
+      # - id: setup_node
+      #   name: Setup Node.js
+      #   # Use a single expression and explicit string comparisons so GitHub evaluates booleans
+      #   # correctly. Avoid using multiple ${{ }} blocks which can produce a non-empty string
+      #   # (e.g. "true && false") that is treated as truthy.
+      #   # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+      #   if: 0 == 1
+      #   uses: actions/setup-node@v6
+      #   with:
+      #     node-version: 24
+      #   # env:
+      #   #   NODE_OPTIONS: --trace-deprecation
+
+      # - id: delete_workflow_run
+      #   name: Delete workflow run
+      #   # if: ${{ steps.sync_repo.outputs.hasSHA == 'true' && needs.daily.outputs.hasRuns != 'true' }}
+      #   if: 0 == 1
+      #   env:
+      #     GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+      #   uses: ./.github/actions/composite/delete-workflow-runs

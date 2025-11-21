@@ -18,6 +18,11 @@ if [ "${NANO_EDITOR}" = "yes" ]; then
   PKG_DEPENDS_TARGET+=" nano"
 fi
 
+# Entware package manager
+if [ "${ENTWARE_SUPPORT}" = "yes" ]; then
+  PKG_DEPENDS_TARGET+=" opkg"
+fi
+
 if [ "${TARGET_ARCH}" = "x86_64" ]; then
   PKG_DEPENDS_TARGET+=" pciutils"
 fi

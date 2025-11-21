@@ -1,0 +1,62 @@
+# https://dev.to/abiwinanda/github-action-adding-post-steps-in-composite-actions-5ak3
+# https://github.com/pyTooling/Actions/blob/dev/with-post-step/action.yml
+name: Delete workflow run
+description: "Delete this workflow run"
+runs:
+  using: "composite"
+  steps:
+    - id: install_deps
+      name: Install JS action dependencies
+      run: |
+        echo "Installing JS action dependencies for with-post-step"
+        # Use `npm ci` for reproducible installs when a lockfile exists. Fall back to `npm install` otherwise.
+        if [ -f ./.github/actions/javascript/with-post-step/package-lock.json ]; then
+          npm ci --prefix ./.github/actions/javascript/with-post-step --no-fund --no-audit
+        else
+          npm install --prefix ./.github/actions/javascript/with-post-step --no-fund --no-audit
+        fi
+      shell: bash
+      working-directory: ${{ github.workspace }}
+
+    - id: cache_node_modules
+      name: Cache action node modules
+      uses: actions/cache@v4
+      with:
+        path: ./.github/actions/javascript/with-post-step/node_modules
+        key: ${{ runner.os }}-with-post-step-${{ hashFiles('.github/actions/javascript/with-post-step/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-with-post-step-
+
+    - id: run_js_action
+      name: Delete workflow run
+      uses: ./.github/actions/javascript/with-post-step
+      with:
+        # Call the executable scripts directly; scripts include a shebang and are executable in git.
+        # main: './.github/actions/javascript/with-post-step/main.js'
+        # post: './.github/actions/javascript/with-post-step/post.js'
+
+        # IMPORTANT: do NOT pass the action's own main file as the `main` input — that causes
+        # the action to spawn itself and creates an infinite loop (seen in CI logs as repeated
+        # `key: INPOST`/`INPOST` lines). Provide a real command or script for `main` and `post`.
+        # For safety we pass no-op placeholders here; replace these with the intended commands.
+        main: './.github/actions/scripts/delete-workflow-run.sh'
+        post: './.github/actions/javascript/with-post-step/post.js'
+        key: INPOST # will be converted to capitals
+
+    - id: collect_outputs
+      name: Collect action outputs
+      run: |
+        set -euo pipefail
+        out_file=.github/actions/javascript/with-post-step/action_output.env
+        if [ -f "$out_file" ]; then
+          # append the env-style file lines to GITHUB_OUTPUT so the composite action exposes outputs
+          while IFS= read -r line; do
+            # skip empty lines
+            [ -z "$line" ] && continue
+            echo "$line" >> $GITHUB_OUTPUT
+          done < "$out_file"
+        else
+          echo "run_deleted=false" >> $GITHUB_OUTPUT
+          echo "run_id=" >> $GITHUB_OUTPUT
+        fi
+      shell: bash

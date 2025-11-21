@@ -1,0 +1,38 @@
+name: Init-Env-Vars
+description: 'Initialize environment variables'
+outputs:
+  output_set_builder_version:
+    value: ${{ steps.set-builder-version.outputs.BUILDER_VERSION }}
+  output_get_pwd:
+    value: ${{ steps.get-pwd.outputs.curdir }}
+  output_get_cpu_info:
+    value: ${{ steps.get-cpu-info.outputs.NB_CORES }}
+runs:
+  using: "composite"
+  steps:
+    - name: Set BUILDER_VERSION
+      id: set-builder-version
+      shell: bash
+      run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" | sudo tee -a $GITHUB_OUTPUT
+
+    - name: Get current directory
+      id: get-pwd
+      shell: bash
+      run: echo "curdir=$PWD" | sudo tee -a $GITHUB_OUTPUT
+
+    - name: Get Date
+      id: get-date
+      shell: bash
+      run: |
+        # echo "[date]: $(/bin/date -u "+%Y%m%d")"
+        echo "date=$(/bin/date -u "+%Y%m%d")" | sudo tee -a $GITHUB_OUTPUT
+
+    - name: Get CPU info
+      id: get-cpu-info
+      shell: bash
+      run: echo "NB_CORES=$(grep -c '^processor' /proc/cpuinfo)" | sudo tee -a $GITHUB_OUTPUT
+
+    # - name: Set DistroCodeName
+    #   id: set-distro-codename
+    #   shell: bash
+    #   run: echo "DistroCodeName=${{ env.DistroCodeName }}" | sudo tee -a $GITHUB_OUTPUT

@@ -1,0 +1,268 @@
+name: Build image in container
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'OS of build container'
+        required: true
+        type: choice
+        options:
+          - bookworm
+          - jammy
+          - noble
+          - noble-custom
+          - plucky
+          - sid
+        default: noble
+      arch:
+        description: 'Arch of build target'
+        required: true
+        type: choice
+        options:
+          - amd64
+          - aarch64
+          - arm
+          - x86_64
+        default: aarch64
+
+run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
+
+env:
+  DistroCodeName: ${{ github.event.inputs.os }}
+  EE_Distro: EddictwareELEC
+  EE_Project: RPi
+  EE_Device: RPi4
+  EE_Arch: ${{ github.event.inputs.arch }}
+  EE_image_pathfilename: ""
+  EE_image_filename: ""
+  EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
+
+jobs:
+  init:
+#    runs-on: github
+    runs-on: self-hosted
+    if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
+      # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
+    env:
+      BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
+    # Expose step outputs as job outputs
+    outputs:
+      output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+    steps:
+    -
+      name: Get Date
+      id: get-date
+      run: |
+        # echo "[date]: $(/bin/date -u "+%Y%m%d")"
+        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Get docker guid
+      id: get-docker-guid
+      run: |
+        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    -
+      name: Compose image tag
+      id: compose-image-tag
+      run: |
+        # echo "DistroCodeName=${DistroCodeName}"
+        # echo "DistroCodeName@L=${DistroCodeName@L}"
+        # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
+        # echo "EE_Distro_tag=${EE_Distro_tag}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_tag=${{ env.EE_Registry }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+
+        # value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo EE_Distro_tag:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+
+        # value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo REGISTRY_FQDN:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+
+        # value=$(printf '%s' "${{ secrets.REGISTRY_PRIVATE_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo REGISTRY_PRIVATE_FQDN:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+
+        # value=$(printf '%s' "${{ secrets.REGISTRY_USER }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+        # echo "value=$value"
+        # echo "Trick to echo REGISTRY_USER:"
+        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
+      shell: bash
+
+    -
+      name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
+        clean: false
+
+  build:
+#    runs-on: github
+    runs-on: self-hosted
+    needs: init
+    # container:
+    #   image: ${{ needs.init.outputs.output_ee_distro_tag }}
+    #   credentials:
+    #     username: ${{ secrets.REGISTRY_USER }}
+    #     password: ${{ secrets.REGISTRY_PWD }}
+    steps:
+    # - name: Echo out to the logs
+    #   run: |
+    #     value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+    #     echo "Trick to echo output_ee_distro_tag:"
+    #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
+    #     # echo "$value" | sed 's/./& /g'
+    #     value=$(printf '%s' "${{ env.EE_Registry }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
+    #     echo "Trick to echo reg_fqdn:"
+    #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
+    #     # echo "$value" | sed 's/./& /g'
+
+    - name: Login to (private) Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.EE_Registry }} #"https://${{ secrets.REGISTRY_FQDN }}:5000"
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PWD }}
+
+    # -
+    #   name: Compose image tag
+    #   id: compose-image-tag
+    #   run: |
+    #     echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+    #   shell: bash
+
+    # -
+    #   name: Cache Docker layers
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: /tmp/.buildx-cache-2
+    #     key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}--${{ github.ref_sha }}
+    #     restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
+
+    # - uses: docker://${{ needs.init.outputs.output_ee_distro_tag }}:latest       
+    # - uses: docker://ghcr.io/<my-org>/<some-private-repo>/<some-private-image>:<tag>        
+
+    -
+      name: Build ${{ env.EE_Distro }} image
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        debug=true
+        [ "$debug" = true ] && echo "[pwd]: $PWD"
+        [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
+        # ls -al $PWD
+        chown -R docker:docker $PWD
+        # ls -al $PWD
+        # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
+        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        #     # cleanup
+        #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
+        # fi
+        # set some build performance flags
+        NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
+        [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
+
+        # pull the image
+        docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ env.EE_Registry }}
+        docker --debug image pull "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}"
+        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+            # cleanup
+            docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
+        fi
+
+        # docker volume create ${{ env.DistroCodeName }}-ccache
+        # docker create \
+        #   --name "${{ env.DistroCodeName }}-ccache" \
+        #   -v ${{ env.DistroCodeName }}-ccache:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
+        #   debian
+          # run: echo "BUILD_NAME=${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}" >> $GITHUB_OUTPUT
+          # ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.ccache
+          # ${{ github.workspace }}/build.${{ steps.set-build-name.outputs.BUILD_NAME }}-13.0-devel/.stamps
+          # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
+          # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
+        # run the container
+        docker run --rm \
+          --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
+          --user docker \
+          --cpus="12" \
+          --memory="12g" \
+          --memory-swap="-1" \
+          --ipc="host" \
+          --log-driver local \
+          -v ${{ github.workspace }}:/build \
+          -w /build \
+          -e DISABLE_COLORS=no \
+          -e MTCOLORS=auto \
+          -e ONELOG=no \
+          -e LOGCOMBINE=fail \
+          -e MTIMMEDIATE=no \
+          -e MTDEBUG=no \
+          -e MTVERBOSE=no \
+          -e MTPROGRESS=no \
+          -e DISTRO=${{ env.EE_Distro }} \
+          -e PROJECT=${{ env.EE_Project }} \
+          -e DEVICE=${{ env.EE_Device }} \
+          -e ARCH=${{ env.EE_Arch }} \
+          -e BUILDER_NAME=Eddict \
+          -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
+          "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          # "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          # --volumes-from ${{ env.DistroCodeName }}-ccache \
+          # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
+          # --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
+          # -e THREADCOUNT=75% \
+          # --user docker \
+
+    -
+      name: Copy built ${{ env.EE_Distro }} image to archive
+      id: image-path
+      run: |
+        debug=true
+        [ "$debug" = true ] && echo "[pwd]: ${{ github.workspace }}"
+        if [ -d ${{ github.workspace }}/target ]; then
+          lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+          [ "$debug" = true ] && echo "[lines]: $lines"
+          if [ $lines -ne 0 ]; then
+            pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
+            [ "$debug" = true ] && echo "[EE_image_pathfilename]: $pathfilename"
+            echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
+            filename="${pathfilename##*/}"
+            [ "$debug" = true ] && echo "[EE_image_filename]: $filename"
+            echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
+            if [ ! -d /root/target_archive ]; then
+              mkdir --parents "/root/target_archive"
+            fi
+            if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older
+              echo "Copied built image to /root/target_archive"
+            else
+              echo "No newer built image to copy to /root/target_archive"
+            fi
+          else
+            echo "No built image found in target directory, skipping copy."
+          fi
+        else
+          echo "No target directory found, skipping copy of built image."
+        fi
+
+    - name: Upload built ${{ env.EE_Distro }} image
+      if: steps.image-path.outputs.EE_image_pathfilename != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{ steps.image-path.outputs.EE_image_filename }}"
+        path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
+
+    # - # Temp fix to prevent cache size keeps growing
+    #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
+    #   name: Move cache
+    #   run: |
+    #     rm -rf /tmp/.buildx-cache-2
+    #     mv /tmp/.buildx-cache-2-new /tmp/.buildx-cache-2
+ 

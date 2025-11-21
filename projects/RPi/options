@@ -85,3 +85,8 @@
 
   # debug tty path
     DEBUG_TTY="/dev/console"
+
+  ### ADDITIONAL PROGRAMS / FUNCTIONS ###
+
+  # build with Entware support (yes / no)
+    ENTWARE_SUPPORT="yes"

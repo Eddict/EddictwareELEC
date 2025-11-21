@@ -1,0 +1,14 @@
+{
+  "name": "with-post-step",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Helper action to run a main command and register a post-step",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.0.0"
+  }
+}

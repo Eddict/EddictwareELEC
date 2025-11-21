@@ -74,8 +74,15 @@ fi
 
 # main
 # process files in SOURCES
-for SOURCE_PACKAGE in $(find "${SOURCES}/" -mindepth 1 -type d); do
-  PACKAGE_NAME=$(basename "${SOURCE_PACKAGE}")
+# for SOURCE_PACKAGE in $(find "${SOURCES}/" -mindepth 1 -type d); do
+#   PACKAGE_NAME=$(basename "${SOURCE_PACKAGE}")
+
+total=$(find "${SOURCES}/" -mindepth 1 -type d | wc -l)
+i=0
+find "${SOURCES}/" -mindepth 1 -type d | while IFS= read -r SOURCE_PACKAGE; do
+  i=$((i+1))
+  PACKAGE_NAME=$(basename "$SOURCE_PACKAGE")
+  printf '[%d/%d] Checking %s\n' "$i" "$total" "$PACKAGE_NAME"
 
   # check if package is still in the tree to selectively prune, or delete the dir
   PACKAGE_DIR=$(get_pkg_directory "${PACKAGE_NAME}" || true)
