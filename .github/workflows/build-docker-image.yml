@@ -85,8 +85,8 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-        tags: |
-          ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        # tags: |
+        #   ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
         #   type=ref,event=branch
         #   type=ref,event=pr
         #   type=semver,pattern={{version}}
@@ -127,8 +127,8 @@ jobs:
         file: "./tools/docker/${{ inputs.environment }}/Dockerfile"
         # outputs: type=cacheonly # build without pushing
         push: true
-        # tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
-        tags: ${{ steps.meta.outputs.tags }}
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        # tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         # target: custom
         no-cache: false
