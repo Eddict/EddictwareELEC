@@ -85,7 +85,8 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-        # tags: |
+        tags: |
+          ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
         #   type=ref,event=branch
         #   type=ref,event=pr
         #   type=semver,pattern={{version}}
