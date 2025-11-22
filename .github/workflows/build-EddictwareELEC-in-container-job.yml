@@ -126,6 +126,8 @@ jobs:
       id: set-multi
       shell: bash
       run: |
+        echo "PWD before set_multi: $PWD"
+        ls -al $PWD
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
@@ -136,6 +138,13 @@ jobs:
         clean: true # otherwise .ccache subfolder gets deleted
         show-progress: false
         set-safe-directory: true # this is the default, but just to be sure
+
+    - name: Echo PWD
+      id: echo-pwd
+      shell: bash
+      run: |
+        echo "PWD before set_multi: $PWD"
+        ls -al $PWD
 
   repo-vars:
     name: Repo-vars
