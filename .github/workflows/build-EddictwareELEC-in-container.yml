@@ -91,7 +91,7 @@ jobs:
         # echo "EE_Distro_tag=${EE_Distro_tag}" >> $GITHUB_OUTPUT
         dTag="EE_Distro_tag=${{ env.EE_Registry }}/eddict/${{ env.EE_Distro }}-${DistroCodeName@L}"
         # Use ,, to convert all characters to lowercase
-        # echo "EE_Distro_tag=${dTag,,}"
+        echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
 
         # value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
