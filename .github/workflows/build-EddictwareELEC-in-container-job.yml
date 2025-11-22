@@ -231,7 +231,7 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         context: workflow
-        images: name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}",enable=true
+        images: name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }},enable=true
         # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
         tags: type=raw,value=latest
         # flavor: latest=true
