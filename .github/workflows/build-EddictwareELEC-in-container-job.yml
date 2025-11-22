@@ -153,12 +153,21 @@ jobs:
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       EE_Test: ${{ steps.env-test.outputs.EE_Test }}
     steps:
-    # - name: Initialize environment
-    #   id: set-multi
-    #   shell: bash
-    #   run: |
-    #     .github/actions/scripts/set_multi.sh ${{ runner.temp }}
-    #     .github/actions/scripts/set_multi.sh
+    - name: Checkout repository scripts
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.repository.default_branch }}
+        clean: false # otherwise .ccache subfolder gets deleted
+        show-progress: true
+        set-safe-directory: true # this is the default, but just to be sure
+        sparse-checkout: .github/actions/scripts
+
+    - name: Initialize environment
+      id: set-multi
+      shell: bash
+      run: |
+        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
+        .github/actions/scripts/set_multi.sh
 
     - uses: ./.github/actions/composite/init-env-vars
       id: get-env-vars
