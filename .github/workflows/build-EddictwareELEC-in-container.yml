@@ -176,7 +176,7 @@ jobs:
         [ "$debug" = true ] && echo "[pwd]: $PWD"
         [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
         # ls -al $PWD
-        chown -R docker:docker $PWD
+        # chown -R docker:docker $PWD
         # ls -al $PWD
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -209,12 +209,6 @@ jobs:
         # run the container
         docker run --rm \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
-          --user docker \
-          --cpus="12" \
-          --memory="12g" \
-          --memory-swap="-1" \
-          --ipc="host" \
-          --log-driver local \
           -v ${{ github.workspace }}:/build \
           -w /build \
           -e DISABLE_COLORS=no \
@@ -238,6 +232,12 @@ jobs:
           # --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
           # -e THREADCOUNT=75% \
           # --user docker \
+          # --user docker \
+          # --cpus="12" \
+          # --memory="12g" \
+          # --memory-swap="-1" \
+          # --ipc="host" \
+          # --log-driver local \
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
