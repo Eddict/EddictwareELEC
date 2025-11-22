@@ -107,6 +107,12 @@ jobs:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
+    outputs:
+      output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}
+      output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
+      output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
+      output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      EE_Test: ${{ steps.env-test.outputs.EE_Test }}
     steps:
     - name: Checkout repository scripts
       uses: actions/checkout@v5
@@ -127,8 +133,6 @@ jobs:
       id: set-multi
       shell: bash
       run: |
-        echo "PWD before set_multi: $PWD"
-        ls -al $PWD
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
@@ -147,54 +151,6 @@ jobs:
       run: |
         echo "PWD before set_multi: $PWD"
         ls -al $PWD
-
-  repo-vars:
-    name: Repo-vars
-    needs:
-      - runner
-      - pre-build
-    runs-on: ${{ needs.runner.outputs.runner }}
-    permissions:
-      contents: read
-      packages: read
-      attestations: read
-      id-token: write
-      actions: write
-    env:
-      GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
-      HOME: ""
-    outputs:
-      output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}
-      output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
-      output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
-      output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-      EE_Test: ${{ steps.env-test.outputs.EE_Test }}
-    steps:
-    # - name: Checkout repository scripts
-    #   uses: actions/checkout@v5
-    #   with:
-    #     ref: ${{ github.event.repository.default_branch }}
-    #     clean: false # otherwise .ccache subfolder gets deleted
-    #     show-progress: true
-    #     set-safe-directory: true # this is the default, but just to be sure
-    #     sparse-checkout: .github/actions/scripts
-
-    - name: Initialize environment
-      id: set-multi
-      shell: bash
-      run: |
-        echo "PWD before set_multi: $PWD"
-        ls -al $PWD
-        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
-        .github/actions/scripts/set_multi.sh
-
-    # - name: Checkout repository
-    #   uses: actions/checkout@v5
-    #   with:
-    #     ref: 'master-entw'
-    #     clean: false # otherwise .ccache subfolder gets deleted
-    #     show-progress: false
-    #     set-safe-directory: true # this is the default, but just to be sure
 
     - uses: ./.github/actions/composite/init-env-vars
       id: get-env-vars
@@ -231,7 +187,7 @@ jobs:
         echo "EE_Test=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g' | tr '[:upper:]' '[:lower:]')" | sudo tee -a $GITHUB_OUTPUT
         # echo "EE_Distro_tag: $EE_Distro_tag"
         # echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
-        # echo "EE_Distro_tag3: ${{ needs.repo-vars.outputs.output_get_distro_tag }}"
+        # echo "EE_Distro_tag3: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
         # exit 1
     - name: Get EE_Test
       env:
@@ -246,8 +202,8 @@ jobs:
   repo-login:
     name: Repo-login
     needs:
-      - runner 
-      - repo-vars
+      - runner
+      - pre-build
     runs-on: ${{ needs.runner.outputs.runner }}
     permissions:
       actions: write
@@ -300,7 +256,7 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         context: workflow
-        images: name=${{ needs.repo-vars.outputs.output_get_distro_tag }},enable=true
+        images: name=${{ needs.pre-build.outputs.output_get_distro_tag }},enable=true
         # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
         tags: type=raw,value=latest
         # flavor: latest=true
@@ -318,8 +274,8 @@ jobs:
       id: prepare-build-dir
       shell: bash
       env:
-        EE_DT: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
-        EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}
+        EE_DT: ${{ needs.pre-build.outputs.output_get_distro_tag }}
+        EE_Test: ${{ needs.pre-build.outputs.EE_Test }}
       run: |
         echo "EE_DT: ${EE_DT}"
         echo "EE_Test: ${EE_Test}"
@@ -343,16 +299,16 @@ jobs:
       id-token: write
     needs:
       - runner
-      - repo-vars
+      - pre-build
       - repo-login
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
-      BUILDER_VERSION: ${{ needs.repo-vars.outputs.output_set_builder_version }}
-      EE_Distro_tag: ${{ needs.repo-vars.outputs.EE_Test }}
-      EE_DT: ${{ needs.repo-vars.outputs.output_get_distro_tag }}
-      EE_Test: ${{ needs.repo-vars.outputs.EE_Test }}
-      NB_CORES: ${{ needs.repo-vars.outputs.output_get_cpu_info }}
+      BUILDER_VERSION: ${{ needs.pre-build.outputs.output_set_builder_version }}
+      EE_Distro_tag: ${{ needs.pre-build.outputs.EE_Test }}
+      EE_DT: ${{ needs.pre-build.outputs.output_get_distro_tag }}
+      EE_Test: ${{ needs.pre-build.outputs.EE_Test }}
+      NB_CORES: ${{ needs.pre-build.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
       image: edregistry.main.eddict.nl/noble
@@ -383,7 +339,7 @@ jobs:
         BUILDER_VERSION: ${{ env.BUILDER_VERSION }}
         BUILD_BASE: "build.${{ env.DistroCodeName }}"
       volumes:
-        - ${{ needs.repo-vars.outputs.output_get_pwd }}:/build:rw
+        - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
     steps:
     - name: Initialize environment
       id: set-multi
