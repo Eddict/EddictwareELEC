@@ -113,6 +113,7 @@ jobs:
       output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       EE_Test: ${{ steps.env-test.outputs.EE_Test }}
+      output_meta_tags: ${{ steps.meta.outputs.tags }}
     steps:
     - name: Checkout repository scripts
       uses: actions/checkout@v5
@@ -198,32 +199,6 @@ jobs:
         echo "The selected EE_DT is ${EE_DT}"
         echo "The selected EE_Test is ${EE_Test}"
 
-
-  repo-login:
-    name: Repo-login
-    needs:
-      - runner
-      - pre-build
-    runs-on: ${{ needs.runner.outputs.runner }}
-    permissions:
-      actions: write
-      contents: read
-      packages: read
-      attestations: read
-      id-token: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      HOME: ""
-    outputs:
-      output_meta_tags: ${{ steps.meta.outputs.tags }}
-    steps:
-    - name: Initialize environment
-      id: set-multi
-      shell: bash
-      run: |
-        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
-        .github/actions/scripts/set_multi.sh
-
     # - name: OAuth2 token retrieval
     #   id: oauth-token
     #   uses: ./.github/actions/composite/oauth-token-retrieval
@@ -256,7 +231,7 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         context: workflow
-        images: name=${{ needs.pre-build.outputs.output_get_distro_tag }},enable=true
+        images: name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}",enable=true
         # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
         tags: type=raw,value=latest
         # flavor: latest=true
@@ -274,8 +249,8 @@ jobs:
       id: prepare-build-dir
       shell: bash
       env:
-        EE_DT: ${{ needs.pre-build.outputs.output_get_distro_tag }}
-        EE_Test: ${{ needs.pre-build.outputs.EE_Test }}
+        EE_DT: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        EE_Test: ${{ steps.compose-image-tag.outputs.EE_Test }}
       run: |
         echo "EE_DT: ${EE_DT}"
         echo "EE_Test: ${EE_Test}"
@@ -300,7 +275,6 @@ jobs:
     needs:
       - runner
       - pre-build
-      - repo-login
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
