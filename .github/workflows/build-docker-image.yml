@@ -114,8 +114,8 @@ jobs:
       id: push
       uses: docker/build-push-action@v6
       with:
-        context: .
-        file: tools/docker/${{ inputs.environment }}/Dockerfile
+        # context: "{{defaultContext}}:mysubdir"
+        file: "./tools/docker/${{ inputs.environment }}/Dockerfile"
         # outputs: type=cacheonly # build without pushing
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
