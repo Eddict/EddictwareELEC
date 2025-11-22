@@ -43,6 +43,7 @@ projects/**/*.old
 build.log
 
 # ignore (temp) backup files
+.github/_backup
 .github/workflows/**/*.bak
 .github/copilot-instructions.md
 
