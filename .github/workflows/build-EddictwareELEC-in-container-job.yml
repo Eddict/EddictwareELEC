@@ -197,6 +197,15 @@ jobs:
       id: prepare-build-dir
       shell: bash
       run: |
+        echo "whoami: $(whoami)"
+        echo "uid: $(id -u)"
+        echo "gid: $(id -g)"
+        cat /etc/passwd | grep docker || echo "docker user not found"
+        cat /etc/group | grep docker || echo "docker group not found"
+        echo "/etc/passwd"
+        cat /etc/passwd 
+        echo "/etc/group"
+        cat /etc/group
         echo "EE_Distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
         echo "curdir: $PWD"
         chown -R docker:docker $PWD
