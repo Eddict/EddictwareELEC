@@ -85,6 +85,13 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+        labels: |
+          org.opencontainers.image.source=https://github.com/Eddict/EddictwareELEC
 
     -
       name: Set up Docker Buildx
@@ -118,7 +125,9 @@ jobs:
         file: "./tools/docker/${{ inputs.environment }}/Dockerfile"
         # outputs: type=cacheonly # build without pushing
         push: true
-        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        # tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
         # target: custom
         no-cache: false
         # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
