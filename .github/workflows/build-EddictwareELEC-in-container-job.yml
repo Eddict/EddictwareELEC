@@ -142,8 +142,11 @@ jobs:
       - pre-build
     runs-on: ${{ needs.runner.outputs.runner }}
     permissions:
-      contents: read
       actions: write
+      contents: read
+      packages: read
+      attestations: read
+      id-token: write
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       HOME: ""
