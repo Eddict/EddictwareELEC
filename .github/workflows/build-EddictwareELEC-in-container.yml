@@ -84,11 +84,15 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
+        # ghcr.io/eddict/eddictwareelec-questing:latest
         # echo "DistroCodeName=${DistroCodeName}"
         # echo "DistroCodeName@L=${DistroCodeName@L}"
         # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
         # echo "EE_Distro_tag=${EE_Distro_tag}" >> $GITHUB_OUTPUT
-        echo "EE_Distro_tag=${{ env.EE_Registry }}/eddict/${DistroCodeName@L}" >> $GITHUB_OUTPUT
+        dTag="EE_Distro_tag=${{ env.EE_Registry }}/eddict/${{ env.EE_Distro }}-${DistroCodeName@L}"
+        # Use ,, to convert all characters to lowercase
+        # echo "EE_Distro_tag=${dTag,,}"
+        echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
 
         # value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
         # echo "value=$value"
@@ -225,7 +229,7 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
           # "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
           # --volumes-from ${{ env.DistroCodeName }}-ccache \
           # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
