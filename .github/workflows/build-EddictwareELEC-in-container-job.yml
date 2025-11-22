@@ -198,17 +198,17 @@ jobs:
       shell: bash
       run: |
         echo "whoami: $(whoami)"
-        echo "uid: $(id -u)"
-        echo "gid: $(id -g)"
-        cat /etc/passwd | grep docker || echo "docker user not found"
-        cat /etc/group | grep docker || echo "docker group not found"
-        echo "/etc/passwd"
-        cat /etc/passwd 
-        echo "/etc/group"
-        cat /etc/group
+        # echo "uid: $(id -u)"
+        # echo "gid: $(id -g)"
+        # cat /etc/passwd | grep docker || echo "docker user not found"
+        # cat /etc/group | grep docker || echo "docker group not found"
+        # echo "/etc/passwd"
+        # cat /etc/passwd 
+        # echo "/etc/group"
+        # cat /etc/group
         echo "EE_Distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
         echo "curdir: $PWD"
-        chown -R docker:docker $PWD
+        # chown -R $(whoami):docker $PWD
 
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
