@@ -112,7 +112,6 @@ jobs:
       output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
       output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-      EE_Test: ${{ steps.env-test.outputs.EE_Test }}
       output_meta_tags: ${{ steps.meta.outputs.tags }}
     steps:
     - name: Checkout repository scripts
@@ -163,49 +162,10 @@ jobs:
       id: compose-image-tag
       shell: bash
       run: |
-        fqdn=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g')
-        dTag="$fqdn/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
         dTag="${{ env.EE_Registry }}/eddict/${{ env.EE_Distro }}-${DistroCodeName@L}:latest"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
         # run: echo "backend_image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
-
-      # # var1=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g')
-      #   # echo "spaced: $var1"
-      #   x=$(echo "${{ github.event.repository.full_name }}" | sed 's/./& /g' | sed 's/ //g')
-      #   echo "repository_fullname: $x"
-      #   exit 1
-      #   # unspaced=$(echo "$var1" | tr -d ' ')
-      #   unspaced=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g')
-      #   # echo "::add-mask::$unspaced"
-      #   echo "unspaced: $unspaced" # | sudo tee -a $GITHUB
-      #   exit 1
-
-    - name: Test
-      id: env-test
-      shell: bash
-      run: |
-        echo "EE_Test=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g' | tr '[:upper:]' '[:lower:]')" | sudo tee -a $GITHUB_OUTPUT
-        # echo "EE_Distro_tag: $EE_Distro_tag"
-        # echo "EE_Distro_tag2: ${{ env.EE_Distro_tag }}"
-        # echo "EE_Distro_tag3: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
-        # exit 1
-    - name: Get EE_Test
-      env:
-        EE_DT: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-        EE_Test: ${{ steps.env-test.outputs.EE_Test }}
-      shell: bash
-      run: |
-        echo "The selected EE_DT is ${EE_DT}"
-        echo "The selected EE_Test is ${EE_Test}"
-
-    # - name: OAuth2 token retrieval
-    #   id: oauth-token
-    #   uses: ./.github/actions/composite/oauth-token-retrieval
-    #   with:
-    #     registry-fqdn: ${{ secrets.REGISTRY_FQDN }}
-    #     registry-user: ${{ secrets.REGISTRY_USER }}
-    #     registry-pwd: ${{ secrets.REGISTRY_PWD }}
 
     - name: Login to (private) Registry
       uses: docker/login-action@v3
@@ -213,18 +173,6 @@ jobs:
         registry: ${{ env.EE_Registry }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-        # registry: ${{ secrets.REGISTRY_FQDN }} #"https://${{ secrets.REGISTRY_FQDN }}:5000"
-        # username: ${{ secrets.REGISTRY_USER }}
-        # password: ${{ secrets.REGISTRY_PWD }}
-        # registry-auth: |
-        #   # - username: ${{ vars.DOCKERHUB_USERNAME }}
-        #   #   password: ${{ secrets.DOCKERHUB_TOKEN }}
-        #   # - registry: ghcr.io
-        #   #   username: ${{ github.actor }}
-        #   #   password: ${{ secrets.GITHUB_TOKEN }}
-        #   - registry: ${{ secrets.REGISTRY_FQDN }}
-        #     username: ${{ secrets.REGISTRY_USER }}
-        #     password: ${{ secrets.REGISTRY_PWD }}
 
     - name: Extract Docker metadata
       id: meta
@@ -248,12 +196,8 @@ jobs:
     - name: Prepare build directory
       id: prepare-build-dir
       shell: bash
-      env:
-        EE_DT: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-        EE_Test: ${{ steps.compose-image-tag.outputs.EE_Test }}
       run: |
-        echo "EE_DT: ${EE_DT}"
-        echo "EE_Test: ${EE_Test}"
+        echo "EE_Distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
         echo "curdir: $PWD"
         chown -R docker:docker $PWD
 
@@ -279,9 +223,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
       BUILDER_VERSION: ${{ needs.pre-build.outputs.output_set_builder_version }}
-      EE_Distro_tag: ${{ needs.pre-build.outputs.EE_Test }}
-      EE_DT: ${{ needs.pre-build.outputs.output_get_distro_tag }}
-      EE_Test: ${{ needs.pre-build.outputs.EE_Test }}
+      EE_Distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}
       NB_CORES: ${{ needs.pre-build.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
