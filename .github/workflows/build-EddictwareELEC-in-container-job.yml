@@ -143,10 +143,6 @@ jobs:
     runs-on: ${{ needs.runner.outputs.runner }}
     permissions:
       actions: write
-      contents: read
-      packages: read
-      attestations: read
-      id-token: write
     env:
       GH_TOKEN: ${{ secrets.GH_RUNNER_TOKEN }}
       HOME: ""
@@ -157,12 +153,12 @@ jobs:
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       EE_Test: ${{ steps.env-test.outputs.EE_Test }}
     steps:
-    - name: Initialize environment
-      id: set-multi
-      shell: bash
-      run: |
-        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
-        .github/actions/scripts/set_multi.sh
+    # - name: Initialize environment
+    #   id: set-multi
+    #   shell: bash
+    #   run: |
+    #     .github/actions/scripts/set_multi.sh ${{ runner.temp }}
+    #     .github/actions/scripts/set_multi.sh
 
     - uses: ./.github/actions/composite/init-env-vars
       id: get-env-vars
