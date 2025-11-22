@@ -179,7 +179,7 @@ jobs:
         debug=true
         [ "$debug" = true ] && echo "[pwd]: $PWD"
         [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
-        # ls -al $PWD
+        ls -al $PWD
         # chown -R docker:docker $PWD
         # ls -al $PWD
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
