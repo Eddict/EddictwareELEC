@@ -61,7 +61,11 @@ jobs:
       name: Compose image tag
       id: compose-image-tag
       run: |
-        dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
+        echo "env.REGISTRY=${{ env.REGISTRY }}"
+        echo "github.repository_owner=${{ github.repository_owner }}"
+        echo "github.repository=${{ github.repository }}"
+        echo "inputs.environment=${{ inputs.environment }}"
+        # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
         dTag="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ github.repository }}-${{ inputs.environment }}"
         # Use ,, to convert all characters to lowercase
