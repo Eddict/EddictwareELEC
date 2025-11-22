@@ -115,13 +115,6 @@ jobs:
         # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
       shell: bash
 
-    -
-      name: Checkout repository
-      uses: actions/checkout@v5
-      with:
-        ref: 'master-entw'
-        clean: false
-
   build:
     runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
     needs: init
@@ -170,6 +163,13 @@ jobs:
 
     # - uses: docker://${{ needs.init.outputs.output_ee_distro_tag }}:latest       
     # - uses: docker://ghcr.io/<my-org>/<some-private-repo>/<some-private-image>:<tag>        
+
+    -
+      name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
+        # clean: false
 
     -
       name: Build ${{ env.EE_Distro }} image
