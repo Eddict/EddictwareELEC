@@ -173,6 +173,14 @@ jobs:
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: 'master-entw'
+        clean: false # otherwise .ccache subfolder gets deleted
+        show-progress: false
+        set-safe-directory: true # this is the default, but just to be sure
+                
     - uses: ./.github/actions/composite/init-env-vars
       id: get-env-vars
       name: Init environment variables
