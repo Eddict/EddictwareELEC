@@ -172,6 +172,8 @@ jobs:
       id: set-multi
       shell: bash
       run: |
+        echo "PWD before set_multi: $PWD"
+        ls -al $PWD
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
