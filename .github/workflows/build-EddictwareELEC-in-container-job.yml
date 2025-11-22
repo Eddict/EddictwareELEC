@@ -3,6 +3,14 @@ name: Build image in container job
 on:
   workflow_dispatch:
     inputs:
+      runner:
+        description: 'Runner to run against'
+        required: true
+        type: choice
+        options:
+          - self-hosted
+          - github
+        default: github
       environment:
         description: 'Environment to run against'
         required: true
@@ -11,7 +19,11 @@ on:
           - bookworm
           - jammy
           - noble
+          - noble-custom
           - plucky
+          - questing
+          - sid
+          - sid-custom
         default: noble
   # pull_request:
   #   branches: [ "master-entw" ]
@@ -41,6 +53,7 @@ env:
   # EE_Distro_tag: ""
   EE_image_pathfilename: ""
   EE_image_filename: ""
+  EE_Registry: ghcr.io
   NB_CORES: 1
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # HOME: ""
@@ -50,10 +63,15 @@ jobs:
   runner:
     name: Set workflow runner
     if: ${{ always() }}
-    runs-on: self-hosted #self-hosted # github
+    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+    permissions:
+      contents: read
+      packages: read
+      attestations: read
+      id-token: write
     outputs:
       # runner: ${{ steps.echo_runner.outputs.WF_RUNNER }}
-      runner: ${{ runner.environment }}
+      runner: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
     steps:
       - name: echo the runner
         id: echo_runner
@@ -80,6 +98,11 @@ jobs:
     runs-on: ${{ needs.runner.outputs.runner }}
     if: github.event.head_commit.author.username != '${{ github.repository_owner }}' || github.event.head_commit.message == 'Merge branch ''LibreELEC:master'' into master-entw' || github.event_name == 'workflow_dispatch'
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: read
+      attestations: read
+      id-token: write
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -149,6 +172,7 @@ jobs:
       run: |
         fqdn=$(echo "${{ secrets.REGISTRY_FQDN }}" | sed 's/./& /g' | sed 's/ //g')
         dTag="$fqdn/${{ github.repository_owner }}/${{ env.DistroCodeName }}"
+        dTag="${{ env.EE_Registry }}/eddict/${{ env.EE_Distro }}-${DistroCodeName@L}:latest"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
         # run: echo "backend_image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
@@ -204,20 +228,23 @@ jobs:
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
 
-    - name: OAuth2 token retrieval
-      id: oauth-token
-      uses: ./.github/actions/composite/oauth-token-retrieval
-      with:
-        registry-fqdn: ${{ secrets.REGISTRY_FQDN }}
-        registry-user: ${{ secrets.REGISTRY_USER }}
-        registry-pwd: ${{ secrets.REGISTRY_PWD }}
+    # - name: OAuth2 token retrieval
+    #   id: oauth-token
+    #   uses: ./.github/actions/composite/oauth-token-retrieval
+    #   with:
+    #     registry-fqdn: ${{ secrets.REGISTRY_FQDN }}
+    #     registry-user: ${{ secrets.REGISTRY_USER }}
+    #     registry-pwd: ${{ secrets.REGISTRY_PWD }}
 
     - name: Login to (private) Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ secrets.REGISTRY_FQDN }} #"https://${{ secrets.REGISTRY_FQDN }}:5000"
-        username: ${{ secrets.REGISTRY_USER }}
-        password: ${{ secrets.REGISTRY_PWD }}
+        registry: ${{ env.EE_Registry }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        # registry: ${{ secrets.REGISTRY_FQDN }} #"https://${{ secrets.REGISTRY_FQDN }}:5000"
+        # username: ${{ secrets.REGISTRY_USER }}
+        # password: ${{ secrets.REGISTRY_PWD }}
         # registry-auth: |
         #   # - username: ${{ vars.DOCKERHUB_USERNAME }}
         #   #   password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -233,7 +260,8 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         context: workflow
-        images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
+        images: name=${{ needs.repo-vars.outputs.output_get_distro_tag }},enable=true
+        # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
         tags: type=raw,value=latest
         # flavor: latest=true
 
