@@ -191,10 +191,10 @@ jobs:
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
 
-        # # pull the image
-        # docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ env.EE_Registry }}
-        # docker --debug image pull "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}"
-        # # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        # pull the image
+        docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ${{ env.EE_Registry }}
+        docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
+        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         # if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
