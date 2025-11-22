@@ -3,6 +3,14 @@ name: Build image in container
 on:
   workflow_dispatch:
     inputs:
+      runner:
+        description: 'Runner to run against'
+        required: true
+        type: choice
+        options:
+          - self-hosted
+          - github
+        default: github
       os:
         description: 'OS of build container'
         required: true
@@ -37,12 +45,18 @@ env:
   EE_Arch: ${{ github.event.inputs.arch }}
   EE_image_pathfilename: ""
   EE_image_filename: ""
-  EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
+  # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
+  EE_Registry: ghcr.io
+
 
 jobs:
   init:
-#    runs-on: github
-    runs-on: self-hosted
+    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+    permissions:
+      contents: read
+      packages: read
+      attestations: read
+      id-token: write
     if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
@@ -105,8 +119,7 @@ jobs:
         clean: false
 
   build:
-#    runs-on: github
-    runs-on: self-hosted
+    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
     needs: init
     # container:
     #   image: ${{ needs.init.outputs.output_ee_distro_tag }}
@@ -125,12 +138,16 @@ jobs:
     #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
     #     # echo "$value" | sed 's/./& /g'
 
-    - name: Login to (private) Registry
+    -
+      name: Log in to registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ env.EE_Registry }} #"https://${{ secrets.REGISTRY_FQDN }}:5000"
-        username: ${{ secrets.REGISTRY_USER }}
-        password: ${{ secrets.REGISTRY_PWD }}
+        # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
+        # username: ${{ secrets.REGISTRY_USER }}
+        # password: ${{ secrets.REGISTRY_PWD }}
+        registry: ${{ env.EE_Registry }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     # -
     #   name: Compose image tag
@@ -170,14 +187,14 @@ jobs:
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
 
-        # pull the image
-        docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ env.EE_Registry }}
-        docker --debug image pull "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}"
-        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
-        if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
-            # cleanup
-            docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
-        fi
+        # # pull the image
+        # docker login --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PWD }} ${{ env.EE_Registry }}
+        # docker --debug image pull "${{ env.EE_Registry }}/eddict/${{ env.DistroCodeName }}"
+        # # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        # if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+        #     # cleanup
+        #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
+        # fi
 
         # docker volume create ${{ env.DistroCodeName }}-ccache
         # docker create \
