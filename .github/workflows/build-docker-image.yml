@@ -85,13 +85,14 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
+        # tags: |
+        #   type=ref,event=branch
+        #   type=ref,event=pr
+        #   type=semver,pattern={{version}}
+        #   type=semver,pattern={{major}}.{{minor}}
         labels: |
           org.opencontainers.image.source=https://github.com/Eddict/EddictwareELEC
+          org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
 
     -
       name: Set up Docker Buildx
