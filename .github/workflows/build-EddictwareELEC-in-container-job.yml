@@ -236,7 +236,7 @@ jobs:
       NB_CORES: ${{ needs.pre-build.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
-      image: edregistry.main.eddict.nl/noble
+      image: ${{ needs.pre-build.outputs.output_meta_tags }}
       # image: ${{ needs.repo-login.outputs.output_meta_tags }}
       # image: eu.gcr.io/path/to/image:tag
       # image: ${{ needs.build.outputs.image_tag }}
@@ -245,8 +245,10 @@ jobs:
       # image: ${{ vars.REGISTRY_FQDN }}/eddict/noble
       # image: ${{ needs.repo-login.outputs.output_get_RFQDN }}/eddict/noble
       credentials:
-        username: ${{ secrets.REGISTRY_USER }}
-        password: ${{ secrets.REGISTRY_PWD }}
+        # username: ${{ secrets.REGISTRY_USER }}
+        # password: ${{ secrets.REGISTRY_PWD }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       env:
         # DEBUG: no
         # LOCAL_CCACHE: yes
