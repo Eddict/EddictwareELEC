@@ -195,14 +195,17 @@ jobs:
     - name: Prepare build directory
       id: prepare-build-dir
       run: |
-        echo "PWD: $PWD"
-        ls -al $PWD
-        export
-        echo "output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}"
-        ls -al ${{ steps.get-env-vars.outputs.output_get_pwd }}
-        echo "output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}"
-        echo "output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}"
-        echo "whoami: $(whoami)"
+        debug=true
+        [ "$debug" = true ] && echo "[pwd]: $PWD"
+        [ "$debug" = true ] && ls -al $PWD
+        [ "$debug" = true ] && echo "github.workspace: ${{ github.workspace }}"
+        [ "$debug" = true ] && ls -al ${{ github.workspace }}
+        [ "$debug" = true ] && export
+        [ "$debug" = true ] && echo "output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}"
+        [ "$debug" = true ] && ls -al ${{ steps.get-env-vars.outputs.output_get_pwd }}
+        [ "$debug" = true ] && echo "output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}"
+        [ "$debug" = true ] && echo "output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}"
+        [ "$debug" = true ] && echo "whoami: $(whoami)"
         # echo "uid: $(id -u)"
         # echo "gid: $(id -g)"
         # cat /etc/passwd | grep docker || echo "docker user not found"
@@ -211,8 +214,7 @@ jobs:
         # cat /etc/passwd 
         # echo "/etc/group"
         # cat /etc/group
-        echo "EE_Distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
-        echo "curdir: $PWD"
+        [ "$debug" = true ] && echo "EE_Distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
         # chown -R $(whoami):docker $PWD
 
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
@@ -220,6 +222,11 @@ jobs:
         #     # cleanup
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
+
+    # - uses: actions/upload-artifact@v4
+    #   with:
+    #     name: artifact-${{ env.BUILDER_VERSION }}
+    #     path: ${{ steps.get-env-vars.outputs.output_get_pwd }}
 
   build:
     name: Build
@@ -276,13 +283,19 @@ jobs:
         working-directory: /build
 
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.repository.default_branch }}
+        path: ${{ github.workspace }}
+
     - name: Build ${{ env.EE_Distro }} image
       run: |
         echo "PWD: $PWD"
         ls -al $PWD
         export
-        echo "output_get_pwd: ${{ needs.pre-build.outputs.output_get_pwd }}"
-        ls -al ${{ needs.pre-build.outputs.output_get_pwd }}
+        # echo "output_get_pwd: ${{ needs.pre-build.outputs.output_get_pwd }}"
+        # ls -al ${{ needs.pre-build.outputs.output_get_pwd }}
         echo "output_get_distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}"
         echo "output_set_builder_version: ${{ needs.pre-build.outputs.output_set_builder_version }}"
         # run the build
