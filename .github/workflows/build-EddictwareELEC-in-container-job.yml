@@ -54,7 +54,6 @@ env:
   EE_image_pathfilename: ""
   EE_image_filename: ""
   EE_Registry: ghcr.io
-  NB_CORES: 1
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   # HOME: ""
   ACTIONS_RUNNER_DEBUG: true
@@ -110,7 +109,6 @@ jobs:
     outputs:
       output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}
       output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
-      output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       output_meta_tags: ${{ steps.meta.outputs.tags }}
     steps:
@@ -233,7 +231,6 @@ jobs:
       HOME: ""
       BUILDER_VERSION: ${{ needs.pre-build.outputs.output_set_builder_version }}
       EE_Distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}
-      NB_CORES: ${{ needs.pre-build.outputs.output_get_cpu_info }}
     container:
       options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
       image: ${{ needs.pre-build.outputs.output_meta_tags }}
@@ -271,13 +268,11 @@ jobs:
     steps:
     - name: Build ${{ env.EE_Distro }} image
       run: |
-        NB_CORES=${{ env.NB_CORES }}
-        [ "$NB_CORES" -lt 1 ] && NB_CORES=1
-        echo "NB_CORES=$NB_CORES"
-        # run the build
+        echo "PWD: $PWD"
+        ls -al $PWD
         export
-        # exit 1
-        make -j$((NB_CORES+1)) -l${NB_CORES} image
+        # run the build
+        make image
 
   post-build:
     name: Post-build
