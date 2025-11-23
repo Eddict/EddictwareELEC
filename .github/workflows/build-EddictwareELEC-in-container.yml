@@ -173,6 +173,7 @@ jobs:
 
     -
       name: Build ${{ env.EE_Distro }} image
+      id: build-image
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -242,6 +243,27 @@ jobs:
           # --memory-swap="-1" \
           # --ipc="host" \
           # --log-driver local \
+
+    # https://stackoverflow.com/a/57877438
+    - uses: actions/upload-artifact@v4
+      if: always() && (steps.build-image.outcome == 'failure')
+      with:
+        name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
+        path: /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
+        overwrite: true
+        include-hidden-files: true
+
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: artifact_cache_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
+        path: |
+          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
+          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache/
+          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps/
+          /sources/
+        overwrite: true
+        include-hidden-files: true
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
