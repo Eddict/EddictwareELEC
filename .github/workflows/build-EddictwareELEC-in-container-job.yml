@@ -114,6 +114,7 @@ jobs:
     outputs:
       output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}
       output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}
+      output_get_cpu_info: ${{ steps.get-env-vars.outputs.output_get_cpu_info }}
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       output_meta_tags: ${{ steps.meta.outputs.tags }}
     steps:
@@ -291,8 +292,12 @@ jobs:
         # [ "$debug" = true ] && ls -al ${{ needs.pre-build.outputs.output_get_pwd }}
         [ "$debug" = true ] && echo "output_get_distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}"
         [ "$debug" = true ] && echo "output_set_builder_version: ${{ needs.pre-build.outputs.output_set_builder_version }}"
+        debug=true
+        [ "$debug" = true ] && echo "output_get_cpu_info: ${{ needs.pre-build.outputs.output_get_cpu_info }}"
+        [ "$debug" = true ] && echo "NB_CORES: ${NB_CORES}"
         # run the build
-        make image
+        make -j$((NB_CORES+1)) -l${NB_CORES} image
+        # make image # ${{ needs.pre-build.outputs.output_get_cpu_info }}
 
   post-build:
     name: Post-build
