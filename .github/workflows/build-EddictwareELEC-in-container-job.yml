@@ -195,7 +195,11 @@ jobs:
       id: prepare-build-dir
       shell: bash
       run: |
+        echo "PWD: $PWD"
+        ls -al $PWD
+        export
         echo "output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}"
+        ls -al ${{ steps.get-env-vars.outputs.output_get_pwd }}
         echo "output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}"
         echo "output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}"
         echo "whoami: $(whoami)"
