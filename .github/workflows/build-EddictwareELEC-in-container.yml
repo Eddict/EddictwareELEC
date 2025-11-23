@@ -48,6 +48,9 @@ env:
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
   EE_Registry: ghcr.io
 
+defaults:
+  run:
+    shell: bash
 
 jobs:
   init:
@@ -65,23 +68,18 @@ jobs:
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
     steps:
-    -
-      name: Get Date
+    - name: Get Date
       id: get-date
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-      shell: bash
 
-    -
-      name: Get docker guid
+    - name: Get docker guid
       id: get-docker-guid
       run: |
         echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
-      shell: bash
 
-    -
-      name: Compose image tag
+    - name: Compose image tag
       id: compose-image-tag
       run: |
         # ghcr.io/eddict/eddictwareelec-questing:latest
@@ -113,7 +111,6 @@ jobs:
         # echo "value=$value"
         # echo "Trick to echo REGISTRY_USER:"
         # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
-      shell: bash
 
   build:
     runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
@@ -135,8 +132,7 @@ jobs:
     #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
     #     # echo "$value" | sed 's/./& /g'
 
-    -
-      name: Log in to registry
+    - name: Log in to registry
       uses: docker/login-action@v3
       with:
         # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
@@ -151,7 +147,6 @@ jobs:
     #   id: compose-image-tag
     #   run: |
     #     echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/${DistroCodeName@L}" >> $GITHUB_OUTPUT
-    #   shell: bash
 
     # -
     #   name: Cache Docker layers
@@ -164,15 +159,13 @@ jobs:
     # - uses: docker://${{ needs.init.outputs.output_ee_distro_tag }}:latest       
     # - uses: docker://ghcr.io/<my-org>/<some-private-repo>/<some-private-image>:<tag>        
 
-    -
-      name: Checkout repository
+    - name: Checkout repository
       uses: actions/checkout@v5
       with:
         ref: 'master-entw'
         # clean: false
 
-    -
-      name: Build ${{ env.EE_Distro }} image
+    - name: Build ${{ env.EE_Distro }} image
       id: build-image
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -243,6 +236,13 @@ jobs:
           # --memory-swap="-1" \
           # --ipc="host" \
           # --log-driver local \
+
+    - name: github-workspace
+      id: ls-ghws
+      run: |
+        debug=true
+        [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
+        [ "$debug" = true ] && ls -al ${{ github.workspace }}
 
     # https://stackoverflow.com/a/57877438
     - uses: actions/upload-artifact@v4
