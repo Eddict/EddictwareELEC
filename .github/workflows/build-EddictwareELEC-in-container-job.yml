@@ -216,6 +216,7 @@ jobs:
         #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
         # fi
 
+    # https://stackoverflow.com/a/57877438
     # - uses: actions/upload-artifact@v4
     #   with:
     #     name: artifact-${{ env.BUILDER_VERSION }}
