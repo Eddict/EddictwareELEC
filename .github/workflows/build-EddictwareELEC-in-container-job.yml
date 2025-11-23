@@ -239,7 +239,7 @@ jobs:
       BUILDER_VERSION: ${{ needs.pre-build.outputs.output_set_builder_version }}
       EE_Distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}
     container:
-      options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
+      # options: --user docker --log-driver local --workdir /build # --name "build.${{ env.EE_Distro }}.${{ env.DistroCodeName }}" # --user root
       image: ${{ needs.pre-build.outputs.output_meta_tags }}
       # image: ${{ needs.repo-login.outputs.output_meta_tags }}
       # image: eu.gcr.io/path/to/image:tag
