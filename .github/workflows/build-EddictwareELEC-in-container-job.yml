@@ -271,13 +271,13 @@ jobs:
     steps:
     - name: Build ${{ env.EE_Distro }} image
       run: |
+        echo "PWD: $PWD"
+        ls -al $PWD
+        export
         echo "output_get_pwd: ${{ needs.pre-build.outputs.output_get_pwd }}"
         ls -al ${{ needs.pre-build.outputs.output_get_pwd }}
         echo "output_get_distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}"
         echo "output_set_builder_version: ${{ needs.pre-build.outputs.output_set_builder_version }}"
-        echo "PWD: $PWD"
-        ls -al $PWD
-        export
         # run the build
         make image
 
