@@ -195,6 +195,9 @@ jobs:
       id: prepare-build-dir
       shell: bash
       run: |
+        echo "output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}"
+        echo "output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}"
+        echo "output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}"
         echo "whoami: $(whoami)"
         # echo "uid: $(id -u)"
         # echo "gid: $(id -g)"
@@ -268,6 +271,10 @@ jobs:
     steps:
     - name: Build ${{ env.EE_Distro }} image
       run: |
+        echo "output_get_pwd: ${{ needs.pre-build.outputs.output_get_pwd }}"
+        ls -al ${{ needs.pre-build.outputs.output_get_pwd }}
+        echo "output_get_distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}"
+        echo "output_set_builder_version: ${{ needs.pre-build.outputs.output_set_builder_version }}"
         echo "PWD: $PWD"
         ls -al $PWD
         export
