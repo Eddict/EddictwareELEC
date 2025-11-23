@@ -58,6 +58,10 @@ env:
   # HOME: ""
   ACTIONS_RUNNER_DEBUG: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   runner:
     name: Set workflow runner
@@ -129,7 +133,6 @@ jobs:
 
     - name: Initialize environment
       id: set-multi
-      shell: bash
       run: |
         .github/actions/scripts/set_multi.sh ${{ runner.temp }}
         .github/actions/scripts/set_multi.sh
@@ -145,7 +148,6 @@ jobs:
 
     - name: Echo PWD
       id: echo-pwd
-      shell: bash
       run: |
         echo "PWD before set_multi: $PWD"
         ls -al $PWD
@@ -158,7 +160,6 @@ jobs:
 
     - name: Compose image tag
       id: compose-image-tag
-      shell: bash
       run: |
         dTag="${{ env.EE_Registry }}/eddict/${{ env.EE_Distro }}-${DistroCodeName@L}"
         # Use ,, to convert all characters to lowercase
@@ -193,7 +194,6 @@ jobs:
 
     - name: Prepare build directory
       id: prepare-build-dir
-      shell: bash
       run: |
         echo "PWD: $PWD"
         ls -al $PWD
@@ -271,6 +271,9 @@ jobs:
         BUILD_BASE: "build.${{ env.DistroCodeName }}"
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
+    defaults:
+      run:
+        working-directory: /build
 
     steps:
     - name: Build ${{ env.EE_Distro }} image
