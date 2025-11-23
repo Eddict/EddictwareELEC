@@ -78,6 +78,7 @@ jobs:
     steps:
       - name: echo the runner
         id: echo_runner
+        if: ${{ 0 == 1 }}
         run: |
           debug=false
           # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
