@@ -267,14 +267,8 @@ jobs:
         BUILD_BASE: "build.${{ env.DistroCodeName }}"
       volumes:
         - ${{ needs.pre-build.outputs.output_get_pwd }}:/build:rw
-    steps:
-    - name: Initialize environment
-      id: set-multi
-      shell: bash
-      run: |
-        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
-        .github/actions/scripts/set_multi.sh
 
+    steps:
     - name: Build ${{ env.EE_Distro }} image
       run: |
         NB_CORES=${{ env.NB_CORES }}
