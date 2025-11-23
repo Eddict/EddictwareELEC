@@ -284,6 +284,7 @@ jobs:
         path: ${{ github.workspace }}
 
     - name: Build ${{ env.EE_Distro }} image
+      id: build-image
       run: |
         debug=false
         [ "$debug" = true ] && echo "[pwd]: $PWD"
@@ -299,6 +300,27 @@ jobs:
         # run the build
         make -j$((NB_CORES+1)) -l${NB_CORES} image
         # make image # ${{ needs.pre-build.outputs.output_get_cpu_info }}
+
+    # https://stackoverflow.com/a/57877438
+    - uses: actions/upload-artifact@v4
+      if: always() && (steps.build-image.outcome == 'failure')
+      with:
+        name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
+        path: /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
+        overwrite: true
+        include-hidden-files: true
+
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: artifact_cache_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
+        path: |
+          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
+          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache/
+          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps/
+          /sources/
+        overwrite: true
+        include-hidden-files: true
 
   post-build:
     name: Post-build
