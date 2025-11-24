@@ -259,12 +259,14 @@ jobs:
       env:
         # DEBUG: no
         # LOCAL_CCACHE: yes
-        DISABLE_COLORS: yes
+        DISABLE_COLORS: no
+        MTCOLORS: auto
+        ONELOG: no
         LOGCOMBINE: fail
         MTIMMEDIATE: no
-        MTDEBUG: yes
-        MTVERBOSE: yes
-        MTPROGRESS: yes
+        MTDEBUG: no
+        MTVERBOSE: no
+        MTPROGRESS: no
         DISTRO: ${{ env.EE_Distro }}
         PROJECT: ${{ env.EE_Project }}
         DEVICE: ${{ env.EE_Device }}
