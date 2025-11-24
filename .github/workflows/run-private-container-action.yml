@@ -2,26 +2,62 @@ name: Docker Container Action to build EddictwareELEC
 
 on:
   workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner to run against'
+        required: true
+        type: choice
+        options:
+          - self-hosted
+          - github
+        default: github
+      os:
+        description: 'OS of build container'
+        required: true
+        type: choice
+        options:
+          # - bookworm
+          # - jammy
+          - noble
+          # - noble-custom
+          # - plucky
+          # - questing
+          # - sid
+        default: noble
+      arch:
+        description: 'Arch of build target'
+        required: true
+        type: choice
+        options:
+          - amd64
+          - aarch64
+          - arm
+          - x86_64
+        default: aarch64
 
 env:
   DISABLE_COLORS: yes
   LOGCOMBINE: fail
   MTIMMEDIATE: no
-  DEBUG: yes
-  MTDEBUG: yes
-  MTVERBOSE: yes
-  MTPROGRESS: yes
+  DEBUG: no
+  MTDEBUG: no
+  MTVERBOSE: no
+  MTPROGRESS: no
   DISTRO: EddictwareELEC
   PROJECT: RPi
   DEVICE: RPi4
-  ARCH: aarch64
+  ARCH: ${{ inputs.arch }}
   BUILDER_NAME: ${{ github.repository_owner }}
-  BUILD_BASE: "alt.build.noble"
+  BUILD_BASE: "alt.build.${{ inputs.runner }}"
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   hello_world_job:
     runs-on: ubuntu-latest #ubuntu-latest #self-hosted 
-    name: A test job to build in a noble container
+    name: A test job to build in a ${{ inputs.runner }} container
     env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -32,12 +68,12 @@ jobs:
 
       - name: overwrite some repo files
         id: overwrite-repo-files
-        shell: bash
+        if: ${{ 0 == 1 }}
         run: |
-          sed -i 's/USER docker/# USER docker/g' tools/docker/noble/Dockerfile
-          # sed -i 's/# ENTRYPOINT \[\]/ENTRYPOINT \["\/bin\/sh", "-c", "git config --global --add safe.directory \/github\/workspace && make image"\]/g' tools/docker/noble/Dockerfile
+          sed -i 's/USER docker/# USER docker/g' tools/docker/${{ inputs.runner }}/Dockerfile
+          # sed -i 's/# ENTRYPOINT \[\]/ENTRYPOINT \["\/bin\/sh", "-c", "git config --global --add safe.directory \/github\/workspace && make image"\]/g' tools/docker/${{ inputs.runner }}/Dockerfile
           sed -i 's/"\${EUID}" -eq 0/"\${EUID}" -eq -1/g' config/options
-          # cat tools/docker/noble/Dockerfile
+          # cat tools/docker/${{ inputs.runner }}/Dockerfile
 
           # git config --global user.name '${{ github.repository_owner }}'
           # git config --global user.email '${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com'
@@ -47,7 +83,6 @@ jobs:
 
       - name: Set BUILDER_VERSION
         id: set-builder-version
-        shell: bash
         run: echo "BUILDER_VERSION=13.0-$(date +%Y%m%d)" | sudo tee -a $GITHUB_OUTPUT
 
       - name: make action step
