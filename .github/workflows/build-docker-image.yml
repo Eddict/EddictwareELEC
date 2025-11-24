@@ -36,6 +36,7 @@ run-name: '${{ github.workflow }} (${{ inputs.environment }})'
 
 env:
   REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
+  RUNNER_TOOL_CACHE: /toolcache
 
 jobs:
   build:
