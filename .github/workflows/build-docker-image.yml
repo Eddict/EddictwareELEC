@@ -35,7 +35,7 @@ on:
 run-name: '${{ github.workflow }} (${{ inputs.environment }})'
 
 env:
-  REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.GITEA_REGISTRY_FQDN || 'ghcr.io' }}
+  REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
 
 jobs:
   build:
@@ -78,8 +78,8 @@ jobs:
         # username: ${{ secrets.REGISTRY_USER }}
         # password: ${{ secrets.REGISTRY_PWD }}
         registry: ${{ env.REGISTRY }}
-        username: ${{ inputs.runner == 'github' && github.actor || inputs.runner == 'gitea' && secrets.GITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
-        password: ${{ inputs.runner == 'github' && secrets.GITHUB_TOKEN || inputs.runner == 'gitea' && secrets.GITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
+        username: ${{ inputs.runner == 'github' && github.actor || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
+        password: ${{ inputs.runner == 'github' && secrets.GITHUB_TOKEN || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
