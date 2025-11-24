@@ -39,7 +39,7 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+    runs-on: ${{ inputs.runner == 'self-hosted' && inputs.runner || 'ubuntu-latest' }}
 
     permissions:
       contents: read
