@@ -53,3 +53,5 @@ build.log
 
 # Optionally ignore generated build output
 dist/
+
+.logs/
