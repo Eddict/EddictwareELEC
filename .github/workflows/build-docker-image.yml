@@ -28,7 +28,7 @@ on:
         default: noble
   # deployment:
   push:
-    branches: [ "master-entw" ]
+    branches: [ "master" ]
     paths: &include_paths
       - 'tools/docker/noble/Dockerfile'
 
