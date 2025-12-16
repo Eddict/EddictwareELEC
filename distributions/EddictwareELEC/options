@@ -40,7 +40,7 @@
   MOLD_SUPPORT="yes"
 
 # default linker (bfd / gold / mold)
-  DEFAULT_LINKER="gold"
+  DEFAULT_LINKER="mold"
 
 # HARDENING (security relevant linker and compiler flags) support
   HARDENING_SUPPORT="no"
