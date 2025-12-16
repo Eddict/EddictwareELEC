@@ -39,10 +39,10 @@ on:
   #     - '!.github/workflows/build-EddictwareELEC-in-container.yml'
   #     - 'tools/docker/**'
     
-run-name: ${{ format('{0} ({1} - {2})', github.workflow, inputs.environment || 'noble', github.event_name) }}
+run-name: ${{ format('{0} ({1}/{2} - {3})', github.workflow, inputs.runner, inputs.environment, github.event_name) }}
 
 env:
-  DistroCodeName: ${{ inputs.environment || 'noble' }}
+  DistroCodeName: ${{ inputs.environment }}
   BUILDER_NAME: ${{ github.repository_owner }}
   BUILDER_VERSION: ""
   BUILD_BASE: ""

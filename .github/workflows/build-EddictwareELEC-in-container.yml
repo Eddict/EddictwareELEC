@@ -35,7 +35,7 @@ on:
           - x86_64
         default: aarch64
 
-run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.os, inputs.arch) }}
+run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, inputs.runner, inputs.os, inputs.arch) }}
 
 env:
   DistroCodeName: ${{ github.event.inputs.os }}
