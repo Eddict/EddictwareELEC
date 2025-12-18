@@ -219,6 +219,16 @@ jobs:
         # pull the image
         docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ${{ env.EE_Registry }}
         docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
+        # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        echo "[debug] Running temporary container to show container UID/GID and test cache write"
+        docker run --rm \
+          --name "debug-${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
+          -v ${{ github.workspace }}:/build \
+          -v ${{ github.workspace }}/.ccache:/build/${BUILD_DIR}/.ccache \
+          -v ${{ github.workspace }}/${BUILD_DIR}/.cache_package_global:/build/${BUILD_DIR}/.cache_package_global \
+          -w /build \
+          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "echo 'container uid:' \$(id -u); echo 'container gid:' \$(id -g); echo 'ls cache dir:'; ls -lad /build/${BUILD_DIR}/.cache_package_global || true; echo 'try touch'; if touch /build/${BUILD_DIR}/.cache_package_global/debugfile 2>/dev/null; then echo 'touch: OK'; else echo 'touch: FAIL'; fi; ls -lad /build/${BUILD_DIR}/.cache_package_global || true"
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         # if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         #     # cleanup
