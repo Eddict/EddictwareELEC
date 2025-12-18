@@ -17,13 +17,6 @@ PKG_CONFIGURE_OPTS_TARGET="bash_cv_wcwidth_broken=no \
                            --disable-static \
                            --with-curses"
 
-pre_configure_target() {
-  # Explicitly link with ncurses when using mold linker to satisfy --no-allow-shlib-undefined
-  if [ "$(get_target_linker)" = "mold" ]; then
-    export LDFLAGS="${LDFLAGS} -lncurses"
-  fi
-}
-
 post_makeinstall_target() {
   rm -rf ${INSTALL}/usr/share/readline
 }
