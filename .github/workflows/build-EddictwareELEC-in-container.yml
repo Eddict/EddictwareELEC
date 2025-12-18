@@ -190,7 +190,7 @@ jobs:
     - name: Prepare cache dirs for container
       run: |
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-        mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives
+        mkdir -p .ccache "$BUILD_DIR" "$BUILD_DIR/.cache_package_global" .apt-cache/archives
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         # use same GID as UID if we don't know the image GID (common in builder images)
         DOCKER_GID=${DOCKER_UID}
