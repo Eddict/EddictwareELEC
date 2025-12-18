@@ -67,6 +67,7 @@ jobs:
     # Expose step outputs as job outputs
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+      docker_guid: ${{ steps.get-docker-guid.outputs.docker_guid }}
     steps:
     - name: Get Date
       id: get-date
@@ -77,7 +78,7 @@ jobs:
     - name: Get docker guid
       id: get-docker-guid
       run: |
-        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+        echo "docker_guid=$(id -u docker 2>/dev/null || echo 1000)" >> $GITHUB_OUTPUT
 
     - name: Compose image tag
       id: compose-image-tag
@@ -185,6 +186,15 @@ jobs:
         key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
         restore-keys: |
           ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-
+
+    - name: Prepare cache dirs for container
+      run: |
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives
+        DOCKER_UID=${{ needs.init.outputs.docker_guid }}
+        DOCKER_GID=$(id -g docker 2>/dev/null || echo 1000)
+        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} .ccache "$BUILD_DIR" .apt-cache || true
+        chmod -R 0755 .ccache "$BUILD_DIR" .apt-cache || true
 
     - name: Build ${{ env.EE_Distro }} image
       id: build-image
