@@ -38,9 +38,9 @@ RUN if [ "$(uname -m)" = "aarch64" ]; then \
 RUN rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
-    --slave /usr/bin/cpp cpp /usr/bin/cpp-14 \
-    --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
-    --slave /usr/bin/gcov gcov /usr/bin/gcov-14
-RUN update-alternatives --config gcc
+  --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
+  --slave /usr/bin/gcov gcov /usr/bin/gcov-14 \
+  && update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-14 100 \
+  && update-alternatives --set gcc /usr/bin/gcc-14
 
 USER docker
