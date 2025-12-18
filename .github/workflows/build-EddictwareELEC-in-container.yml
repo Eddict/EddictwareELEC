@@ -165,6 +165,27 @@ jobs:
         ref: 'master'
         # clean: false
 
+    - name: Restore build caches
+      uses: actions/cache@v4
+      with:
+        path: |
+          .ccache
+          build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
+          build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+          build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
+          sources
+        key: ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
+        restore-keys: |
+          ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-
+
+    - name: Restore apt cache
+      uses: actions/cache@v4
+      with:
+        path: .apt-cache/archives
+        key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-
+
     - name: Build ${{ env.EE_Distro }} image
       id: build-image
       env:
@@ -208,7 +229,12 @@ jobs:
         docker run --rm \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
+          -v ${{ github.workspace }}/.ccache:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
+          -v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps \
+          -v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global \
+          -v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives \
           -w /build \
+          -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           -e DISABLE_COLORS=no \
           -e MTCOLORS=auto \
           -e ONELOG=no \
@@ -253,17 +279,7 @@ jobs:
         overwrite: true
         include-hidden-files: true
 
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: artifact_cache_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
-        path: |
-          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
-          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache/
-          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps/
-          /sources/
-        overwrite: true
-        include-hidden-files: true
+    # cache artifacts are now persisted via actions/cache (restore steps above)
 
     -
       name: Copy built ${{ env.EE_Distro }} image to archive
