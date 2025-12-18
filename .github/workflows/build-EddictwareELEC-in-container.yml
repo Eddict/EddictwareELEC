@@ -235,9 +235,8 @@ jobs:
           --name "debug-${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
           -v ${{ github.workspace }}/.ccache:/build/${BUILD_DIR}/.ccache \
-          -v ${{ github.workspace }}/${BUILD_DIR}/.cache_package_global:/build/${BUILD_DIR}/.cache_package_global \
           -w /build \
-          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "echo 'container uid:' \$(id -u); echo 'container gid:' \$(id -g); echo 'ls cache dir:'; ls -lad /build/${BUILD_DIR}/.cache_package_global || true; echo 'try touch'; if touch /build/${BUILD_DIR}/.cache_package_global/debugfile 2>/dev/null; then echo 'touch: OK'; else echo 'touch: FAIL'; fi; ls -lad /build/${BUILD_DIR}/.cache_package_global || true"
+          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "echo 'container uid:' \$(id -u); echo 'container gid:' \$(id -g); echo 'ls cache file:'; ls -lad /build/${BUILD_DIR}/.cache_package_global || true; echo 'try append'; if echo debug-$(date +%s) >> /build/${BUILD_DIR}/.cache_package_global 2>/dev/null; then echo 'write: OK'; else echo 'write: FAIL'; fi; ls -lad /build/${BUILD_DIR}/.cache_package_global || true"
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         # if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         #     # cleanup
@@ -260,7 +259,6 @@ jobs:
           -v ${{ github.workspace }}:/build \
           -v ${{ github.workspace }}/.ccache:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           -v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps \
-          -v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global \
           -v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives \
           -w /build \
           -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
