@@ -41,9 +41,22 @@ RUN rm -rf /var/lib/apt/lists/*
 #   --slave /usr/bin/gcov gcov /usr/bin/gcov-14 \
 #   && update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-14 100 \
 #   && update-alternatives --set gcc /usr/bin/gcc-14
+
+# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
+#     --slave /usr/bin/cpp cpp /usr/bin/cpp-14 \
+#     --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
+#     --slave /usr/bin/gcov gcov /usr/bin/gcov-14
+
+
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
-    --slave /usr/bin/cpp cpp /usr/bin/cpp-14 \
-    --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
-    --slave /usr/bin/gcov gcov /usr/bin/gcov-14
+  --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
+  --slave /usr/bin/gcov gcov /usr/bin/gcov-14 \
+  --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-14 \
+  --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-14
+
+RUN update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-14 100
+
+RUN update-alternatives --config gcc \
+  update-alternatives --config cpp
 
 USER docker
