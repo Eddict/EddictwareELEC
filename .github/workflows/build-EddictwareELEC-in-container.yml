@@ -34,11 +34,6 @@ on:
           - arm
           - x86_64
         default: aarch64
-      volume_prefix:
-        description: 'Prefix for docker named volumes (used on self-hosted runners)'
-        required: false
-        type: string
-        default: eddict
 
 run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, inputs.runner, inputs.os, inputs.arch) }}
 
@@ -249,8 +244,8 @@ jobs:
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}
         RUNNER_TYPE="${{ github.event.inputs.runner }}"
-        # make the provided prefix target-specific early (prefix + distro + arch)
-        VOLUME_PREFIX="${{ github.event.inputs.volume_prefix }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
+        # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
+        VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
         if [ "${RUNNER_TYPE}" != "github" ]; then
           VOL_CCACHE="${VOLUME_PREFIX}-ccache"
           VOL_STAMPS="${VOLUME_PREFIX}-stamps"
