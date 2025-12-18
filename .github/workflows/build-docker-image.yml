@@ -57,7 +57,12 @@ jobs:
       name: Get docker guid
       id: get-docker-guid
       run: |
-        echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+        # Some runner images do not have a 'docker' user. Fall back to current UID.
+        if id -u docker >/dev/null 2>&1; then
+          echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
+        else
+          echo "docker-guid=$(id -u)" >> $GITHUB_OUTPUT
+        fi
       shell: bash
 
     -
