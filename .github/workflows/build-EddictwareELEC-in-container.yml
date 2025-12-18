@@ -265,6 +265,56 @@ jobs:
           MOUNT_STAMPS="-v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/${BUILD_DIR}/.stamps"
           MOUNT_APT="-v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives"
         fi
+        # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
+        if [ "${RUNNER_TYPE}" != "github" ]; then
+          CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}"
+          MEMORY_ARG="--memory=${CONTAINER_MEMORY}"
+        else
+          MEMORY_ARG=""
+        fi
+
+        # create a small script in the workspace to compute a safe -j inside the container
+        cat > build_recommend.sh <<'EOF'
+        #!/bin/bash
+        set -euo pipefail
+        if [ "${RUNNER_TYPE:-}" = "github" ]; then
+          git config --global --add safe.directory /build || true
+        fi
+        NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
+        PER_JOB_MB=${PER_JOB_MB:-2000}
+        RESERVE_MB=${RESERVE_MB:-2048}
+        mem_bytes=0
+        if [ -f /sys/fs/cgroup/memory.max ]; then
+          memmax=$(cat /sys/fs/cgroup/memory.max)
+          if [ "$memmax" != "max" ]; then
+            mem_bytes=$memmax
+          fi
+        fi
+        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+          if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+            memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+            if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
+              mem_bytes=$memlim
+            fi
+          fi
+        fi
+        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+          mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+          mem_bytes=$((mem_kb*1024))
+        fi
+        TOTAL_MB=$((mem_bytes/1024/1024))
+        USABLE_MB=$((TOTAL_MB-RESERVE_MB))
+        if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
+        MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
+        if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
+        CANDIDATE_J=$((NB_CORES+2))
+        if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
+        if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
+        echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
+        make -j${RECOMMENDED_J} -l${NB_CORES} image
+        EOF
+        
+        chmod +x build_recommend.sh || true
         # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
         # to avoid 'dubious ownership' errors caused by bind-mounted repos.
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -284,7 +334,7 @@ jobs:
           # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
           # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
         # run the container
-        docker run --rm \
+        docker run --rm ${MEMORY_ARG} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
           ${MOUNT_CCACHE} \
@@ -306,8 +356,18 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
+          -e RUNNER_TYPE=${RUNNER_TYPE} \
           "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "if [ \"${RUNNER_TYPE}\" = \"github\" ]; then git config --global --add safe.directory /build; fi; make -j$((NB_CORES+1)) -l${NB_CORES} image"
-          # "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          # run the workspace helper script so computation happens inside the container
+          # (script will call make with a recommended -j)
+        docker_exit_code=$?
+        if [ -f build_recommend.sh ]; then
+          docker run --rm ${MEMORY_ARG} \
+            --name "build-runner-cmd" \
+            -v ${{ github.workspace }}:/build \
+            ${MOUNT_CCACHE} ${MOUNT_STAMPS} ${MOUNT_APT} \
+            -w /build -e RUNNER_TYPE=${RUNNER_TYPE} "${{ needs.init.outputs.output_ee_distro_tag }}" /bin/bash /build/build_recommend.sh || true
+        fi
           # --volumes-from ${{ env.DistroCodeName }}-ccache \
           # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           # --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
