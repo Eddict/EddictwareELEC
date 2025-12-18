@@ -205,6 +205,8 @@ jobs:
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         # use same GID as UID if we don't know the image GID (common in builder images)
         DOCKER_GID=${DOCKER_UID}
+        # runner type (github or self-hosted)
+        RUNNER_TYPE="${{ github.event.inputs.runner }}"
         echo "Preparing cache dirs for UID:GID ${DOCKER_UID}:${DOCKER_GID}"
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} .ccache "$BUILD_DIR" .apt-cache || true
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.stamps" || true
@@ -213,6 +215,11 @@ jobs:
         chmod -R 0775 .ccache "$BUILD_DIR" .apt-cache || true
         chmod -R 0775 "$BUILD_DIR/.stamps" || true
         chmod 0664 "$BUILD_DIR/.cache_package_global" || true
+        # On self-hosted runners make workspace ownership match container user for full parity
+        if [ "${RUNNER_TYPE}" != "github" ]; then
+          echo "Chowning workspace to ${DOCKER_UID}:${DOCKER_GID}"
+          sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "${GITHUB_WORKSPACE}" || true
+        fi
 
     - name: Build ${{ env.EE_Distro }} image
       id: build-image
@@ -234,8 +241,7 @@ jobs:
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
         [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
 
-        # pull the image
-        docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ${{ env.EE_Registry }}
+        # pull the image (authentication is handled by docker/login-action@v3)
         docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
         # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
@@ -264,13 +270,8 @@ jobs:
           MOUNT_STAMPS="-v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/${BUILD_DIR}/.stamps"
           MOUNT_APT="-v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives"
         fi
-        echo "[debug] Running temporary container to show container UID/GID and test cache write"
-        docker run --rm \
-          --name "debug-${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
-          -v ${{ github.workspace }}:/build \
-          ${MOUNT_CCACHE} \
-          -w /build \
-          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "echo 'container uid:' \$(id -u); echo 'container gid:' \$(id -g); echo 'ls cache file:'; ls -lad /build/${BUILD_DIR}/.cache_package_global || true; echo 'try append'; if echo debug-$(date +%s) >> /build/${BUILD_DIR}/.cache_package_global 2>/dev/null; then echo 'write: OK'; else echo 'write: FAIL'; fi; ls -lad /build/${BUILD_DIR}/.cache_package_global || true"
+        # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
+        # to avoid 'dubious ownership' errors caused by bind-mounted repos.
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         # if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
         #     # cleanup
@@ -310,7 +311,7 @@ jobs:
           -e ARCH=${{ env.EE_Arch }} \
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-          "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
+          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "if [ \"${RUNNER_TYPE}\" = \"github\" ]; then git config --global --add safe.directory /build; fi; make -j$((NB_CORES+1)) -l${NB_CORES} image"
           # "${{ needs.init.outputs.output_ee_distro_tag }}" make -j$((NB_CORES+1)) -l${NB_CORES} image
           # --volumes-from ${{ env.DistroCodeName }}-ccache \
           # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
