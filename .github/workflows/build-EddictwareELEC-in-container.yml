@@ -234,11 +234,32 @@ jobs:
         docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
         # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        # decide mount strategy based on runner input: use named docker volumes only on self-hosted runners
+        RUNNER_TYPE="${{ github.event.inputs.runner }}"
+        if [ "${RUNNER_TYPE}" != "github" ]; then
+          VOL_CCACHE="eddict_${{ env.DistroCodeName }}_${{ env.EE_Arch }}_ccache"
+          VOL_STAMPS="eddict_${{ env.DistroCodeName }}_${{ env.EE_Arch }}_stamps"
+          VOL_APT="eddict_${{ env.DistroCodeName }}_${{ env.EE_Arch }}_apt"
+          docker volume create "${VOL_CCACHE}" || true
+          docker volume create "${VOL_STAMPS}" || true
+          docker volume create "${VOL_APT}" || true
+          # initialize ownership inside volumes so container user can write
+          docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "mkdir -p /mnt && chown ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+          docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "mkdir -p /mnt && chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+          docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "mkdir -p /mnt && chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+          MOUNT_CCACHE="-v ${VOL_CCACHE}:/build/${BUILD_DIR}/.ccache"
+          MOUNT_STAMPS="-v ${VOL_STAMPS}:/build/${BUILD_DIR}/.stamps"
+          MOUNT_APT="-v ${VOL_APT}:/var/cache/apt/archives"
+        else
+          MOUNT_CCACHE="-v ${{ github.workspace }}/.ccache:/build/${BUILD_DIR}/.ccache"
+          MOUNT_STAMPS="-v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/${BUILD_DIR}/.stamps"
+          MOUNT_APT="-v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives"
+        fi
         echo "[debug] Running temporary container to show container UID/GID and test cache write"
         docker run --rm \
           --name "debug-${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
-          -v ${{ github.workspace }}/.ccache:/build/${BUILD_DIR}/.ccache \
+          ${MOUNT_CCACHE} \
           -w /build \
           "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "echo 'container uid:' \$(id -u); echo 'container gid:' \$(id -g); echo 'ls cache file:'; ls -lad /build/${BUILD_DIR}/.cache_package_global || true; echo 'try append'; if echo debug-$(date +%s) >> /build/${BUILD_DIR}/.cache_package_global 2>/dev/null; then echo 'write: OK'; else echo 'write: FAIL'; fi; ls -lad /build/${BUILD_DIR}/.cache_package_global || true"
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -261,9 +282,9 @@ jobs:
         docker run --rm \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
-          -v ${{ github.workspace }}/.ccache:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
-          -v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps \
-          -v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives \
+          ${MOUNT_CCACHE} \
+          ${MOUNT_STAMPS} \
+          ${MOUNT_APT} \
           -w /build \
           -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           -e DISABLE_COLORS=no \
