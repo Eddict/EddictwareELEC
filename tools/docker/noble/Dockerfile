@@ -21,15 +21,14 @@ RUN apt-get update \
     unzip diffutils lzop make file g++-14 xfonts-utils xsltproc default-jre-headless python3 \
     libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
     golang-1.23-go git openssh-client rsync upx-ucl \
+    cmake automake autoconf libtool m4 pkg-config ninja-build \
     --no-install-recommends \
     && ln -s /usr/lib/go-1.23 /usr/lib/go \
     && ln -s /usr/lib/go-1.23/bin/go /usr/bin/go \
     && ln -s /usr/lib/go-1.23/bin/gofmt /usr/bin/gofmt
 
 # build system tools required by package builds
-RUN apt-get install -y \
-  cmake automake autoconf libtool m4 pkg-config ninja-build \
-  --no-install-recommends
+# cmake automake autoconf libtool m4 pkg-config ninja-build
 
 RUN if [ "$(uname -m)" = "aarch64" ]; then \
   apt-get install -y libc6-amd64-cross qemu-user-binfmt --no-install-recommends; \
