@@ -34,6 +34,11 @@ on:
           - arm
           - x86_64
         default: aarch64
+      volume_prefix:
+        description: 'Prefix for docker named volumes (used on self-hosted runners)'
+        required: false
+        type: string
+        default: eddict
 
 run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, inputs.runner, inputs.os, inputs.arch) }}
 
@@ -235,11 +240,15 @@ jobs:
         # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
         # decide mount strategy based on runner input: use named docker volumes only on self-hosted runners
+        DOCKER_UID=${{ needs.init.outputs.docker_guid }}
+        DOCKER_GID=${DOCKER_UID}
         RUNNER_TYPE="${{ github.event.inputs.runner }}"
+        # make the provided prefix target-specific early (prefix + distro + arch)
+        VOLUME_PREFIX="${{ github.event.inputs.volume_prefix }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
         if [ "${RUNNER_TYPE}" != "github" ]; then
-          VOL_CCACHE="eddict_${{ env.DistroCodeName }}_${{ env.EE_Arch }}_ccache"
-          VOL_STAMPS="eddict_${{ env.DistroCodeName }}_${{ env.EE_Arch }}_stamps"
-          VOL_APT="eddict_${{ env.DistroCodeName }}_${{ env.EE_Arch }}_apt"
+          VOL_CCACHE="${VOLUME_PREFIX}-ccache"
+          VOL_STAMPS="${VOLUME_PREFIX}-stamps"
+          VOL_APT="${VOLUME_PREFIX}-apt"
           docker volume create "${VOL_CCACHE}" || true
           docker volume create "${VOL_STAMPS}" || true
           docker volume create "${VOL_APT}" || true
