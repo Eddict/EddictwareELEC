@@ -28,12 +28,11 @@ on:
         default: noble
   # deployment:
   push:
-    branches: [ "master" ]
     paths: &include_paths
       - 'tools/docker/noble/Dockerfile'
 
 # run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.runner, inputs.environment) }}
-run-name: '${{ github.workflow }} (${{ inputs.environment }})'
+run-name: ${{ github.workflow (inputs.environment || 'noble') }}
 
 env:
   REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
@@ -50,6 +49,8 @@ jobs:
       id-token: write
 
     env:
+      RUNNER_CHOICE: ${{ inputs.runner || 'github' }}
+      ENVIRONMENT_CHOICE: ${{ inputs.environment || 'noble' }}
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
 
     steps:
@@ -71,7 +72,7 @@ jobs:
       run: |
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
-        dTag="${{ env.REGISTRY }}/${{ github.repository }}-${{ inputs.environment }}"
+        dTag="${{ env.REGISTRY }}/${{ github.repository }}-${{ env.ENVIRONMENT_CHOICE }}"
         # Use ,, to convert all characters to lowercase
         # echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
@@ -85,8 +86,8 @@ jobs:
         # username: ${{ secrets.REGISTRY_USER }}
         # password: ${{ secrets.REGISTRY_PWD }}
         registry: ${{ env.REGISTRY }}
-        username: ${{ inputs.runner == 'github' && github.actor || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
-        password: ${{ inputs.runner == 'github' && secrets.GITHUB_TOKEN || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
+        username: ${{ env.RUNNER_CHOICE == 'github' && github.actor || env.RUNNER_CHOICE == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
+        password: ${{ env.RUNNER_CHOICE == 'github' && secrets.GITHUB_TOKEN || env.RUNNER_CHOICE == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
@@ -132,7 +133,7 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         # context: "{{defaultContext}}:mysubdir"
-        file: "./tools/docker/${{ inputs.environment }}/Dockerfile"
+        file: "./tools/docker/${{ env.ENVIRONMENT_CHOICE }}/Dockerfile"
         # outputs: type=cacheonly # build without pushing
         push: true
         tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
