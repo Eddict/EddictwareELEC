@@ -18,15 +18,18 @@ RUN useradd docker -U -G sudo -m -s /bin/bash \
 RUN apt-get update \
  && apt-get install -y \
     curl bash bc gcc-14 cpp-14 sed patch patchutils tar bzip2 gzip xz-utils zstd perl gawk gperf zip \
-      unzip diffutils lzop make file g++-14 xfonts-utils xsltproc default-jre-headless python3 \
-      libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
-      golang-1.23-go git openssh-client rsync upx-ucl \
-    # build system tools required by package builds
-      cmake automake autoconf libtool m4 pkg-config ninja-build \
+    unzip diffutils lzop make file g++-14 xfonts-utils xsltproc default-jre-headless python3 \
+    libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
+    golang-1.23-go git openssh-client rsync upx-ucl \
     --no-install-recommends \
     && ln -s /usr/lib/go-1.23 /usr/lib/go \
     && ln -s /usr/lib/go-1.23/bin/go /usr/bin/go \
     && ln -s /usr/lib/go-1.23/bin/gofmt /usr/bin/gofmt
+
+# build system tools required by package builds
+RUN apt-get install -y \
+  cmake automake autoconf libtool m4 pkg-config ninja-build \
+  --no-install-recommends
 
 RUN if [ "$(uname -m)" = "aarch64" ]; then \
   apt-get install -y libc6-amd64-cross qemu-user-binfmt --no-install-recommends; \
