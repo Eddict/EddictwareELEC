@@ -36,27 +36,18 @@ RUN if [ "$(uname -m)" = "aarch64" ]; then \
 
 RUN rm -rf /var/lib/apt/lists/*
 
-# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
-#   --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
-#   --slave /usr/bin/gcov gcov /usr/bin/gcov-14 \
-#   && update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-14 100 \
-#   && update-alternatives --set gcc /usr/bin/gcc-14
-
-# RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
-#     --slave /usr/bin/cpp cpp /usr/bin/cpp-14 \
-#     --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
-#     --slave /usr/bin/gcov gcov /usr/bin/gcov-14
-
-
+# Configure compiler alternatives: register gcc and its slaves, then
+# only install `cpp` if it's not already registered to avoid master/slave conflicts.
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
   --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
   --slave /usr/bin/gcov gcov /usr/bin/gcov-14 \
   --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-14 \
-  --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-14
-
-RUN update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-14 100
-
-RUN update-alternatives --config gcc \
-  update-alternatives --config cpp
+  --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-14 && \
+  if update-alternatives --query cpp >/dev/null 2>&1; then \
+    echo "cpp already registered, skipping cpp install"; \
+  else \
+    update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-14 100; \
+  fi && \
+  update-alternatives --set gcc /usr/bin/gcc-14
 
 USER docker
