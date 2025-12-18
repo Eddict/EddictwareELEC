@@ -191,6 +191,8 @@ jobs:
       run: |
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
         mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives
+        # ensure stamps dir exists so docker won't auto-create it as root when bind-mounting
+        mkdir -p "$BUILD_DIR/.stamps"
         # ensure the global cache is a file (scripts expect a file, not a directory)
         if [ ! -e "$BUILD_DIR/.cache_package_global" ]; then
           touch "$BUILD_DIR/.cache_package_global"
@@ -200,9 +202,11 @@ jobs:
         DOCKER_GID=${DOCKER_UID}
         echo "Preparing cache dirs for UID:GID ${DOCKER_UID}:${DOCKER_GID}"
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} .ccache "$BUILD_DIR" .apt-cache || true
+        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.stamps" || true
         sudo chown ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.cache_package_global" || true
         # allow the container user to create/remove files in cache dirs
         chmod -R 0775 .ccache "$BUILD_DIR" .apt-cache || true
+        chmod -R 0775 "$BUILD_DIR/.stamps" || true
         chmod 0664 "$BUILD_DIR/.cache_package_global" || true
 
     - name: Build ${{ env.EE_Distro }} image
