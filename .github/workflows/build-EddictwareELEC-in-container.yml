@@ -46,14 +46,14 @@ on:
         type: boolean
         default: false
 
-run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, inputs.runner, inputs.os, inputs.arch) }}
+run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, github.event_name == 'workflow_dispatch' && inputs.runner || 'github', github.event_name == 'workflow_dispatch' && inputs.os || 'noble', github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64') }}
 
 env:
-  DistroCodeName: ${{ github.event.inputs.os }}
+  DistroCodeName: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.os || 'noble' }}
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
-  EE_Arch: ${{ github.event.inputs.arch }}
+  EE_Arch: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.arch || 'aarch64' }}
   EE_image_pathfilename: ""
   EE_image_filename: ""
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
@@ -65,7 +65,7 @@ defaults:
 
 jobs:
   init:
-    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'ubuntu-latest' }}
     permissions:
       contents: read
       packages: read
@@ -125,7 +125,7 @@ jobs:
         # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
 
   build:
-    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'ubuntu-latest' }}
     needs: init
     # container:
     #   image: ${{ needs.init.outputs.output_ee_distro_tag }}
