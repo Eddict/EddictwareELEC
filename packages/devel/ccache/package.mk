@@ -21,7 +21,17 @@ configure_host() {
   echo "SET(CMAKE_C_COMPILER   ${CC})"  >>cmake-ccache.conf
   echo "SET(CMAKE_CXX_COMPILER ${CXX})" >>cmake-ccache.conf
 
-  cmake -DCMAKE_TOOLCHAIN_FILE=cmake-ccache.conf \
+  # prefer toolchain-installed cmake when available to avoid races
+  CMAKE_BIN="${TOOLCHAIN}/bin/cmake"
+  if [ ! -x "${CMAKE_BIN}" ]; then
+    CMAKE_BIN="$(command -v cmake 2>/dev/null || true)"
+  fi
+  if [ -z "${CMAKE_BIN}" ]; then
+    echo "cmake not found in ${TOOLCHAIN}/bin or PATH" >&2
+    return 1
+  fi
+
+  "${CMAKE_BIN}" -DCMAKE_TOOLCHAIN_FILE=cmake-ccache.conf \
         -DCMAKE_INSTALL_PREFIX=${TOOLCHAIN} \
         -DENABLE_DOCUMENTATION=OFF \
         -DREDIS_STORAGE_BACKEND=OFF \
