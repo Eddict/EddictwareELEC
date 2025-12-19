@@ -332,6 +332,9 @@ jobs:
         EOF
         
         chmod +x build_recommend.sh || true
+        # Ensure per-build ccache ownership is correct before running the container
+        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.ccache" || true
+
         # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
         # to avoid 'dubious ownership' errors caused by bind-mounted repos.
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -381,6 +384,7 @@ jobs:
           ${MOUNT_STAMPS} \
           ${MOUNT_APT} \
           -w /build \
+          --user ${DOCKER_UID}:${DOCKER_GID} \
           -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           -e DISABLE_COLORS=no \
           -e MTCOLORS=auto \
