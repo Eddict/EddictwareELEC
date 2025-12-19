@@ -226,7 +226,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        debug=true
+        debug=${{ github.event.inputs.debug }}
         [ "$debug" = true ] && echo "[pwd]: $PWD"
         [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
         [ "$debug" = true ] && ls -al $PWD
@@ -249,8 +249,10 @@ jobs:
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}
         RUNNER_TYPE="${{ github.event.inputs.runner }}"
+        [ "$debug" = true ] && echo "[RUNNER_TYPE]: $RUNNER_TYPE"
         # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
         VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
+        [ "$debug" = true ] && echo "[VOLUME_PREFIX]: $VOLUME_PREFIX"
         if [ "${RUNNER_TYPE}" != "github" ]; then
           VOL_CCACHE="${VOLUME_PREFIX}-ccache"
           VOL_STAMPS="${VOLUME_PREFIX}-stamps"
@@ -270,6 +272,9 @@ jobs:
           MOUNT_STAMPS="-v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/${BUILD_DIR}/.stamps"
           MOUNT_APT="-v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives"
         fi
+        [ "$debug" = true ] && echo "[MOUNT_CCACHE]: $MOUNT_CCACHE"
+        [ "$debug" = true ] && echo "[MOUNT_STAMPS]: $MOUNT_STAMPS"
+        [ "$debug" = true ] && echo "[MOUNT_APT]: $MOUNT_APT"
         # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
         if [ "${RUNNER_TYPE}" != "github" ]; then
           CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}"
@@ -277,7 +282,8 @@ jobs:
         else
           MEMORY_ARG=""
         fi
-
+        [ "$debug" = true ] && echo "[MEMORY_ARG]: $MEMORY_ARG"
+        
         # create a small script in the workspace to compute a safe -j inside the container
         cat > build_recommend.sh <<'EOF'
         #!/bin/bash
@@ -339,7 +345,7 @@ jobs:
           # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
           # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
         # run the container (use debug env values when workflow input `debug` is 'true')
-        if [ ${{ github.event.inputs.debug }} ]; then
+        if [ "$debug" = true ]; then
           ONELOG_VAL=no
           LOGCOMBINE_VAL=never
           MTIMMEDIATE_VAL=yes
@@ -360,6 +366,7 @@ jobs:
         fi
 
         DOCKER_ENV_FLAGS="-e ONELOG=${ONELOG_VAL} -e LOGCOMBINE=${LOGCOMBINE_VAL} -e MTIMMEDIATE=${MTIMMEDIATE_VAL} -e MTDEBUG=${MTDEBUG_VAL} -e MTVERBOSE=${MTVERBOSE_VAL} -e MTPROGRESS=${MTPROGRESS_VAL} -e SHOW_STDOUT=${SHOW_STDOUT_VAL} -e SHOW_STDERR=${SHOW_STDERR_VAL}"
+        [ "$debug" = true ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS"
 
         docker run --rm ${MEMORY_ARG} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
