@@ -1,6 +1,12 @@
 name: Build image in container
 
 on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       runner:
@@ -421,7 +427,8 @@ jobs:
       if: always() && (steps.build-image.outcome == 'failure')
       with:
         name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
-        path: /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
+        # use workspace-relative path so the host runner (not the container) can find the logs
+        path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
         overwrite: true
         include-hidden-files: true
 
