@@ -16,7 +16,7 @@ on:
         options:
           - self-hosted
           - github
-        default: github
+        default: self-hosted
       os:
         description: 'OS of build container'
         required: true
