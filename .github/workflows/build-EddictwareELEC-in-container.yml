@@ -459,7 +459,8 @@ jobs:
         # use workspace-relative path so the host runner (not the container) can find the logs
         path: |
           build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
-          build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/diagnostic_pre_chown.txt
+            build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/diagnostic_pre_chown.txt
+            ${{ runner.temp }}/diagnostic_pre_chown.txt
         overwrite: true
         include-hidden-files: true
 
