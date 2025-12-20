@@ -273,6 +273,12 @@ jobs:
         docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
         docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
         docker run --rm -v "${VOL_WORK}:/build" busybox sh -c "mkdir -p /build || true; chmod 0777 /build || true"
+        # Ensure volumes are owned by the intended build UID:GID so the unprivileged build user can write/execute
+        echo "Initializing ownership of volumes to ${DOCKER_UID}:${DOCKER_GID} (idempotent)"
+        docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+        docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+        docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+        docker run --rm -v "${VOL_WORK}:/build" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
         MOUNT_CCACHE="-v ${VOL_CCACHE}:/build/${BUILD_DIR}/.ccache"
         MOUNT_STAMPS="-v ${VOL_STAMPS}:/build/${BUILD_DIR}/.stamps"
         MOUNT_APT="-v ${VOL_APT}:/var/cache/apt/archives"
