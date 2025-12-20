@@ -385,6 +385,13 @@ jobs:
         fi
         
         # Ensure the workspace is writable by the container user by initializing ownership inside a short container
+        # Diagnostic: capture workspace ownership/permission snapshot before attempting chown
+        echo "Writing pre-chown diagnostic to ${BUILD_DIR}/diagnostic_pre_chown.txt"
+        mkdir -p "${BUILD_DIR}" || true
+        echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
+        ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
+        ls -alR "${GITHUB_WORKSPACE}" | sed -n '1,500p' >> "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
+        echo "END DIAGNOSTIC" >> "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
         echo "Initializing workspace ownership inside container to ${DOCKER_UID}:${DOCKER_GID}"
         docker run --rm -v ${{ github.workspace }}:/build "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
         docker run --rm ${MEMORY_ARG} \
