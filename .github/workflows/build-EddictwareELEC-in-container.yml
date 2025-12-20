@@ -254,7 +254,8 @@ jobs:
         # decide mount strategy based on runner input: use named docker volumes only on self-hosted runners
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}
-        RUNNER_TYPE="${{ github.event.inputs.runner }}"
+        # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
+        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'github' }}"
         [ "$debug" = true ] && echo "[RUNNER_TYPE]: $RUNNER_TYPE"
         # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
         VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
@@ -377,6 +378,12 @@ jobs:
         DOCKER_ENV_FLAGS="-e ONELOG=${ONELOG_VAL} -e LOGCOMBINE=${LOGCOMBINE_VAL} -e MTIMMEDIATE=${MTIMMEDIATE_VAL} -e MTDEBUG=${MTDEBUG_VAL} -e MTVERBOSE=${MTVERBOSE_VAL} -e MTPROGRESS=${MTPROGRESS_VAL} -e SHOW_STDOUT=${SHOW_STDOUT_VAL} -e SHOW_STDERR=${SHOW_STDERR_VAL}"
         [ "$debug" = true ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS"
 
+        # only pass --user when running on self-hosted runners; run as root on GitHub-hosted runners
+        USER_ARG=""
+        if [ "${RUNNER_TYPE}" != "github" ]; then
+          USER_ARG="--user ${DOCKER_UID}:${DOCKER_GID}"
+        fi
+
         docker run --rm ${MEMORY_ARG} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
@@ -384,7 +391,7 @@ jobs:
           ${MOUNT_STAMPS} \
           ${MOUNT_APT} \
           -w /build \
-          --user ${DOCKER_UID}:${DOCKER_GID} \
+          ${USER_ARG} \
           -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           -e DISABLE_COLORS=no \
           -e MTCOLORS=auto \
