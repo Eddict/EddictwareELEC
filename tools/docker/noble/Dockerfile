@@ -36,6 +36,12 @@ RUN if [ "$(uname -m)" = "aarch64" ]; then \
 
 RUN rm -rf /var/lib/apt/lists/*
 
+# Attempt to install libfmt runtime/dev packages so host-built ccache can load libfmt.so
+# Use a tolerant install so the build doesn't fail on bases that lack the exact package name.
+RUN apt-get update \
+ && { apt-get install -y libfmt-dev libfmt1 --no-install-recommends || true; } \
+ && rm -rf /var/lib/apt/lists/*
+
 RUN rm -f /usr/bin/cpp /etc/alternatives/cpp || true && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 \
       --slave /usr/bin/g++ g++ /usr/bin/g++-14 \
