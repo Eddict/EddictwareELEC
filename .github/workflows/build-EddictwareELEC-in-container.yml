@@ -269,10 +269,10 @@ jobs:
         docker volume create "${VOL_APT}" || true
         docker volume create "${VOL_WORK}" || true
         # initialize ownership inside volumes so container user can write
-        docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "mkdir -p /mnt || true"
-        docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "mkdir -p /mnt || true"
-        docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "mkdir -p /mnt || true"
-        docker run --rm -v "${VOL_WORK}:/build" busybox sh -c "mkdir -p /build || true"
+        docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
+        docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
+        docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
+        docker run --rm -v "${VOL_WORK}:/build" busybox sh -c "mkdir -p /build || true; chmod 0777 /build || true"
         MOUNT_CCACHE="-v ${VOL_CCACHE}:/build/${BUILD_DIR}/.ccache"
         MOUNT_STAMPS="-v ${VOL_STAMPS}:/build/${BUILD_DIR}/.stamps"
         MOUNT_APT="-v ${VOL_APT}:/var/cache/apt/archives"
@@ -336,7 +336,8 @@ jobs:
 
         # Copy repository into the container-owned workspace volume to avoid bind-mount ownership issues
         echo "Copying workspace into container volume ${VOL_WORK} as UID ${DOCKER_UID} (source mounted read-only)"
-        docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v ${{ github.workspace }}:/src:ro -v ${VOL_WORK}:/build busybox sh -c "cp -a /src/. /build/ || true"
+        # use alpine+tar to avoid preserving host ownership/perm metadata and to be robust on filesystems that reject chown
+        docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v ${{ github.workspace }}:/src:ro -v ${VOL_WORK}:/build alpine sh -c "cd /src && tar --no-same-owner --no-same-permissions -cf - . | tar -C /build -xpf - || true"
 
         # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
         # to avoid 'dubious ownership' errors caused by bind-mounted repos.
