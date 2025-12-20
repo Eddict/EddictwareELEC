@@ -396,7 +396,7 @@ jobs:
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
           -e RUNNER_TYPE=${RUNNER_TYPE} \
-          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "if [ \"${RUNNER_TYPE}\" = \"github\" ]; then git config --global --add safe.directory /build; fi; make -j$((NB_CORES+1)) -l${NB_CORES} image"
+          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "git config --global --add safe.directory /build || true; make -j$((NB_CORES+1)) -l${NB_CORES} image"
           # run the workspace helper script so computation happens inside the container
           # (script will call make with a recommended -j)
         docker_exit_code=$?
