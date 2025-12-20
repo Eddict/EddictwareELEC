@@ -383,7 +383,12 @@ jobs:
         if [ "${RUNNER_TYPE}" != "github" ]; then
           USER_ARG="--user ${DOCKER_UID}:${DOCKER_GID}"
         fi
-
+        
+        # For self-hosted runners, ensure the workspace is owned correctly inside a short container
+        if [ "${RUNNER_TYPE}" != "github" ]; then
+          echo "Initializing workspace ownership inside container to ${DOCKER_UID}:${DOCKER_GID}"
+          docker run --rm -v ${{ github.workspace }}:/build "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
+        fi
         docker run --rm ${MEMORY_ARG} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
