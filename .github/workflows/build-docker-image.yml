@@ -31,7 +31,7 @@ on:
     paths: &include_paths
       - 'tools/docker/noble/Dockerfile'
 
-run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.runner, inputs.environment || 'noble') }}
+run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.runner || 'github', inputs.environment || 'noble') }}
 
 env:
   REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
