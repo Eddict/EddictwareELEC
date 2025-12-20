@@ -211,8 +211,8 @@ jobs:
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         # use same GID as UID if we don't know the image GID (common in builder images)
         DOCKER_GID=${DOCKER_UID}
-        # runner type (github or self-hosted)
-        RUNNER_TYPE="${{ github.event.inputs.runner }}"
+        # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
+        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'github' }}"
         echo "Preparing cache dirs for UID:GID ${DOCKER_UID}:${DOCKER_GID}"
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} .ccache "$BUILD_DIR" .apt-cache || true
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.stamps" || true
