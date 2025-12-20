@@ -65,7 +65,7 @@ defaults:
 
 jobs:
   init:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'ubuntu-latest' }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     permissions:
       contents: read
       packages: read
@@ -125,7 +125,7 @@ jobs:
         # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
 
   build:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'ubuntu-latest' }}
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     needs: init
     # container:
     #   image: ${{ needs.init.outputs.output_ee_distro_tag }}
