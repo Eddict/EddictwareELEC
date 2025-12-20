@@ -335,9 +335,20 @@ jobs:
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.ccache" || true
 
         # Copy repository into the container-owned workspace volume to avoid bind-mount ownership issues
-        echo "Copying workspace into container volume ${VOL_WORK} as UID ${DOCKER_UID} (source mounted read-only)"
-        # use alpine+tar to avoid preserving host ownership/perm metadata and to be robust on filesystems that reject chown
-        docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v ${{ github.workspace }}:/src:ro -v ${VOL_WORK}:/build alpine sh -c "cd /src && tar --no-same-owner --no-same-permissions -cf - . | tar -C /build -xpf - || true"
+        echo "Copying workspace into container volume ${VOL_WORK} (source mounted read-only) as root"
+        # copy files as root into the volume (some filesystems reject non-root writes); avoid preserving ownership/perm metadata
+        docker run --rm -v ${{ github.workspace }}:/src:ro -v ${VOL_WORK}:/build alpine sh -c "cd /src && tar --no-same-owner --no-same-permissions -cf - . | tar -C /build -xpf - || true"
+        # attempt to make volume writable for the intended build UID
+        docker run --rm -v ${VOL_WORK}:/build busybox sh -c "chmod -R 0775 /build || true"
+        # test whether the DOCKER_UID can create files in the volume; if not, we'll run the build as root
+        CAN_WRITE=$(docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v ${VOL_WORK}:/build alpine sh -c "sh -c 'touch /build/.perm_test' >/dev/null 2>&1 && echo OK || echo FAIL") || CAN_WRITE=FAIL
+        if [ "${CAN_WRITE}" != "OK" ]; then
+          echo "Volume not writable by ${DOCKER_UID}; will run build container as root"
+          USER_ARG=""
+        else
+          echo "Volume writable by ${DOCKER_UID}; running build container as that UID"
+          USER_ARG="--user ${DOCKER_UID}:${DOCKER_GID}"
+        fi
 
         # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
         # to avoid 'dubious ownership' errors caused by bind-mounted repos.
