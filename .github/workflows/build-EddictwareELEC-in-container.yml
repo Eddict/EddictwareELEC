@@ -251,7 +251,7 @@ jobs:
         docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
         # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-        # decide mount strategy based on runner input: use named docker volumes only on self-hosted runners
+        # decide mount strategy based on runner input: always use named docker volumes for runtime
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
@@ -260,25 +260,23 @@ jobs:
         # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
         VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
         [ "$debug" = true ] && echo "[VOLUME_PREFIX]: $VOLUME_PREFIX"
-        if [ "${RUNNER_TYPE}" != "github" ]; then
-          VOL_CCACHE="${VOLUME_PREFIX}-ccache"
-          VOL_STAMPS="${VOLUME_PREFIX}-stamps"
-          VOL_APT="${VOLUME_PREFIX}-apt"
-          docker volume create "${VOL_CCACHE}" || true
-          docker volume create "${VOL_STAMPS}" || true
-          docker volume create "${VOL_APT}" || true
-          # initialize ownership inside volumes so container user can write
-          docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "mkdir -p /mnt && chown ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
-          docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "mkdir -p /mnt && chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
-          docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "mkdir -p /mnt && chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
-          MOUNT_CCACHE="-v ${VOL_CCACHE}:/build/${BUILD_DIR}/.ccache"
-          MOUNT_STAMPS="-v ${VOL_STAMPS}:/build/${BUILD_DIR}/.stamps"
-          MOUNT_APT="-v ${VOL_APT}:/var/cache/apt/archives"
-        else
-          MOUNT_CCACHE="-v ${{ github.workspace }}/.ccache:/build/${BUILD_DIR}/.ccache"
-          MOUNT_STAMPS="-v ${{ github.workspace }}/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps:/build/${BUILD_DIR}/.stamps"
-          MOUNT_APT="-v ${{ github.workspace }}/.apt-cache/archives:/var/cache/apt/archives"
-        fi
+        VOL_CCACHE="${VOLUME_PREFIX}-ccache"
+        VOL_STAMPS="${VOLUME_PREFIX}-stamps"
+        VOL_APT="${VOLUME_PREFIX}-apt"
+        VOL_WORK="${VOLUME_PREFIX}-work"
+        docker volume create "${VOL_CCACHE}" || true
+        docker volume create "${VOL_STAMPS}" || true
+        docker volume create "${VOL_APT}" || true
+        docker volume create "${VOL_WORK}" || true
+        # initialize ownership inside volumes so container user can write
+        docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "mkdir -p /mnt && chown ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+        docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "mkdir -p /mnt && chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+        docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "mkdir -p /mnt && chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
+        docker run --rm -v "${VOL_WORK}:/build" busybox sh -c "mkdir -p /build && chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
+        MOUNT_CCACHE="-v ${VOL_CCACHE}:/build/${BUILD_DIR}/.ccache"
+        MOUNT_STAMPS="-v ${VOL_STAMPS}:/build/${BUILD_DIR}/.stamps"
+        MOUNT_APT="-v ${VOL_APT}:/var/cache/apt/archives"
+        MOUNT_WORK="-v ${VOL_WORK}:/build"
         [ "$debug" = true ] && echo "[MOUNT_CCACHE]: $MOUNT_CCACHE"
         [ "$debug" = true ] && echo "[MOUNT_STAMPS]: $MOUNT_STAMPS"
         [ "$debug" = true ] && echo "[MOUNT_APT]: $MOUNT_APT"
@@ -336,6 +334,10 @@ jobs:
         # Ensure per-build ccache ownership is correct before running the container
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.ccache" || true
 
+        # Copy repository into the container-owned workspace volume to avoid bind-mount ownership issues
+        echo "Copying workspace into container volume ${VOL_WORK} (source mounted read-only)"
+        docker run --rm -v ${{ github.workspace }}:/src:ro -v ${VOL_WORK}:/build busybox sh -c "cp -a /src/. /build/ || true; chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
+
         # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
         # to avoid 'dubious ownership' errors caused by bind-mounted repos.
         # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
@@ -386,17 +388,23 @@ jobs:
         
         # Ensure the workspace is writable by the container user by initializing ownership inside a short container
         # Diagnostic: capture workspace ownership/permission snapshot before attempting chown
-        echo "Writing pre-chown diagnostic to ${BUILD_DIR}/diagnostic_pre_chown.txt"
-        mkdir -p "${BUILD_DIR}" || true
-        echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
-        ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
-        ls -alR "${GITHUB_WORKSPACE}" | sed -n '1,500p' >> "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
-        echo "END DIAGNOSTIC" >> "${BUILD_DIR}/diagnostic_pre_chown.txt" || true
+        DIAG_FILE="${RUNNER_TEMP:-/tmp}/diagnostic_pre_chown.txt"
+        echo "Writing pre-chown diagnostic to ${DIAG_FILE}"
+        echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${DIAG_FILE}" || true
+        ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
+        ls -alR "${GITHUB_WORKSPACE}" | sed -n '1,500p' >> "${DIAG_FILE}" || true
+        echo "END DIAGNOSTIC" >> "${DIAG_FILE}" || true
         echo "Initializing workspace ownership inside container to ${DOCKER_UID}:${DOCKER_GID}"
-        docker run --rm -v ${{ github.workspace }}:/build "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
+        docker run --rm ${MEMORY_ARG} \
+          --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}-init" \
+          ${MOUNT_WORK} \
+          ${MOUNT_CCACHE} \
+          ${MOUNT_STAMPS} \
+          ${MOUNT_APT} \
+          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
         docker run --rm ${MEMORY_ARG} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
-          -v ${{ github.workspace }}:/build \
+          ${MOUNT_WORK} \
           ${MOUNT_CCACHE} \
           ${MOUNT_STAMPS} \
           ${MOUNT_APT} \
