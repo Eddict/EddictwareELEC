@@ -54,7 +54,15 @@ build.log
 # Optionally ignore generated build output
 dist/
 
-.logs/
+
+# ignore everything in .logs
+/.logs/*
+# allow the directory itself so git can traverse it
+!/.logs/
+# allow the single script file
+!/.logs/collect_ci_diagnostics.sh
+
+#.logs/
 .azure/test-get-endpoint.ps1
 .azure/update-acr-endpoint.ps1
 renamebranch.sh
