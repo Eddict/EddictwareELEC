@@ -280,9 +280,9 @@ jobs:
                 "$TOOLCHAIN_DIR/bin/$g" --version >> "$DIAG_DIR/in-container.txt" 2>&1 || true
                 echo "--- attempting link test with $g ---" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
                 cat > /tmp/test.cpp <<"EOF"
-#include <iostream>
-int main(){ std::cout << "ok\n"; return 0; }
-EOF
+                #include <iostream>
+                int main(){ std::cout << "ok\n"; return 0; }
+                EOF
                 if "$TOOLCHAIN_DIR/bin/$g" -o /tmp/test /tmp/test.cpp 2>>"$DIAG_DIR/in-container.txt"; then
                   echo "$g link: OK" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
                 else
