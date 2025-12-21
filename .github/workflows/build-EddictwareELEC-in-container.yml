@@ -210,11 +210,6 @@ jobs:
           sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "${GITHUB_WORKSPACE}" || true
         fi
 
-    - name: Diagnostic: make env & processes (container)
-      run: |
-        docker run --rm -v "${{ github.workspace }}:/build" -w /build "${{ needs.init.outputs.output_ee_distro_tag }}" \
-          sh -c 'echo "=== MAKE-RELATED ENV ==="; env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true; echo "=== CURRENT make PROCESSES ==="; ps -ef | grep "[m]ake" || true'
-
     - name: Build ${{ env.EE_Distro }} image
       id: build-image
       env:
@@ -276,6 +271,10 @@ jobs:
         if [ "${RUNNER_TYPE:-}" = "github" ]; then
           git config --global --add safe.directory /build || true
         fi
+        echo "=== MAKE-RELATED ENV ==="
+        env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true
+        echo "=== CURRENT make PROCESSES ==="
+        ps -ef | grep "[m]ake" || true
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
         PER_JOB_MB=${PER_JOB_MB:-2000}
         RESERVE_MB=${RESERVE_MB:-2048}
