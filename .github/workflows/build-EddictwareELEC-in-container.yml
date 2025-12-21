@@ -232,6 +232,16 @@ jobs:
           sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "${GITHUB_WORKSPACE}" || true
         fi
 
+    - name: Prebuild host toolchain (serial)
+      id: prebuild-host-toolchain
+      run: |
+        IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
+        echo "Prebuilding host toolchain packages inside image: $IMAGE"
+        # Pull image (best-effort)
+        docker --debug image pull "$IMAGE" || true
+        # Run the minimal host-toolchain builds serially to ensure cmake dependencies
+        docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" sh -c "git config --global --add safe.directory /build || true; /build/scripts/build pkg-config:host && /build/scripts/build gettext:host && /build/scripts/build xxHash:host && /build/scripts/build cmake:host" || echo 'Prebuild step returned non-zero; continuing'
+
     - name: Build ${{ env.EE_Distro }} image
       id: build-image
       env:
@@ -353,10 +363,10 @@ jobs:
         if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
         if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
         echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
-        # spawn a short background snapshot to capture process list shortly after make starts
-        if [ "${MTDEBUG:-}" = "yes" ]; then
-          (sleep 5; echo "=== AFTER make START: running pkgbuild/pkgbuilder/make processes ==="; ps -ef | egrep 'pkgbuild|pkgbuilder.py|[m]ake' || true) &
-        fi
+        # # spawn a short background snapshot to capture process list shortly after make starts
+        # if [ "${MTDEBUG:-}" = "yes" ]; then
+        #   (sleep 5; echo "=== AFTER make START: running pkgbuild/pkgbuilder/make processes ==="; ps -ef | egrep 'pkgbuild|pkgbuilder.py|[m]ake' || true) &
+        # fi
         make -j${RECOMMENDED_J} -l${NB_CORES} image
         EOF
         else
