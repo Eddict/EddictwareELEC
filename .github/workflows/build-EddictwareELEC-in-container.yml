@@ -94,11 +94,6 @@ jobs:
     - name: Compose image tag
       id: compose-image-tag
       run: |
-        # ghcr.io/eddict/eddictwareelec-questing:latest
-        # echo "DistroCodeName=${DistroCodeName}"
-        # echo "DistroCodeName@L=${DistroCodeName@L}"
-        # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
-        # echo "EE_Distro_tag=${EE_Distro_tag}" >> $GITHUB_OUTPUT
         dTag="${{ env.EE_Registry }}/eddict/${{ env.EE_Distro }}-${DistroCodeName@L}:latest"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}"
@@ -109,41 +104,10 @@ jobs:
         # echo "Trick to echo EE_Distro_tag:"
         # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
 
-        # value=$(printf '%s' "${{ secrets.REGISTRY_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        # echo "value=$value"
-        # echo "Trick to echo REGISTRY_FQDN:"
-        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
-
-        # value=$(printf '%s' "${{ secrets.REGISTRY_PRIVATE_FQDN }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        # echo "value=$value"
-        # echo "Trick to echo REGISTRY_PRIVATE_FQDN:"
-        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
-
-        # value=$(printf '%s' "${{ secrets.REGISTRY_USER }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-        # echo "value=$value"
-        # echo "Trick to echo REGISTRY_USER:"
-        # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
-
   build:
     runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     needs: init
-    # container:
-    #   image: ${{ needs.init.outputs.output_ee_distro_tag }}
-    #   credentials:
-    #     username: ${{ secrets.REGISTRY_USER }}
-    #     password: ${{ secrets.REGISTRY_PWD }}
     steps:
-    # - name: Echo out to the logs
-    #   run: |
-    #     value=$(printf '%s' "${{ needs.init.outputs.output_ee_distro_tag }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-    #     echo "Trick to echo output_ee_distro_tag:"
-    #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,60);exit}'
-    #     # echo "$value" | sed 's/./& /g'
-    #     value=$(printf '%s' "${{ env.EE_Registry }}" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-    #     echo "Trick to echo reg_fqdn:"
-    #     echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,70);exit}'
-    #     # echo "$value" | sed 's/./& /g'
-
     - name: Log in to registry
       uses: docker/login-action@v3
       with:
@@ -154,23 +118,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # -
-    #   name: Compose image tag
-    #   id: compose-image-tag
-    #   run: |
-    #     echo "EE_Distro_tag=${{ secrets.REGISTRY_FQDN }}/${DistroCodeName@L}" >> $GITHUB_OUTPUT
-
-    # -
-    #   name: Cache Docker layers
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: /tmp/.buildx-cache-2
-    #     key: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}--${{ github.ref_sha }}
-    #     restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
-
-    # - uses: docker://${{ needs.init.outputs.output_ee_distro_tag }}:latest       
-    # - uses: docker://ghcr.io/<my-org>/<some-private-repo>/<some-private-image>:<tag>        
-
     - name: Checkout repository
       uses: actions/checkout@v5
       with:
@@ -178,6 +125,7 @@ jobs:
         # clean: false
 
     - name: Restore build caches
+      id: restore-build-caches
       uses: actions/cache@v4
       with:
         path: |
@@ -191,12 +139,42 @@ jobs:
           ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-
 
     - name: Restore apt cache
+      id: restore-apt-cache
       uses: actions/cache@v4
       with:
         path: .apt-cache/archives
         key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
         restore-keys: |
           ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-
+
+    - name: Download persisted caches (artifacts) as fallback
+      id: download-ccache-artifact
+      if: steps.restore-build-caches.outputs.cache-hit != 'true'
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        # extract at repository root so multi-path artifacts (e.g. build/.ccache, sources)
+        # are restored to their correct locations
+        path: .
+
+    - name: Download persisted stamps (artifacts) as fallback
+      id: download-stamps-artifact
+      if: steps.restore-build-caches.outputs.cache-hit != 'true'
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+
+    - name: Download persisted apt cache (artifacts) as fallback
+      id: download-apt-artifact
+      if: steps.restore-apt-cache.outputs.cache-hit != 'true'
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        path: .apt-cache/archives
 
     - name: Prepare cache dirs for container
       run: |
@@ -263,26 +241,12 @@ jobs:
         VOL_CCACHE="${VOLUME_PREFIX}-ccache"
         VOL_STAMPS="${VOLUME_PREFIX}-stamps"
         VOL_APT="${VOLUME_PREFIX}-apt"
-        VOL_WORK="${VOLUME_PREFIX}-work"
-        docker volume create "${VOL_CCACHE}" || true
-        docker volume create "${VOL_STAMPS}" || true
-        docker volume create "${VOL_APT}" || true
-        docker volume create "${VOL_WORK}" || true
-        # initialize ownership inside volumes so container user can write
-        docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
-        docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
-        docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "mkdir -p /mnt || true; chmod 0777 /mnt || true"
-        docker run --rm -v "${VOL_WORK}:/build" busybox sh -c "mkdir -p /build || true; chmod 0777 /build || true"
-        # Ensure volumes are owned by the intended build UID:GID so the unprivileged build user can write/execute
-        echo "Initializing ownership of volumes to ${DOCKER_UID}:${DOCKER_GID} (idempotent)"
-        docker run --rm -v "${VOL_CCACHE}:/mnt" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
-        docker run --rm -v "${VOL_STAMPS}:/mnt" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
-        docker run --rm -v "${VOL_APT}:/mnt" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /mnt || true"
-        docker run --rm -v "${VOL_WORK}:/build" busybox sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
-        MOUNT_CCACHE="-v ${VOL_CCACHE}:/build/${BUILD_DIR}/.ccache"
-        MOUNT_STAMPS="-v ${VOL_STAMPS}:/build/${BUILD_DIR}/.stamps"
-        MOUNT_APT="-v ${VOL_APT}:/var/cache/apt/archives"
-        MOUNT_WORK="-v ${VOL_WORK}:/build"
+        # Docker volume creation and chown initialization removed: caches are persisted via artifacts/actions/cache
+        # (VOL_CCACHE, VOL_STAMPS, VOL_APT variable names kept for compatibility)
+        # we persist caches via GitHub artifacts instead of docker volumes
+        MOUNT_CCACHE=""
+        MOUNT_STAMPS=""
+        MOUNT_APT=""
         [ "$debug" = true ] && echo "[MOUNT_CCACHE]: $MOUNT_CCACHE"
         [ "$debug" = true ] && echo "[MOUNT_STAMPS]: $MOUNT_STAMPS"
         [ "$debug" = true ] && echo "[MOUNT_APT]: $MOUNT_APT"
@@ -337,17 +301,11 @@ jobs:
         EOF
         
         chmod +x build_recommend.sh || true
-        # Ensure per-build ccache ownership is correct before running the container
-        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.ccache" || true
 
-        # Copy repository into the container-owned workspace volume to avoid bind-mount ownership issues
-        echo "Copying workspace into container volume ${VOL_WORK} (source mounted read-only) as root"
-        # copy files as root into the volume (some filesystems reject non-root writes); avoid preserving ownership/perm metadata
-        docker run --rm -v ${{ github.workspace }}:/src:ro -v ${VOL_WORK}:/build alpine sh -c "cd /src && tar --no-same-owner --no-same-permissions -cf - . | tar -C /build -xpf - || true"
-        # attempt to make volume writable for the intended build UID
-        docker run --rm -v ${VOL_WORK}:/build busybox sh -c "chmod -R 0775 /build || true"
-        # test whether the DOCKER_UID can create files in the volume; if not, we'll run the build as root
-        CAN_WRITE=$(docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v ${VOL_WORK}:/build alpine sh -c "sh -c 'touch /build/.perm_test' >/dev/null 2>&1 && echo OK || echo FAIL") || CAN_WRITE=FAIL
+        # Runner workspace will be mounted directly into the container at /build
+        echo "Using runner workspace mount -v \\${{ github.workspace }}:/build"
+        # test whether the DOCKER_UID can create files in the mounted workspace; if not, we'll run the build as root
+        CAN_WRITE=$(docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v "${{ github.workspace }}:/build" alpine sh -c "touch /build/.perm_test >/dev/null 2>&1 && echo OK || echo FAIL") || CAN_WRITE=FAIL
         if [ "${CAN_WRITE}" != "OK" ]; then
           echo "Volume not writable by ${DOCKER_UID}; will run build container as root"
           USER_ARG=""
@@ -398,11 +356,8 @@ jobs:
         DOCKER_ENV_FLAGS="-e ONELOG=${ONELOG_VAL} -e LOGCOMBINE=${LOGCOMBINE_VAL} -e MTIMMEDIATE=${MTIMMEDIATE_VAL} -e MTDEBUG=${MTDEBUG_VAL} -e MTVERBOSE=${MTVERBOSE_VAL} -e MTPROGRESS=${MTPROGRESS_VAL} -e SHOW_STDOUT=${SHOW_STDOUT_VAL} -e SHOW_STDERR=${SHOW_STDERR_VAL}"
         [ "$debug" = true ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS"
 
-        # only pass --user when running on self-hosted runners; run as root on GitHub-hosted runners
-        USER_ARG=""
-        if [ "${RUNNER_TYPE}" != "github" ]; then
-          USER_ARG="--user ${DOCKER_UID}:${DOCKER_GID}"
-        fi
+        # USER_ARG already set by the CAN_WRITE test above (prefers the container UID when writable).
+        # Do not override here; RUNNER_TYPE is used only for MEMORY_ARG and git handling.
         
         # Ensure the workspace is writable by the container user by initializing ownership inside a short container
         # Diagnostic: capture workspace ownership/permission snapshot before attempting chown
@@ -412,20 +367,10 @@ jobs:
         ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
         ls -alR "${GITHUB_WORKSPACE}" | sed -n '1,500p' >> "${DIAG_FILE}" || true
         echo "END DIAGNOSTIC" >> "${DIAG_FILE}" || true
-        echo "Initializing workspace ownership inside container to ${DOCKER_UID}:${DOCKER_GID}"
-        docker run --rm ${MEMORY_ARG} \
-          --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}-init" \
-          ${MOUNT_WORK} \
-          ${MOUNT_CCACHE} \
-          ${MOUNT_STAMPS} \
-          ${MOUNT_APT} \
-          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "chown -R ${DOCKER_UID}:${DOCKER_GID} /build || true"
+        # Run the build container once; use the helper script inside the container
         docker run --rm ${MEMORY_ARG} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
-          ${MOUNT_WORK} \
-          ${MOUNT_CCACHE} \
-          ${MOUNT_STAMPS} \
-          ${MOUNT_APT} \
+          -v ${{ github.workspace }}:/build \
           -w /build \
           ${USER_ARG} \
           -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
@@ -439,17 +384,8 @@ jobs:
           -e BUILDER_NAME=Eddict \
           -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
           -e RUNNER_TYPE=${RUNNER_TYPE} \
-          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "git config --global --add safe.directory /build || true; make -j$((NB_CORES+1)) -l${NB_CORES} image"
-          # run the workspace helper script so computation happens inside the container
-          # (script will call make with a recommended -j)
+          "${{ needs.init.outputs.output_ee_distro_tag }}" sh -c "git config --global --add safe.directory /build || true; /build/build_recommend.sh"
         docker_exit_code=$?
-        if [ -f build_recommend.sh ]; then
-          docker run --rm ${MEMORY_ARG} \
-            --name "build-runner-cmd" \
-            -v ${{ github.workspace }}:/build \
-            ${MOUNT_CCACHE} ${MOUNT_STAMPS} ${MOUNT_APT} \
-            -w /build -e RUNNER_TYPE=${RUNNER_TYPE} "${{ needs.init.outputs.output_ee_distro_tag }}" /bin/bash /build/build_recommend.sh || true
-        fi
           # --volumes-from ${{ env.DistroCodeName }}-ccache \
           # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
           # --ipc=host \  #  ?? https://docs.docker.com/reference/cli/docker/container/run/#ipc
@@ -470,6 +406,15 @@ jobs:
         [ "$debug" = true ] && ls -al ${{ github.workspace }}
 
     # https://stackoverflow.com/a/57877438
+    # Artifacts uploaded below — download steps for cache fallbacks exist earlier.
+    # Symmetry note:
+    # - ccache-...  <=> actions/download-artifact name: ccache-...
+    # - stamps-...  <=> actions/download-artifact name: stamps-...
+    # - apt-...     <=> actions/download-artifact name: apt-...
+    # The following artifacts are intentionally uploaded only (no download step):
+    # - artifact_logs_...  (uploaded on failure for debugging)
+    # - built image artifact (final product)
+    # Keep uploads `if: always()` so fallback artifacts are refreshed.
     - uses: actions/upload-artifact@v4
       if: always() && (steps.build-image.outcome == 'failure')
       with:
@@ -482,10 +427,35 @@ jobs:
         overwrite: true
         include-hidden-files: true
 
-    # cache artifacts are now persisted via actions/cache (restore steps above)
+    - name: Upload ccache artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        path: |
+          .ccache
+          build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
+          build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
+          sources
+        if-no-files-found: warn
 
-    -
-      name: Copy built ${{ env.EE_Distro }} image to archive
+    - name: Upload stamps artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+        if-no-files-found: warn
+
+    - name: Upload apt-cache artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        path: .apt-cache/archives
+        if-no-files-found: warn
+
+    - name: Copy built ${{ env.EE_Distro }} image to archive
       id: image-path
       run: |
         debug=true
