@@ -206,9 +206,17 @@ jobs:
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
         RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'github' }}"
         echo "Preparing cache dirs for UID:GID ${DOCKER_UID}:${DOCKER_GID}"
-        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} .ccache "$BUILD_DIR" .apt-cache || true
-        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.stamps" || true
-        sudo chown ${DOCKER_UID}:${DOCKER_GID} "$BUILD_DIR/.cache_package_global" || true
+        # Prefer aligning host ownership to the image UID/GID (IMG_UID/IMG_GID),
+        # if available — this prevents ownership churn when image numeric UID
+        # differs from the host's docker user.
+        if [ -n "${IMG_UID:-}" ]; then
+          echo "Aligning host cache ownership to image UID:GID ${IMG_UID}:${IMG_GID}"
+          sudo chown -R ${IMG_UID}:${IMG_GID} .ccache "$BUILD_DIR" .apt-cache || true
+          sudo chown -R ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.stamps" || true
+          sudo chown ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.cache_package_global" || true
+        else
+          echo "IMG_UID not set; skipping chown-to-image and leaving host ownership as-is"
+        fi
         # allow the container user to create/remove files in cache dirs
         chmod -R 0775 .ccache "$BUILD_DIR" .apt-cache || true
         chmod -R 0775 "$BUILD_DIR/.stamps" || true
@@ -332,7 +340,9 @@ jobs:
         if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
         echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
         # spawn a short background snapshot to capture process list shortly after make starts
-        (sleep 5; echo "=== AFTER make START: running pkgbuild/pkgbuilder/make processes ==="; ps -ef | egrep 'pkgbuild|pkgbuilder.py|[m]ake' || true) &
+        if [ "${MTDEBUG:-}" = "yes" ]; then
+          (sleep 5; echo "=== AFTER make START: running pkgbuild/pkgbuilder/make processes ==="; ps -ef | egrep 'pkgbuild|pkgbuilder.py|[m]ake' || true) &
+        fi
         make -j${RECOMMENDED_J} -l${NB_CORES} image
         EOF
         
