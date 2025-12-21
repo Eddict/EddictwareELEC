@@ -1,12 +1,12 @@
 name: Build image in container
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+  # push:
+  #   branches:
+  #     - master
+  # pull_request:
+  #   branches:
+  #     - master
   workflow_dispatch:
     inputs:
       runner:
@@ -199,6 +199,11 @@ jobs:
         chmod -R 0775 .ccache "$BUILD_DIR" .apt-cache || true
         chmod -R 0775 "$BUILD_DIR/.stamps" || true
         chmod 0664 "$BUILD_DIR/.cache_package_global" || true
+        # Make build tree writable so container processes (including hosted runners
+        # with rootless or user-mapped Docker) can create cache files.
+        sudo chmod -R a+rwX "$BUILD_DIR" || true
+        touch "$BUILD_DIR/.cache_package_local" || true
+        sudo chmod 0666 "$BUILD_DIR/.cache_package_local" || true
         # On self-hosted runners make workspace ownership match container user for full parity
         if [ "${RUNNER_TYPE}" != "github" ]; then
           echo "Chowning workspace to ${DOCKER_UID}:${DOCKER_GID}"
