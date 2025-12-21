@@ -308,6 +308,72 @@ jobs:
           find /build -type f -path "*/build/glibc-*/config.log" -maxdepth 6 -print -exec cp {} /build/ci-diagnostics/ \; 2>/dev/null || true
         '
 
+    - name: Host diagnostics
+      id: host-diagnostics
+      run: |
+        set -euo pipefail
+        DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
+        mkdir -p "$DIAG_DIR"
+        echo "HOST DIAGNOSTIC: $(date -u)" > "$DIAG_DIR/host.txt" || true
+        uname -a >> "$DIAG_DIR/host.txt" 2>&1 || true
+        echo "--- docker --version ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        docker --version >> "$DIAG_DIR/host.txt" 2>&1 || echo "docker: not found" >> "$DIAG_DIR/host.txt" || true
+        echo "--- g++ ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        if command -v g++ >/dev/null 2>&1; then g++ --version >> "$DIAG_DIR/host.txt" 2>&1; else echo "g++: not found on host" >> "$DIAG_DIR/host.txt"; fi
+        echo "--- libgcc_s on host ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        ls -l /usr/lib*/libgcc_s* 2>> "$DIAG_DIR/host.txt" || true
+        echo "--- perl/makeinfo presence ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        command -v perl >> "$DIAG_DIR/host.txt" 2>&1 || echo "perl: not found" >> "$DIAG_DIR/host.txt"
+        command -v makeinfo >> "$DIAG_DIR/host.txt" 2>&1 || echo "makeinfo: not found" >> "$DIAG_DIR/host.txt"
+        echo "--- workspace top files ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        ls -al "$PWD" | sed -n '1,200p' >> "$DIAG_DIR/host.txt" 2>&1 || true
+
+    - name: In-container diagnostics
+      id: in-container-diagnostics
+      run: |
+        set -euo pipefail
+        IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
+        echo "Running in-container diagnostics inside image: $IMAGE"
+        # Pull image best-effort
+        docker image pull "$IMAGE" || true
+        docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" sh -c '
+          set -euo pipefail
+          DIAG_DIR=/build/ci-diagnostics
+          mkdir -p "$DIAG_DIR"
+          echo "CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_DIR/in-container.txt" || true
+          echo "--- id ---" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+          id >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+          echo "--- toolchain dirs ---" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+          ls -ld /build/build.*-13.0-devel/toolchain 2>>"$DIAG_DIR/in-container.txt" || true
+          TOOLCHAIN_DIR=$(ls -d /build/build.*-13.0-devel/toolchain 2>/dev/null || true)
+          if [ -n "$TOOLCHAIN_DIR" ]; then
+            echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+            echo "--- bin listing ---" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+            ls -l "$TOOLCHAIN_DIR/bin" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+            for g in host-g++ aarch64-libreelec-linux-gnu-g++ g++; do
+              if [ -x "$TOOLCHAIN_DIR/bin/$g" ]; then
+                echo "--- $g --version ---" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+                "$TOOLCHAIN_DIR/bin/$g" --version >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+                echo "--- attempting link test with $g ---" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+                cat > /tmp/test.cpp <<"EOF"
+                #include <iostream>
+                int main(){ std::cout << "ok\n"; return 0; }
+                EOF
+                if "$TOOLCHAIN_DIR/bin/$g" -o /tmp/test /tmp/test.cpp 2>>"$DIAG_DIR/in-container.txt"; then
+                  echo "$g link: OK" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+                else
+                  echo "$g link: FAILED" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+                fi
+              fi
+            done
+            echo "--- sysroot libgcc_s ---" >> "$DIAG_DIR/in-container.txt" 2>&1 || true
+            ls -l "$TOOLCHAIN_DIR"/aarch64-libreelec-linux-gnu/sysroot/usr/lib*/libgcc_s* 2>>"$DIAG_DIR/in-container.txt" || true
+            ls -l "$TOOLCHAIN_DIR"/lib/gcc/*/*/libgcc_s* 2>>"$DIAG_DIR/in-container.txt" || true
+          fi
+          # copy any existing glibc config.log from previous runs into diagnostics
+          find /build -type f -path "*/build/glibc-*/config.log" -maxdepth 6 -print -exec cp {} /build/ci-diagnostics/ \; 2>/dev/null || true
+        '
+
     - name: Upload CI diagnostics
       if: always()
       uses: actions/upload-artifact@v4
