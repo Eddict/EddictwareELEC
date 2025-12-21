@@ -266,8 +266,13 @@ jobs:
         # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
         # decide mount strategy based on runner input: always use named docker volumes for runtime
-        DOCKER_UID=${{ needs.init.outputs.docker_guid }}
-        DOCKER_GID=${DOCKER_UID}
+        # Only set DOCKER_UID from the host docker_guid if it wasn't already
+        # determined from the image (IMG_UID). This prevents overriding the
+        # image-detected UID used for the CAN_WRITE test above.
+        if [ -z "${DOCKER_UID:-}" ]; then
+          DOCKER_UID=${{ needs.init.outputs.docker_guid }}
+        fi
+        DOCKER_GID=${DOCKER_GID:-${DOCKER_UID}}
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
         RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'github' }}"
         [ "$debug" = true ] && echo "[RUNNER_TYPE]: $RUNNER_TYPE"
