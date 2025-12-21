@@ -273,6 +273,16 @@ jobs:
         fi
         echo "=== MAKE-RELATED ENV ==="
         env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true
+        echo "=== CONTAINER ID/UID/GID ==="
+        id || true
+        echo "=== /build ownership (top-level) ==="
+        ls -ld /build || true
+        echo "=== cache files ownership/perm ==="
+        stat -c '%U:%G %a %n' /build/.ccache /build/build.*-13.0-devel/.cache_package_global /build/build.*-13.0-devel/.cache_package_local /build/build.*-13.0-devel/.ccache 2>/dev/null || true
+        echo "=== THREAD_CONTROL / THREADCOUNT env ==="
+        env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT' || true
+        echo "=== running pkgbuild / pkgbuilder processes ==="
+        ps -ef | egrep 'pkgbuild|pkgbuilder.py' || true
         echo "=== CURRENT make PROCESSES ==="
         ps -ef | grep "[m]ake" || true
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
@@ -306,6 +316,8 @@ jobs:
         if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
         if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
         echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
+        # spawn a short background snapshot to capture process list shortly after make starts
+        (sleep 5; echo "=== AFTER make START: running pkgbuild/pkgbuilder/make processes ==="; ps -ef | egrep 'pkgbuild|pkgbuilder.py|[m]ake' || true) &
         make -j${RECOMMENDED_J} -l${NB_CORES} image
         EOF
         
