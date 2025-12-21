@@ -210,12 +210,10 @@ jobs:
           sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "${GITHUB_WORKSPACE}" || true
         fi
 
-    - name: 'Diagnostic: make env & processes'
+    - name: Diagnostic: make env & processes (container)
       run: |
-        echo "=== MAKE-RELATED ENV ==="
-        env | grep -E 'MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE' || true
-        echo "=== CURRENT make PROCESSES ==="
-        ps -ef | grep '[m]ake' || true
+        docker run --rm -v "${{ github.workspace }}:/build" -w /build "${{ needs.init.outputs.output_ee_distro_tag }}" \
+          sh -c 'echo "=== MAKE-RELATED ENV ==="; env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true; echo "=== CURRENT make PROCESSES ==="; ps -ef | grep "[m]ake" || true'
 
     - name: Build ${{ env.EE_Distro }} image
       id: build-image
