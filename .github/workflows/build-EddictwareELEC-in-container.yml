@@ -179,6 +179,20 @@ jobs:
     - name: Prepare cache dirs for container
       run: |
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        # Determine image numeric UID/GID and align host cache ownership to it
+        IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
+        IMG_UID=$(docker run --rm --entrypoint id "$IMAGE" -u 2>/dev/null || echo ${DOCKER_UID})
+        IMG_GID=$(docker run --rm --entrypoint id "$IMAGE" -g 2>/dev/null || echo ${IMG_UID})
+        echo "Image UID:GID = ${IMG_UID}:${IMG_GID}"
+        # chown critical cache dirs/files to the image UID/GID so container user can write
+        sudo chown -R ${IMG_UID}:${IMG_GID} .ccache "$BUILD_DIR" .apt-cache || true
+        sudo chown -R ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.stamps" || true
+        sudo chown ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.cache_package_global" || true
+        # ensure per-build ccache is owned by image uid too
+        sudo chown -R ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.ccache" 2>/dev/null || true
+        # relax permissions as a fallback so builds don't fail due to strict host umasks
+        chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache || true
+        chmod 0666 "$BUILD_DIR/.cache_package_local" || true
         mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives
         # ensure stamps dir exists so docker won't auto-create it as root when bind-mounting
         mkdir -p "$BUILD_DIR/.stamps"
@@ -232,20 +246,7 @@ jobs:
 
         # pull the image (authentication is handled by docker/login-action@v3)
         docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
-        # Determine image numeric UID/GID and align host cache ownership to it
-        IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
-        IMG_UID=$(docker run --rm --entrypoint id "$IMAGE" -u 2>/dev/null || echo ${DOCKER_UID})
-        IMG_GID=$(docker run --rm --entrypoint id "$IMAGE" -g 2>/dev/null || echo ${IMG_UID})
-        echo "Image UID:GID = ${IMG_UID}:${IMG_GID}"
-        # chown critical cache dirs/files to the image UID/GID so container user can write
-        sudo chown -R ${IMG_UID}:${IMG_GID} .ccache "$BUILD_DIR" .apt-cache || true
-        sudo chown -R ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.stamps" || true
-        sudo chown ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.cache_package_global" || true
-        # ensure per-build ccache is owned by image uid too
-        sudo chown -R ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.ccache" 2>/dev/null || true
-        # relax permissions as a fallback so builds don't fail due to strict host umasks
-        chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache || true
-        chmod 0666 "$BUILD_DIR/.cache_package_local" || true
+        # (image UID/GID chown moved below after BUILD_DIR is set)
         # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
         # decide mount strategy based on runner input: always use named docker volumes for runtime
