@@ -321,7 +321,7 @@ jobs:
         
         # create a small script in the workspace to compute a safe -j inside the container
         if [ ${{ env.DEBUG }} ]; then
-          cat > build_recommend.sh <<'EOF'
+          cat > "${GITHUB_WORKSPACE}/build_recommend.sh" <<'EOF'
         #!/bin/bash
         set -euo pipefail
         if [ "${RUNNER_TYPE:-}" = "github" ]; then
@@ -379,7 +379,7 @@ jobs:
         EOF
         else
           # Lean non-diagnostic build script for normal runs
-          cat > build_recommend.sh <<'EOF'
+          cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
         #!/bin/bash
         set -euo pipefail
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
@@ -415,7 +415,7 @@ jobs:
         EOF
         fi
         
-        chmod +x build_recommend.sh || true
+        chmod +x "${{ github.workspace }}/build_recommend.sh" || true
 
     - name: Prebuild host toolchain (serial)
       id: prebuild-host-toolchain
@@ -430,7 +430,7 @@ jobs:
         mkdir -p "${{ github.workspace }}/ci-diagnostics"
         # Source precomputed parallelism values from build_recommend.sh (created by calc-parallelism)
         # Then run prebuild inside the image, tee output to prebuild.log but preserve docker exit code
-        . /build/build_recommend.sh && \
+        . "${{ github.workspace }}/build_recommend.sh" && \
         docker run --rm -v "${{ github.workspace }}:/build" -w /build \
           -e MAKEFLAGS="-j${RECOMMENDED_J}" \
           "$IMAGE" bash -lc "git config --global --add safe.directory /build || true; /build/scripts/build pkg-config:host && /build/scripts/build gettext:host && /build/scripts/build xxHash:host && /build/scripts/build cmake:host" 2>&1 | tee "${{ github.workspace }}/ci-diagnostics/prebuild.log"
@@ -610,7 +610,7 @@ jobs:
           : > "${DIAG_FILE}" || true
         fi
         # Run the build container once; use the helper script inside the container
-        . /build/build_recommend.sh && docker run --rm ${MEMORY_ARG} \
+        . "${{ github.workspace }}/build_recommend.sh" && docker run --rm ${MEMORY_ARG} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
           -w /build \
