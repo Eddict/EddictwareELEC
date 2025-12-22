@@ -49,11 +49,12 @@ on:
 run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted', github.event_name == 'workflow_dispatch' && inputs.os || 'noble', github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64') }}
 
 env:
-  DistroCodeName: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.os || 'noble' }}
+  DEBUG: ${{ inputs.debug }}
+  DistroCodeName: ${{ github.event_name == 'workflow_dispatch' && inputs.os || 'noble' }}
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
-  EE_Arch: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.arch || 'aarch64' }}
+  EE_Arch: ${{ github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64' }}
   EE_image_pathfilename: ""
   EE_image_filename: ""
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
@@ -83,6 +84,9 @@ jobs:
     - name: Get Date
       id: get-date
       run: |
+        echo "env.DEBUG = ${{ env.DEBUG }}"
+        [ ${{ env.DEBUG }} = true ] && echo "{{ env.DEBUG }} = true"
+        [ ${{ env.DEBUG }} ] && echo "{{ env.DEBUG }}"
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
 
@@ -204,7 +208,7 @@ jobs:
         # use same GID as UID if we don't know the image GID (common in builder images)
         DOCKER_GID=${DOCKER_UID}
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
-        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'github' }}"
+        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'github' }}"
         echo "Preparing cache dirs for UID:GID ${DOCKER_UID}:${DOCKER_GID}"
         # Prefer aligning host ownership to the image UID/GID (IMG_UID/IMG_GID),
         # if available — this prevents ownership churn when image numeric UID
@@ -363,9 +367,9 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        debug=${{ github.event.inputs.debug }}
-        [ "$debug" = true ] && echo "[pwd]: $PWD"
-        [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
+        debug=${{ inputs.debug }}
+        [ ${{ env.DEBUG }} = true ] && echo "[pwd]: $PWD"
+        [ ${{ env.DEBUG }} ] && echo "[github.workspace]: ${{ github.workspace }}"
         [ "$debug" = true ] && ls -al $PWD
         # chown -R docker:docker $PWD
         # ls -al $PWD
@@ -400,7 +404,7 @@ jobs:
         fi
         DOCKER_GID=${DOCKER_GID:-${DOCKER_UID}}
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
-        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && github.event.inputs.runner || 'github' }}"
+        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'github' }}"
         [ "$debug" = true ] && echo "[RUNNER_TYPE]: $RUNNER_TYPE"
         # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
         VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
