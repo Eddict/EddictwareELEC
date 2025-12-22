@@ -84,9 +84,6 @@ jobs:
     - name: Get Date
       id: get-date
       run: |
-        echo "env.DEBUG = ${{ env.DEBUG }}"
-        [ ${{ env.DEBUG }} = true ] && echo "{{ env.DEBUG }} = true"
-        [ ${{ env.DEBUG }} ] && echo "{{ env.DEBUG }}"
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
 
@@ -367,10 +364,9 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        debug=${{ inputs.debug }}
-        [ ${{ env.DEBUG }} = true ] && echo "[pwd]: $PWD"
+        [ ${{ env.DEBUG }} ] && echo "[pwd]: $PWD"
         [ ${{ env.DEBUG }} ] && echo "[github.workspace]: ${{ github.workspace }}"
-        [ "$debug" = true ] && ls -al $PWD
+        [ ${{ env.DEBUG }} ] && ls -al $PWD
         # chown -R docker:docker $PWD
         # ls -al $PWD
         # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
@@ -380,7 +376,7 @@ jobs:
         # fi
         # set some build performance flags
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
-        [ "$debug" = true ] && echo "[NB_CORES]: $NB_CORES"
+        [ ${{ env.DEBUG }} ] && echo "[NB_CORES]: $NB_CORES"
 
         # pull the image (authentication is handled by docker/login-action@v3)
         docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
@@ -405,10 +401,10 @@ jobs:
         DOCKER_GID=${DOCKER_GID:-${DOCKER_UID}}
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
         RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'github' }}"
-        [ "$debug" = true ] && echo "[RUNNER_TYPE]: $RUNNER_TYPE"
+        [ ${{ env.DEBUG }} ] && echo "[RUNNER_TYPE]: $RUNNER_TYPE"
         # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
         VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
-        [ "$debug" = true ] && echo "[VOLUME_PREFIX]: $VOLUME_PREFIX"
+        [ ${{ env.DEBUG }} ] && echo "[VOLUME_PREFIX]: $VOLUME_PREFIX"
         VOL_CCACHE="${VOLUME_PREFIX}-ccache"
         VOL_STAMPS="${VOLUME_PREFIX}-stamps"
         VOL_APT="${VOLUME_PREFIX}-apt"
@@ -418,9 +414,9 @@ jobs:
         MOUNT_CCACHE=""
         MOUNT_STAMPS=""
         MOUNT_APT=""
-        [ "$debug" = true ] && echo "[MOUNT_CCACHE]: $MOUNT_CCACHE"
-        [ "$debug" = true ] && echo "[MOUNT_STAMPS]: $MOUNT_STAMPS"
-        [ "$debug" = true ] && echo "[MOUNT_APT]: $MOUNT_APT"
+        [ ${{ env.DEBUG }} ] && echo "[MOUNT_CCACHE]: $MOUNT_CCACHE"
+        [ ${{ env.DEBUG }} ] && echo "[MOUNT_STAMPS]: $MOUNT_STAMPS"
+        [ ${{ env.DEBUG }} ] && echo "[MOUNT_APT]: $MOUNT_APT"
         # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
         if [ "${RUNNER_TYPE}" != "github" ]; then
           CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}"
@@ -428,7 +424,7 @@ jobs:
         else
           MEMORY_ARG=""
         fi
-        [ "$debug" = true ] && echo "[MEMORY_ARG]: $MEMORY_ARG"
+        [ ${{ env.DEBUG }} ] && echo "[MEMORY_ARG]: $MEMORY_ARG"
         
         # create a small script in the workspace to compute a safe -j inside the container
         if [ "${debug}" = true ]; then
@@ -561,7 +557,7 @@ jobs:
           # EE_Distro_tag="${{ env.EE_Registry }}/eddict/${DistroCodeName@L}"
           # [pwd]: /root/actions-runner/_work/EddictwareELEC/EddictwareELEC
         # run the container (use debug env values when workflow input `debug` is 'true')
-        if [ "$debug" = true ]; then
+        if [ ${{ env.DEBUG }} ]; then
           ONELOG_VAL=no
           LOGCOMBINE_VAL=never
           MTIMMEDIATE_VAL=yes
@@ -582,7 +578,7 @@ jobs:
         fi
 
         DOCKER_ENV_FLAGS="-e ONELOG=${ONELOG_VAL} -e LOGCOMBINE=${LOGCOMBINE_VAL} -e MTIMMEDIATE=${MTIMMEDIATE_VAL} -e MTDEBUG=${MTDEBUG_VAL} -e MTVERBOSE=${MTVERBOSE_VAL} -e MTPROGRESS=${MTPROGRESS_VAL} -e SHOW_STDOUT=${SHOW_STDOUT_VAL} -e SHOW_STDERR=${SHOW_STDERR_VAL}"
-        [ "$debug" = true ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS"
+        [ ${{ env.DEBUG }} ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS"
 
         # USER_ARG already set by the CAN_WRITE test above (prefers the container UID when writable).
         # Do not override here; RUNNER_TYPE is used only for MEMORY_ARG and git handling.
@@ -634,9 +630,8 @@ jobs:
     - name: github-workspace
       id: ls-ghws
       run: |
-        debug=true
-        [ "$debug" = true ] && echo "[github.workspace]: ${{ github.workspace }}"
-        [ "$debug" = true ] && ls -al ${{ github.workspace }}
+        [ ${{ env.DEBUG }} ] && echo "[github.workspace]: ${{ github.workspace }}"
+        [ ${{ env.DEBUG }} ] && ls -al ${{ github.workspace }}
     
 
     # https://stackoverflow.com/a/57877438
@@ -692,17 +687,16 @@ jobs:
     - name: Copy built ${{ env.EE_Distro }} image to archive
       id: image-path
       run: |
-        debug=true
-        [ "$debug" = true ] && echo "[pwd]: ${{ github.workspace }}"
+        [ ${{ env.DEBUG }} ] && echo "[pwd]: ${{ github.workspace }}"
         if [ -d ${{ github.workspace }}/target ]; then
           lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
-          [ "$debug" = true ] && echo "[lines]: $lines"
+          [ ${{ env.DEBUG }} ] && echo "[lines]: $lines"
           if [ $lines -ne 0 ]; then
             pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
-            [ "$debug" = true ] && echo "[EE_image_pathfilename]: $pathfilename"
+            [ ${{ env.DEBUG }} ] && echo "[EE_image_pathfilename]: $pathfilename"
             echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
             filename="${pathfilename##*/}"
-            [ "$debug" = true ] && echo "[EE_image_filename]: $filename"
+            [ ${{ env.DEBUG }} ] && echo "[EE_image_filename]: $filename"
             echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
             if [ ! -d /root/target_archive ]; then
               mkdir --parents "/root/target_archive"
