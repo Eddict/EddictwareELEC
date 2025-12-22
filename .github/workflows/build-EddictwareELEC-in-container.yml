@@ -51,11 +51,11 @@ run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner || '
 
 env:
   DEBUG: ${{ inputs.debug }}
-  DistroCodeName: ${{ github.event_name == 'workflow_dispatch' && inputs.os || 'noble' }}
+  DistroCodeName: ${{ inputs.os || 'noble' }}
   EE_Distro: EddictwareELEC
   EE_Project: RPi
   EE_Device: RPi4
-  EE_Arch: ${{ github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64' }}
+  EE_Arch: ${{ inputs.arch || 'aarch64' }}
   EE_image_pathfilename: ""
   EE_image_filename: ""
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
@@ -67,7 +67,7 @@ defaults:
 
 jobs:
   init:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     permissions:
       contents: read
       packages: read
@@ -107,7 +107,7 @@ jobs:
         # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
 
   build:
-    runs-on: ${{ github.event_name == 'workflow_dispatch' && (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     needs: init
     steps:
     - name: Log in to registry
@@ -206,7 +206,7 @@ jobs:
         # use same GID as UID if we don't know the image GID (common in builder images)
         DOCKER_GID=${DOCKER_UID}
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
-        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'github' }}"
+        RUNNER_TYPE="${{ inputs.runner || 'self-hosted' }}"
         echo "Preparing cache dirs for UID:GID ${DOCKER_UID}:${DOCKER_GID}"
         # Prefer aligning host ownership to the image UID/GID (IMG_UID/IMG_GID),
         # if available — this prevents ownership churn when image numeric UID
@@ -408,7 +408,7 @@ jobs:
         fi
         DOCKER_GID=${DOCKER_GID:-${DOCKER_UID}}
         # runner type (github or self-hosted) — default to 'github' for non-dispatch runs
-        RUNNER_TYPE="${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'github' }}"
+        RUNNER_TYPE="${{ inputs.runner || 'self-hosted' }}"
         [ ${{ env.DEBUG }} ] && echo "[RUNNER_TYPE]: $RUNNER_TYPE"
         # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
         VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
