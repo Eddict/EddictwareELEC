@@ -312,11 +312,17 @@ jobs:
         IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
         echo "Prebuilding host toolchain packages inside image: $IMAGE"
         # Pull image (best-effort)
-        docker --debug image pull "$IMAGE" || true
+        if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
+        docker $DOCKER_DEBUG image pull "$IMAGE" || true
         # Run the minimal host-toolchain builds serially to ensure cmake dependencies
         # Capture stdout/stderr into ci-diagnostics/prebuild.log for upload and analysis
         mkdir -p "${{ github.workspace }}/ci-diagnostics"
-        docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc "git config --global --add safe.directory /build || true; /build/scripts/build pkg-config:host && /build/scripts/build gettext:host && /build/scripts/build xxHash:host && /build/scripts/build cmake:host" > "${{ github.workspace }}/ci-diagnostics/prebuild.log" 2>&1 || echo 'Prebuild step returned non-zero; continuing' >> "${{ github.workspace }}/ci-diagnostics/prebuild.log"
+        # Run prebuild inside the image, tee output to prebuild.log but preserve docker exit code
+        docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc "git config --global --add safe.directory /build || true; /build/scripts/build pkg-config:host && /build/scripts/build gettext:host && /build/scripts/build xxHash:host && /build/scripts/build cmake:host" 2>&1 | tee "${{ github.workspace }}/ci-diagnostics/prebuild.log"
+        rc=${PIPESTATUS[0]:-1}
+        if [ "$rc" -ne 0 ]; then
+          echo 'Prebuild step returned non-zero; continuing' | tee -a "${{ github.workspace }}/ci-diagnostics/prebuild.log"
+        fi
 
     - name: In-container diagnostics (post-prebuild)
       id: in-container-diagnostics-post
@@ -379,7 +385,8 @@ jobs:
         [ ${{ env.DEBUG }} ] && echo "[NB_CORES]: $NB_CORES"
 
         # pull the image (authentication is handled by docker/login-action@v3)
-        docker --debug image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
+        if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
+        docker $DOCKER_DEBUG image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
         # Determine image numeric UID/GID for CAN_WRITE test; prefer image UID when available
         IMG_UID=$(docker run --rm --entrypoint id "${{ needs.init.outputs.output_ee_distro_tag }}" -u 2>/dev/null || echo "")
         IMG_GID=$(docker run --rm --entrypoint id "${{ needs.init.outputs.output_ee_distro_tag }}" -g 2>/dev/null || echo "${IMG_UID}")
@@ -427,7 +434,7 @@ jobs:
         [ ${{ env.DEBUG }} ] && echo "[MEMORY_ARG]: $MEMORY_ARG"
         
         # create a small script in the workspace to compute a safe -j inside the container
-        if [ "${debug}" = true ]; then
+        if [ ${{ env.DEBUG }} ]; then
           cat > build_recommend.sh <<'EOF'
           #!/bin/bash
           set -euo pipefail
@@ -586,7 +593,7 @@ jobs:
         # Ensure the workspace is writable by the container user by initializing ownership inside a short container
         # Diagnostic: capture workspace ownership/permission snapshot before attempting chown
         DIAG_FILE="${RUNNER_TEMP:-/tmp}/diagnostic_pre_chown.txt"
-        if [ "${debug}" = true ]; then
+        if [ ${{ env.DEBUG }} ]; then
           echo "Writing pre-chown diagnostic to ${DIAG_FILE}"
           echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${DIAG_FILE}" || true
           ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
