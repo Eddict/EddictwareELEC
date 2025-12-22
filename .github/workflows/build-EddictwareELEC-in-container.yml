@@ -307,8 +307,8 @@ jobs:
           build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/**/config.log
         if-no-files-found: warn
 
-    - name: Calculate parallelism
-      id: calc-parallelism
+    - name: Calculate container memory
+      id: calc-container-memory
       run: |
         # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
         if [ "${RUNNER_TYPE}" != "github" ]; then
@@ -317,8 +317,12 @@ jobs:
         else
           MEMORY_ARG=""
         fi
+        echo "MEMORY_ARG=$MEMORY_ARG" >> "$GITHUB_OUTPUT"
         [ ${{ env.DEBUG }} ] && echo "[MEMORY_ARG]: $MEMORY_ARG"
-        
+
+    - name: Calculate parallelism
+      id: calc-parallelism
+      run: |
         # create a small script in the workspace to compute a safe -j inside the container
         if [ ${{ env.DEBUG }} ]; then
           cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
@@ -610,7 +614,7 @@ jobs:
           : > "${DIAG_FILE}" || true
         fi
         # Run the build container once; use the helper script inside the container
-        . "${{ github.workspace }}/build_recommend.sh" && docker run --rm ${MEMORY_ARG} \
+        . "${{ github.workspace }}/build_recommend.sh" && docker run --rm ${{ steps.calc-container-memory.outputs.MEMORY_ARG }} \
           --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
           -v ${{ github.workspace }}:/build \
           -w /build \
