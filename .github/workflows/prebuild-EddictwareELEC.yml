@@ -65,18 +65,19 @@ jobs:
           registry_owner="${{ github.repository_owner }}"
           echo "EE_REGISTRY_OWNER=${registry_owner,,}" | sudo tee -a $GITHUB_ENV
 
-      - name: Set up Docker Buildx (container driver)
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker-container
-          buildkitd-flags: ${{ inputs.debug && '--debug' || '' }}
+      # - name: Set up Docker Buildx (container driver)
+      #   uses: docker/setup-buildx-action@v3
+      #   with:
+      #     driver: docker-container
+      #     buildkitd-flags: ${{ inputs.debug && '--debug' || '' }}
 
       - name: Build and push prebuilt image
         uses: docker/build-push-action@v4
         with:
           context: .
           file: tools/docker/noble-custom/prebuilt-toolchain.Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
+          # platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ inputs.distro }}-${{ inputs.arch }}
