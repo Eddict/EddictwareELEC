@@ -1,0 +1,52 @@
+name: Build prebuilt toolchain image
+
+on:
+  # push:
+  #   paths:
+  #     - 'packages/**'
+  #     - 'tools/docker/noble/**'
+  workflow_dispatch:
+    inputs:
+      distro:
+        description: 'Distro codename'
+        required: true
+        default: noble
+      arch:
+        description: 'Target arch'
+        required: true
+        default: aarch64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_NAME: eddictwareelec-prebuilt
+      EE_REGISTRY: ghcr.io
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up QEMU (for cross-platform build)
+        uses: docker/setup-qemu-action@v2
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.EE_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push prebuilt image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: tools/docker/noble-custom/prebuilt-toolchain.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.EE_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ inputs.distro }}-${{ inputs.arch }}
+          build-args: |
+            BASE_IMAGE=${{ env.EE_REGISTRY }}/${{ github.repository_owner }}/eddictwareelec-${{ inputs.distro }}:latest
