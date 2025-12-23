@@ -126,6 +126,33 @@ jobs:
         ref: 'master'
         # clean: false
 
+    - name: Pre-populate prebuilt toolchain
+      id: pre-populate-toolchain
+      run: |
+        set -euo pipefail
+        registry_owner="${{ github.repository_owner }}"
+        registry_owner="${registry_owner,,}"
+        PREBUILT_IMAGE="${{ env.EE_Registry }}/${registry_owner}/eddictwareelec-prebuilt:${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
+        echo "Looking for prebuilt image: $PREBUILT_IMAGE"
+        if ! docker image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+          echo "Prebuilt image not present locally, attempting to pull"
+          if ! docker pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+            echo "Prebuilt image not available; skipping populate-toolchain"
+            exit 0
+          fi
+        fi
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        TARGET_TOOLCHAIN="${{ github.workspace }}/$BUILD_DIR/toolchain"
+        if [ -d "$TARGET_TOOLCHAIN" ]; then
+          echo "Toolchain already present at $TARGET_TOOLCHAIN; skipping copy"
+          exit 0
+        fi
+        mkdir -p "$TARGET_TOOLCHAIN"
+        docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "set -euo pipefail; if [ -d /opt/prebuilt-toolchain ]; then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true; fi"
+        DOCKER_UID=${{ needs.init.outputs.docker_guid }}
+        DOCKER_GID=${DOCKER_UID}
+        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$TARGET_TOOLCHAIN" || true
+
     - name: Restore build caches
       id: restore-build-caches
       uses: actions/cache@v4
@@ -425,7 +452,9 @@ jobs:
       id: populate-toolchain
       run: |
         set -euo pipefail
-        PREBUILT_IMAGE="${{ env.EE_Registry }}/${{ github.repository_owner }}/eddictwareelec-prebuilt:${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
+        registry_owner="${{ github.repository_owner }}"
+        registry_owner="${registry_owner,,}"
+        PREBUILT_IMAGE="${{ env.EE_Registry }}/${registry_owner}/eddictwareelec-prebuilt:${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
         echo "Looking for prebuilt image: $PREBUILT_IMAGE"
         if ! docker image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
           echo "Prebuilt image not present locally, attempting to pull"
