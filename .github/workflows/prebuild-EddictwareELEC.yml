@@ -7,6 +7,14 @@ on:
   #     - 'tools/docker/noble/**'
   workflow_dispatch:
     inputs:
+      runner:
+        description: 'Runner to run against'
+        required: true
+        type: choice
+        options:
+          - self-hosted
+          - github
+        default: self-hosted
       distro:
         description: 'Distro codename'
         required: true
@@ -15,6 +23,13 @@ on:
         description: 'Target arch'
         required: true
         default: aarch64
+      debug:
+        description: 'Enable debug build'
+        required: true
+        type: boolean
+        default: false
+
+run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner || 'self-hosted', inputs.os || 'noble', inputs.arch || 'aarch64', inputs.debug && '/debug' || '') }}
 
 jobs:
   build:
