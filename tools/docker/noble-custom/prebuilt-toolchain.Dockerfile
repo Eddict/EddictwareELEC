@@ -42,12 +42,15 @@ RUN set -eux; \
     ); \
     # Copy any produced toolchain trees into /opt/prebuilt-toolchain
     sudo mkdir -p /opt/prebuilt-toolchain; \
-    for d in /tmp/prebuild/*; do \
-      if [ -d "$d/toolchain" ]; then \
-        name=$(basename "$d"); \
-        sudo cp -a "$d/toolchain" "/opt/prebuilt-toolchain/${name}-toolchain" || true; \
-      fi; \
-    done
+    # Copy all toolchain directories found under /tmp/prebuild (recursively)
+    find /tmp/prebuild -type d -name 'toolchain' | while read tcdir; do \
+      name=$(basename $(dirname "$tcdir")); \
+      sudo cp -a "$tcdir" "/opt/prebuilt-toolchain/${name}-toolchain" || true; \
+    done; \
+    # Also copy /tmp/prebuild/toolchain directly if it exists (flat layout)
+    if [ -d /tmp/prebuild/toolchain ]; then \
+      sudo cp -a /tmp/prebuild/toolchain /opt/prebuilt-toolchain/ || true; \
+    fi
 
 FROM ${BASE_IMAGE}
 COPY --from=builder /opt/prebuilt-toolchain /opt/prebuilt-toolchain
