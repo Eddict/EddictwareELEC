@@ -234,6 +234,13 @@ jobs:
           sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "${GITHUB_WORKSPACE}" || true
         fi
 
+    # Ensure permissions are correct before toolchain population
+    - name: Ensure workspace and build dir permissions (pre-toolchain)
+      run: |
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        sudo chown -R 1001:1001 .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
+        sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
+
     - name: Host diagnostics
       id: host-diagnostics
       run: |
@@ -431,9 +438,9 @@ jobs:
         if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
         echo "DOCKER_DEBUG=${DOCKER_DEBUG}"
         echo "Looking for prebuilt image: $PREBUILT_IMAGE"
+        # if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
         if ! docker ${DOCKER_DEBUG} image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
           echo "Prebuilt image not present locally, attempting to pull"
-          # if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
           if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE"; then
             echo "Prebuilt image not available; skipping populate-toolchain"
             exit 0
@@ -450,6 +457,24 @@ jobs:
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$TARGET_TOOLCHAIN" || true
+
+    - name: Upload toolchain artifact (after population)
+      if: success() && !cancelled()
+      uses: actions/upload-artifact@v4
+      with:
+        name: toolchain-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/toolchain
+        if-no-files-found: warn
+    # Fallback for missing toolchain after all artifact/copy attempts
+    - name: Add fallback for missing toolchain (post-artifact)
+      run: |
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        TARGET_TOOLCHAIN="${{ github.workspace }}/$BUILD_DIR/toolchain"
+        if [ ! -d "$TARGET_TOOLCHAIN" ]; then
+          echo "Toolchain directory missing. Attempting to recreate."
+          mkdir -p "$TARGET_TOOLCHAIN"
+          docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true"
+        fi
 
     - name: In-container diagnostics (post-prebuild)
       id: in-container-diagnostics-post
