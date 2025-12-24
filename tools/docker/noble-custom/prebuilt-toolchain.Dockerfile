@@ -14,10 +14,21 @@ RUN set -eux; \
     mkdir -p /tmp/prebuild; \
     export BUILD_DIR=/tmp/prebuild; \
     # run a minimal host-toolchain bootstrap; change package list as appropriate
-    /src/scripts/build pkg-config:host || true; \
-    /src/scripts/build gettext:host || true; \
-    /src/scripts/build xxHash:host || true; \
-    /src/scripts/build cmake:host || true; \
+    # normal
+    # /src/scripts/build pkg-config:host || true; \
+    # quiet, only errors shown in build log)
+    # /src/scripts/build pkg-config:host > /dev/null 2>&1 || true; \
+    # keep logs for debugging
+    # /src/scripts/build pkg-config:host > /tmp/prebuild/pkg-config-host.log 2>&1 || true; \
+    /src/scripts/build pkg-config:host > /dev/null 2>&1 || true; \
+    /src/scripts/build gettext:host > /dev/null 2>&1 || true; \
+    /src/scripts/build xxHash:host > /dev/null 2>&1 || true; \
+    /src/scripts/build cmake:host > /dev/null 2>&1 || true; \
+    /src/scripts/build toolchain:host > /dev/null 2>&1 || true; \
+    /src/scripts/build linux:host > /dev/null 2>&1 || true; \
+    /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 || true; \
+    /src/scripts/build mesa:host > /dev/null 2>&1 || true; \
+    /src/scripts/build zstd:host > /dev/null 2>&1 || true; \
     # copy any produced toolchain trees into /opt/prebuilt-toolchain
     sudo mkdir -p /opt/prebuilt-toolchain; \
     for d in /tmp/prebuild/*; do \
