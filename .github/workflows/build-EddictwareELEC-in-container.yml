@@ -133,10 +133,11 @@ jobs:
         registry_owner="${{ github.repository_owner }}"
         registry_owner="${registry_owner,,}"
         PREBUILT_IMAGE="${{ env.EE_Registry }}/${registry_owner}/eddictwareelec-prebuilt:${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
+        if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
         echo "Looking for prebuilt image: $PREBUILT_IMAGE"
-        if ! docker image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+        if ! docker $DOCKER_DEBUG image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
           echo "Prebuilt image not present locally, attempting to pull"
-          if ! docker pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+          if ! docker $DOCKER_DEBUG pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
             echo "Prebuilt image not available; skipping populate-toolchain"
             exit 0
           fi
@@ -148,7 +149,7 @@ jobs:
           exit 0
         fi
         mkdir -p "$TARGET_TOOLCHAIN"
-        docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "set -euo pipefail; if [ -d /opt/prebuilt-toolchain ]; then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true; fi"
+        docker $DOCKER_DEBUG run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "set -euo pipefail; if [ -d /opt/prebuilt-toolchain ]; then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true; fi"
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$TARGET_TOOLCHAIN" || true
