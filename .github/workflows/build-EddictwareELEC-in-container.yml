@@ -126,36 +126,6 @@ jobs:
         ref: 'master'
         # clean: false
 
-    - name: Pre-populate prebuilt toolchain
-      id: pre-populate-toolchain
-      run: |
-        set -euo pipefail
-        registry_owner="${{ github.repository_owner }}"
-        registry_owner="${registry_owner,,}"
-        PREBUILT_IMAGE="${{ env.EE_Registry }}/${registry_owner}/eddictwareelec-prebuilt:${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
-        if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
-        echo "DOCKER_DEBUG=${DOCKER_DEBUG}"
-        echo "Looking for prebuilt image: $PREBUILT_IMAGE"
-        if ! docker ${DOCKER_DEBUG} image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
-          echo "Prebuilt image not present locally, attempting to pull"
-          # if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
-          if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE"; then
-            echo "Prebuilt image not available; skipping populate-toolchain"
-            exit 0
-          fi
-        fi
-        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-        TARGET_TOOLCHAIN="${{ github.workspace }}/$BUILD_DIR/toolchain"
-        if [ -d "$TARGET_TOOLCHAIN" ]; then
-          echo "Toolchain already present at $TARGET_TOOLCHAIN; skipping copy"
-          exit 0
-        fi
-        mkdir -p "$TARGET_TOOLCHAIN"
-        docker ${DOCKER_DEBUG} run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "set -euo pipefail; if [ -d /opt/prebuilt-toolchain ]; then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true; fi"
-        DOCKER_UID=${{ needs.init.outputs.docker_guid }}
-        DOCKER_GID=${DOCKER_UID}
-        sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$TARGET_TOOLCHAIN" || true
-
     - name: Restore build caches
       id: restore-build-caches
       uses: actions/cache@v4
@@ -458,10 +428,13 @@ jobs:
         registry_owner="${{ github.repository_owner }}"
         registry_owner="${registry_owner,,}"
         PREBUILT_IMAGE="${{ env.EE_Registry }}/${registry_owner}/eddictwareelec-prebuilt:${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
+        if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
+        echo "DOCKER_DEBUG=${DOCKER_DEBUG}"
         echo "Looking for prebuilt image: $PREBUILT_IMAGE"
-        if ! docker image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+        if ! docker ${DOCKER_DEBUG} image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
           echo "Prebuilt image not present locally, attempting to pull"
-          if ! docker pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+          # if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+          if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE"; then
             echo "Prebuilt image not available; skipping populate-toolchain"
             exit 0
           fi
@@ -477,29 +450,6 @@ jobs:
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}
         sudo chown -R ${DOCKER_UID}:${DOCKER_GID} "$TARGET_TOOLCHAIN" || true
-
-    - name: Prebuild host toolchain (serial)
-      id: prebuild-host-toolchain
-      run: |
-        IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
-        echo "Prebuilding host toolchain packages inside image: $IMAGE"
-        # Pull image (best-effort)
-        if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
-        docker $DOCKER_DEBUG image pull "$IMAGE" || true
-        # Run the minimal host-toolchain builds serially to ensure cmake dependencies
-        # Capture stdout/stderr into ci-diagnostics/prebuild.log for upload and analysis
-        mkdir -p "${{ github.workspace }}/ci-diagnostics"
-        # Run prebuild inside the image. Source the helper inside the container so
-        # container-local detection (NB_CORES/RECOMMENDED_J) runs in the container.
-        # Source host-side container params (MEMORY_ARG) so docker receives memory flags
-        . "${{ github.workspace }}/container_params.sh" && \
-        docker run --rm $MEMORY_ARG -v "${{ github.workspace }}:/build" -w /build \
-          "$IMAGE" bash -lc \
-          ". /build/build_recommend.sh && export MAKEFLAGS=\"-j${RECOMMENDED_J}\" && git config --global --add safe.directory /build || true; /build/scripts/build pkg-config:host && /build/scripts/build gettext:host && /build/scripts/build xxHash:host && /build/scripts/build cmake:host" 2>&1 | tee "${{ github.workspace }}/ci-diagnostics/prebuild.log"
-        rc=${PIPESTATUS[0]:-1}
-        if [ "$rc" -ne 0 ]; then
-          echo 'Prebuild step returned non-zero; continuing' | tee -a "${{ github.workspace }}/ci-diagnostics/prebuild.log"
-        fi
 
     - name: In-container diagnostics (post-prebuild)
       id: in-container-diagnostics-post
