@@ -438,7 +438,8 @@ jobs:
         if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
         echo "DOCKER_DEBUG=${DOCKER_DEBUG}"
         echo "Looking for prebuilt image: $PREBUILT_IMAGE"
-        # if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+        # Diagnostic: check /opt/prebuilt-toolchain in prebuilt image
+        docker run --rm "$PREBUILT_IMAGE" bash -c 'echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; ls -l /opt/prebuilt-toolchain || true; find /opt/prebuilt-toolchain -type f | xargs ls -l || true; stat /opt/prebuilt-toolchain || true'
         if ! docker ${DOCKER_DEBUG} image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
           echo "Prebuilt image not present locally, attempting to pull"
           if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE"; then
@@ -453,6 +454,9 @@ jobs:
           exit 0
         fi
         mkdir -p "$TARGET_TOOLCHAIN"
+        # Ensure permissions before copying
+        sudo chown -R 1001:1001 "$TARGET_TOOLCHAIN" || true
+        sudo chmod -R u+rwX,g+rwX,o+rwX "$TARGET_TOOLCHAIN" || true
         docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "set -euo pipefail; if [ -d /opt/prebuilt-toolchain ]; then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true; fi"
         DOCKER_UID=${{ needs.init.outputs.docker_guid }}
         DOCKER_GID=${DOCKER_UID}

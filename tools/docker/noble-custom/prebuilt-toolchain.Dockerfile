@@ -50,7 +50,12 @@ RUN set -eux; \
     # Also copy /tmp/prebuild/toolchain directly if it exists (flat layout)
     if [ -d /tmp/prebuild/toolchain ]; then \
       sudo cp -a /tmp/prebuild/toolchain /opt/prebuilt-toolchain/ || true; \
-    fi
+    fi; \
+    # Diagnostic: confirm /opt/prebuilt-toolchain presence and permissions
+    echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; \
+    ls -l /opt/prebuilt-toolchain || true; \
+    find /opt/prebuilt-toolchain -type f | xargs ls -l || true; \
+    stat /opt/prebuilt-toolchain || true
 
 FROM ${BASE_IMAGE}
 COPY --from=builder /opt/prebuilt-toolchain /opt/prebuilt-toolchain
