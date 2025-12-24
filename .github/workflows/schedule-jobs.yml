@@ -36,7 +36,7 @@ jobs:
           calcEpoch=$(date -d "$calcDateTime" +%s)
 
           [ "${DEBUG:-}" ] && echo "Current date and time: $curDateTime"
-          [ "${DEBUG:-}" = true ] && echo "Calculated date and time (24 hours ago): $calcDateTime"
+          [ "${DEBUG:-}" = true ] && echo "Calculated date and time (5 days ago): $calcDateTime"
           [ "${DEBUG:-}" = true ] && echo "Calculated epoch time: $calcEpoch"
 
           jq_filter='[ .workflow_runs[] | {id, name, display_title, conclusion, created_at} + {"creat_epoch": ((.created_at) | fromdateiso8601?)} | select(.creat_epoch < $calc_epoch) ]'
