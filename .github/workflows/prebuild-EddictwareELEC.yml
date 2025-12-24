@@ -94,6 +94,12 @@ jobs:
       # Ensure ownership alignment for the build directory
       - name: Fix permissions for build directory
         run: |
+          # Check if the directory exists, create it if not
+          if [ ! -d "/build/build.EddictwareELEC-RPi4.aarch64-13.0-devel" ]; then
+            echo "Directory does not exist. Creating it..."
+            sudo mkdir -p /build/build.EddictwareELEC-RPi4.aarch64-13.0-devel
+          fi
+
           sudo chown -R $DOCKER_UID:$DOCKER_GID /build/build.EddictwareELEC-RPi4.aarch64-13.0-devel || true
 
           # Add diagnostics to verify ownership and permissions
