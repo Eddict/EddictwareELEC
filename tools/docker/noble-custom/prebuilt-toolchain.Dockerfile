@@ -9,10 +9,10 @@ WORKDIR /src
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Add build arguments for EE variables
-ARG DISTRO
-ARG PROJECT
-ARG DEVICE
-ARG ARCH
+ARG DISTRO=noble
+ARG PROJECT=RPi
+ARG DEVICE=RPi4
+ARG ARCH=aarch64
 
 # Build host-toolchain packages into a temporary build dir inside the image.
 # Adjust the package list if you need more/less prebuilt packages.
