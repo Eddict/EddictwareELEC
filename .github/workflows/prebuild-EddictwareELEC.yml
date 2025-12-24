@@ -45,6 +45,10 @@ jobs:
       IMAGE_NAME: eddictwareelec-prebuilt
       EE_REGISTRY: ghcr.io
       EE_REGISTRY_OWNER:
+      EE_Distro: EddictwareELEC
+      EE_Project: RPi
+      EE_Device: RPi4
+      EE_Arch: ${{ inputs.arch || 'aarch64' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
