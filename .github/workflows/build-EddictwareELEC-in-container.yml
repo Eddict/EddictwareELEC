@@ -138,7 +138,8 @@ jobs:
         echo "Looking for prebuilt image: $PREBUILT_IMAGE"
         if ! docker ${DOCKER_DEBUG} image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
           echo "Prebuilt image not present locally, attempting to pull"
-          if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+          # if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+          if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE"; then
             echo "Prebuilt image not available; skipping populate-toolchain"
             exit 0
           fi
@@ -801,4 +802,3 @@ jobs:
     #   run: |
     #     rm -rf /tmp/.buildx-cache-2
     #     mv /tmp/.buildx-cache-2-new /tmp/.buildx-cache-2
- 
