@@ -9,15 +9,15 @@ WORKDIR /src
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Add build arguments for EE variables
-ARG EE_Distro
-ARG EE_Project
-ARG EE_Device
-ARG EE_Arch
+ARG DISTRO
+ARG PROJECT
+ARG DEVICE
+ARG ARCH
 
 # Build host-toolchain packages into a temporary build dir inside the image.
 # Adjust the package list if you need more/less prebuilt packages.
 RUN set -eux; \
-    echo "Building for Distro: $EE_Distro, Project: $EE_Project, Device: $EE_Device, Arch: $EE_Arch"; \
+    echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     mkdir -p /tmp/prebuild; \
     export BUILD_DIR=/tmp/prebuild; \
     # Run host-toolchain builds in parallel
