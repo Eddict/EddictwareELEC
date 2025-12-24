@@ -14,7 +14,7 @@ RUN set -eux; \
     mkdir -p /tmp/prebuild; \
     export BUILD_DIR=/tmp/prebuild; \
     # Run host-toolchain builds in parallel
-    (
+    ( \
         # run a minimal host-toolchain bootstrap; change package list as appropriate
         # normal
         # /src/scripts/build pkg-config:host || true; \
@@ -31,7 +31,7 @@ RUN set -eux; \
         /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 & \
         /src/scripts/build mesa:host > /dev/null 2>&1 & \
         /src/scripts/build zstd:host > /dev/null 2>&1 & \
-        wait
+        wait \
     ); \
     # Copy any produced toolchain trees into /opt/prebuilt-toolchain
     sudo mkdir -p /opt/prebuilt-toolchain; \
