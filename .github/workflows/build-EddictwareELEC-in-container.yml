@@ -746,9 +746,38 @@ jobs:
         name: "${{ steps.image-path.outputs.EE_image_filename }}"
         path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
 
-    # - # Temp fix to prevent cache size keeps growing
-    #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
-    #   name: Move cache
-    #   run: |
-    #     rm -rf /tmp/.buildx-cache-2
-    #     mv /tmp/.buildx-cache-2-new /tmp/.buildx-cache-2
+    - name: Ensure required directories exist with correct permissions
+      run: |
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives "$BUILD_DIR/.stamps"
+        sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
+        sudo chown -R $(id -u):$(id -g) .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
+
+    - name: Verify artifact availability
+      run: |
+        if [ ! -d "$BUILD_DIR/.stamps" ]; then
+          echo "Warning: Stamps artifact is missing. Build may fail."
+        fi
+        if [ ! -d .ccache ]; then
+          echo "Warning: Ccache artifact is missing. Build performance may be degraded."
+        fi
+
+    - name: Add fallback for missing toolchain
+      run: |
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        TARGET_TOOLCHAIN="${{ github.workspace }}/$BUILD_DIR/toolchain"
+        if [ ! -d "$TARGET_TOOLCHAIN" ]; then
+          echo "Toolchain directory missing. Attempting to recreate."
+          mkdir -p "$TARGET_TOOLCHAIN"
+          docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true"
+        fi
+
+    - name: Add detailed logging for make command
+      run: |
+        set -x
+        . /build/build_recommend.sh
+        make -j${RECOMMENDED_J} -l${NB_CORES} image || {
+          echo "Make command failed. Capturing logs...";
+          find /build -name '*.log' -exec cp {} /build/ci-diagnostics/ \; || true;
+          exit 1;
+        }
