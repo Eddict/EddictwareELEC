@@ -9,7 +9,7 @@ WORKDIR /src
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Add build arguments for EE variables
-ARG DISTRO=noble
+ARG DISTRO=EddictwareELEC
 ARG PROJECT=RPi
 ARG DEVICE=RPi4
 ARG ARCH=aarch64
