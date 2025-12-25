@@ -243,6 +243,7 @@ jobs:
 
     - name: Host diagnostics
       id: host-diagnostics
+      continue-on-error: true
       run: |
         set -euo pipefail
         DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
@@ -263,6 +264,7 @@ jobs:
 
     - name: In-container diagnostics
       id: in-container-diagnostics
+      continue-on-error: true
       run: |
         set -euo pipefail
         IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
@@ -482,6 +484,7 @@ jobs:
 
     - name: In-container diagnostics (post-prebuild)
       id: in-container-diagnostics-post
+      continue-on-error: true
       run: |
         set -euo pipefail
         IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
