@@ -20,9 +20,10 @@ RUN apt-get update \
     cmake curl bash bc gcc-14 cpp-14 sed patch patchutils tar bzip2 gzip xz-utils zstd perl gawk gperf zip \
       unzip diffutils lzop make file g++-14 xfonts-utils xsltproc default-jre-headless python3 \
       libxxhash-dev \
-        libzstd-dev \
-        pkgconf pkg-config autoconf automake libtool m4 \
-        zlib1g-dev \
+      libzstd-dev \
+      pkgconf pkg-config autoconf automake libtool m4 \
+      ccache \
+      zlib1g-dev \
       libc6-dev libncurses5-dev libjson-perl libxml-parser-perl libparse-yapp-perl rdfind \
       golang-1.23-go git openssh-client rsync upx-ucl \
     --no-install-recommends \
