@@ -33,7 +33,7 @@ RUN set -eux; \
         /src/scripts/build gettext:host > /dev/null 2>&1 & \
         /src/scripts/build xxHash:host > /dev/null 2>&1 & \
         /src/scripts/build cmake:host > /dev/null 2>&1 & \
-        /src/scripts/build toolchain:host > /dev/null 2>&1 & \
+        /src/scripts/build toolchain:host > /tmp/prebuild/toolchain-host.log 2>&1 & \
         /src/scripts/build linux:host > /dev/null 2>&1 & \
         /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 & \
         /src/scripts/build mesa:host > /dev/null 2>&1 & \
@@ -45,6 +45,8 @@ RUN set -eux; \
     ls -l /tmp/prebuild || true; \
     echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain ---"; \
     ls -l /tmp/prebuild/toolchain || true; \
+    echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain-host.log ---"; \
+    cat /tmp/prebuild/toolchain-host.log || true; \
     # Copy any produced toolchain trees into /opt/prebuilt-toolchain
     sudo mkdir -p /opt/prebuilt-toolchain; \
     # Copy all toolchain directories found under /tmp/prebuild (recursively)
