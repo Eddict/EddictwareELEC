@@ -48,6 +48,15 @@ defaults:
     shell: bash
 
 jobs:
+  yamllint:
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    steps:
+      - name: Run yamllint composite action
+        uses: ./.github/actions/composite/yamllint
+        with:
+          yamllint_config: ''  # Optionally set to .yamllint or another config file
+          yamllint_files: '**/*.yml **/*.yaml'  # Optionally override file globs
+
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     permissions:

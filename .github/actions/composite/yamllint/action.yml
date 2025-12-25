@@ -1,0 +1,26 @@
+# yamllint Composite Action
+# This composite action runs yamllint using the ibiqlik/action-yamllint GitHub Action.
+# Place this under .github/actions/composite/yamllint/action.yml
+
+name: 'yamllint'
+description: 'Lint YAML files using yamllint (ibiqlik/action-yamllint)'
+author: 'EddictwareELEC maintainers'
+inputs:
+  yamllint_config:
+    description: 'Path to yamllint config file (optional)'
+    required: false
+    default: ''
+  yamllint_files:
+    description: 'Files or globs to lint (optional, default: all YAML files)'
+    required: false
+    default: '**/*.yml **/*.yaml'
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Run yamllint
+      uses: ibiqlik/action-yamllint@v3
+      with:
+        config_file: ${{ inputs.yamllint_config }}
+        file_or_dir: ${{ inputs.yamllint_files }}

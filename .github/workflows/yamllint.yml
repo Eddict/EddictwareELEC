@@ -1,0 +1,24 @@
+# Example workflow using the yamllint composite action
+# Save as .github/workflows/yamllint.yml
+
+name: YAML Lint
+
+on:
+  pull_request:
+    paths:
+      - '**/*.yml'
+      - '**/*.yaml'
+  push:
+    paths:
+      - '**/*.yml'
+      - '**/*.yaml'
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run yamllint composite action
+        uses: ./.github/actions/composite/yamllint
+        with:
+          yamllint_config: ''  # Optionally set to .yamllint or another config file
+          yamllint_files: '**/*.yml **/*.yaml'  # Optionally override file globs
