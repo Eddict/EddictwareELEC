@@ -47,16 +47,11 @@ RUN set -eux; \
     ls -l /tmp/prebuild/toolchain || true; \
     echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain-host.log ---"; \
     cat /tmp/prebuild/toolchain-host.log || true; \
-    # Copy any produced toolchain trees into /opt/prebuilt-toolchain
+    # Copy the first found toolchain dir as /opt/prebuilt-toolchain/toolchain (flat, predictable path)
     sudo mkdir -p /opt/prebuilt-toolchain; \
-    # Copy all toolchain directories found under /tmp/prebuild (recursively)
-    find /tmp/prebuild -type d -name 'toolchain' | while read tcdir; do \
-      name=$(basename $(dirname "$tcdir")); \
-      sudo cp -a "$tcdir" "/opt/prebuilt-toolchain/${name}-toolchain" || true; \
-    done; \
-    # Also copy /tmp/prebuild/toolchain directly if it exists (flat layout)
-    if [ -d /tmp/prebuild/toolchain ]; then \
-      sudo cp -a /tmp/prebuild/toolchain /opt/prebuilt-toolchain/ || true; \
+    tcdir=$(find /tmp/prebuild -type d -name 'toolchain' | head -n1); \
+    if [ -n "$tcdir" ]; then \
+      sudo cp -a "$tcdir" /opt/prebuilt-toolchain/toolchain; \
     fi; \
     # Diagnostic: confirm /opt/prebuilt-toolchain presence and permissions
     echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; \
