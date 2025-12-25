@@ -15,13 +15,25 @@ on:
           - self-hosted
           - github
         default: self-hosted
-      distro:
-        description: 'Distro codename'
+      os:
+        description: 'OS codename'
         required: true
+        type: choice
+        options:
+          - noble
+          - jammy
+          - bookworm
+          - sid
         default: noble
       arch:
-        description: 'Target arch'
+        description: 'Arch of build target'
         required: true
+        type: choice
+        options:
+          - amd64
+          - aarch64
+          - arm
+          - x86_64
         default: aarch64
       debug:
         description: 'Enable debug build'
@@ -79,30 +91,31 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: tools/docker/noble-custom/prebuilt-toolchain.Dockerfile
+          file: tools/docker/${{ inputs.os }}-custom/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ inputs.distro }}-${{ inputs.arch }}
+            ${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ inputs.os }}-${{ inputs.arch }}
           build-args: |
-            DISTRO=${{ inputs.distro }}
-            PROJECT=RPi
-            DEVICE=RPi4
-            ARCH=${{ inputs.arch }}
+            DISTRO=${{ env.EE_Distro }}
+            PROJECT=${{ env.EE_Project }}
+            DEVICE=${{ env.EE_Device }}
+            ARCH=${{ env.EE_Arch }}
 
       # Ensure ownership alignment for the build directory
       - name: Fix permissions for build directory
         run: |
           # Check if the directory exists, create it if not
-          if [ ! -d "/build/build.EddictwareELEC-RPi4.aarch64-13.0-devel" ]; then
+          BUILD_DIR="/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+          if [ ! -d "$BUILD_DIR" ]; then
             echo "Directory does not exist. Creating it..."
-            sudo mkdir -p /build/build.EddictwareELEC-RPi4.aarch64-13.0-devel
+            sudo mkdir -p "$BUILD_DIR"
           fi
 
-          sudo chown -R $DOCKER_UID:$DOCKER_GID /build/build.EddictwareELEC-RPi4.aarch64-13.0-devel || true
+          sudo chown -R $DOCKER_UID:$DOCKER_GID "$BUILD_DIR" || true
 
           # Add diagnostics to verify ownership and permissions
           echo "=== Ownership and Permissions Diagnostics ==="
-          ls -ld /build/build.EddictwareELEC-RPi4.aarch64-13.0-devel
-          find /build/build.EddictwareELEC-RPi4.aarch64-13.0-devel -maxdepth 2 -exec stat -c "%U:%G %a %n" {} \;
+          ls -ld "$BUILD_DIR"
+          find "$BUILD_DIR" -maxdepth 2 -exec stat -c "%U:%G %a %n" {} \;
