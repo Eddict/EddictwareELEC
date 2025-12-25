@@ -59,6 +59,7 @@ jobs:
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    needs: yamllint
     permissions:
       contents: read
       packages: write
