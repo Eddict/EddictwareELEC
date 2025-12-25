@@ -126,8 +126,27 @@ jobs:
         ref: 'master'
         # clean: false
 
+    - name: Check for existing build cache (self-hosted only)
+      id: check-build-cache
+      if: inputs.runner == 'self-hosted'
+      run: |
+        # Check if all required cache dirs/files exist and are non-empty
+        missing=0
+        for d in .ccache build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global sources; do
+          if [ ! -e "$d" ] || [ "$(ls -A $d 2>/dev/null | wc -l)" -eq 0 ]; then
+            echo "Cache missing or empty: $d"
+            missing=1
+          fi
+        done
+        if [ "$missing" -eq 0 ]; then
+          echo "build_cache_present=true" >> $GITHUB_OUTPUT
+        else
+          echo "build_cache_present=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Restore build caches
       id: restore-build-caches
+      if: inputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true'
       uses: actions/cache@v4
       with:
         path: |
