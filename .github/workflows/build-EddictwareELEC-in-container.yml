@@ -18,7 +18,7 @@ on:
           - github
         default: self-hosted
       os:
-        description: 'OS of build container'
+        description: 'OS codename of build container'
         required: true
         type: choice
         options:
