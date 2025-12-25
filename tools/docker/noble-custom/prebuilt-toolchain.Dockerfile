@@ -40,6 +40,11 @@ RUN set -eux; \
         /src/scripts/build zstd:host > /dev/null 2>&1 & \
         wait \
     ); \
+    # Diagnostic: show contents of /tmp/prebuild and /tmp/prebuild/toolchain after build
+    echo "--- DIAGNOSTIC: /tmp/prebuild ---"; \
+    ls -l /tmp/prebuild || true; \
+    echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain ---"; \
+    ls -l /tmp/prebuild/toolchain || true; \
     # Copy any produced toolchain trees into /opt/prebuilt-toolchain
     sudo mkdir -p /opt/prebuilt-toolchain; \
     # Copy all toolchain directories found under /tmp/prebuild (recursively)
