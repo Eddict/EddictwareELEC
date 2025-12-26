@@ -58,7 +58,7 @@ jobs:
         uses: ./.github/actions/composite/yamllint
         with:
           yamllint_config: ''  # Optionally set to .yamllint or another config file
-          yamllint_files: 'prebuild-EddictwareELEC.yml'
+          yamllint_files: './.github/workflows/prebuild-EddictwareELEC.yml'
           # yamllint_files: '**/*.yml **/*.yaml'  # Optionally override file globs
 
   build:
