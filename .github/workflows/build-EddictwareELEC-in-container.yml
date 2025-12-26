@@ -60,13 +60,13 @@ env:
   EE_image_filename: ""
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
   EE_Registry: ghcr.io
-  RUNNER_TYPE: ${{ env.RUNNER_TYPE }}
-  HOST_UID: ${{ env.HOST_UID }}
-  HOST_GID: ${{ env.HOST_GID }}
-  DOCKER_UID: ${{ env.DOCKER_UID }}
-  DOCKER_GID: ${{ env.DOCKER_GID }}
-  IMG_UID: ${{ env.IMG_UID }}
-  IMG_GID: ${{ env.IMG_GID }}
+  RUNNER_TYPE:
+  HOST_UID:
+  HOST_GID:
+  DOCKER_UID:
+  DOCKER_GID:
+  IMG_UID:
+  IMG_GID:
 
 defaults:
   run:
