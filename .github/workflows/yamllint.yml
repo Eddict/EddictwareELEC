@@ -21,5 +21,6 @@ jobs:
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
         with:
-          yamllint_config: ''  # Optionally set to .yamllint or another config file
-          yamllint_files: '**/*.yml **/*.yaml'  # Optionally override file globs
+          yamllint_config_data: ''  # Optionally set yamllint config data
+          yamllint_config_file: ''  # Optionally set to .yamllint or another config file
+          yamllint_files_or_dirs: '**/*.yml **/*.yaml'  # Optionally override file globs

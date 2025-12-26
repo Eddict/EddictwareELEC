@@ -6,11 +6,15 @@ name: 'yamllint'
 description: 'Lint YAML files using yamllint (ibiqlik/action-yamllint)'
 author: 'EddictwareELEC maintainers'
 inputs:
-  yamllint_config:
+  yamllint_config_data:
+    description: 'Yamllint config data (optional)'
+    required: false
+    default: ''
+  yamllint_config_file:
     description: 'Path to yamllint config file (optional)'
     required: false
     default: ''
-  yamllint_files:
+  yamllint_files_or_dirs:
     description: 'Files or globs to lint (optional, default: all YAML files)'
     required: false
     default: '**/*.yml **/*.yaml'
@@ -22,5 +26,6 @@ runs:
     - name: Run yamllint
       uses: ibiqlik/action-yamllint@v3
       with:
-        config_file: ${{ inputs.yamllint_config }}
-        file_or_dir: ${{ inputs.yamllint_files }}
+        config_data: ${{ inputs.yamllint_config_data }}
+        config_file: ${{ inputs.yamllint_config_file }}
+        file_or_dir: ${{ inputs.yamllint_files_or_dirs }}
