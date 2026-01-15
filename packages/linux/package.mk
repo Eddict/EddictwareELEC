@@ -23,8 +23,8 @@ case "${LINUX}" in
     PKG_PATCH_DIRS="default"
     ;;
   raspberrypi)
-    PKG_VERSION="3114bf728457e0a03e8c3e96798c04f2ffd89aca" # 6.18
-    PKG_SHA256="64061d1be7f7035a2cebdf6517f552c00b60d7534c63f97f5b87fc8a5053d6c6"
+    PKG_VERSION="bb594fb36f555f9b88b7b6fcf8b71c669c1d60c7" # 6.18.4
+    PKG_SHA256="1c9a308daaf417a92a3c5ad4548e8fec11bab2f3e222350444f6a509335e91e9"
     PKG_URL="https://github.com/raspberrypi/linux/archive/${PKG_VERSION}.tar.gz"
     PKG_SOURCE_NAME="linux-${LINUX}-${PKG_VERSION}.tar.gz"
     PKG_PATCH_DIRS="raspberrypi"
@@ -37,8 +37,8 @@ case "${LINUX}" in
     PKG_PATCH_DIRS="default rockchip"
     ;;
   *)
-    PKG_VERSION="6.18.2"
-    PKG_SHA256="558c6bbab749492b34f99827fe807b0039a744693c21d3a7e03b3a48edaab96a"
+    PKG_VERSION="6.18.4"
+    PKG_SHA256="f850139ca5f79c1bf6bb8b32f92e212aadca97bdaef8a83a7cf4ac4d6a525fab"
     PKG_URL="https://www.kernel.org/pub/linux/kernel/v${PKG_VERSION/.*/}.x/${PKG_NAME}-${PKG_VERSION}.tar.xz"
     PKG_PATCH_DIRS="default"
     case ${DEVICE} in

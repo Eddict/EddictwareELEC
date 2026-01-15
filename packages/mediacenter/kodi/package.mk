@@ -3,8 +3,8 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="kodi"
-PKG_VERSION="665a76031976fb37ddbcde6cec567d62dc1871fe"
-PKG_SHA256="209559a1eafd5384a8e69b5c9588dbd827ebaa5cf64c3575fec78452c9620e99"
+PKG_VERSION="929344495c9ede095c3f2ccd8197d2b8141e3a4b"
+PKG_SHA256="7a965fde85ad976f01d8eefa7668f37b1ba2a7862db3545dcccddadb0f93a523"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/xbmc/xbmc/archive/${PKG_VERSION}.tar.gz"
@@ -247,6 +247,7 @@ configure_package() {
                          -DENABLE_INTERNAL_EXIV2=OFF \
                          -DENABLE_INTERNAL_FFMPEG=OFF \
                          -DENABLE_INTERNAL_FLATBUFFERS=OFF \
+                         -DENABLE_INTERNAL_MARIADBCLIENT=OFF \
                          -DENABLE_INTERNAL_SPDLOG=OFF \
                          -DENABLE_UDEV=ON \
                          -DENABLE_DBUS=ON \
