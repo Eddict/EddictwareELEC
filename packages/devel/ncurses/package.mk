@@ -68,6 +68,11 @@ PKG_CONFIGURE_OPTS_HOST="--enable-termcap \
                          --enable-pc-files \
                          --without-manpages"
 
+pre_configure_host() {
+  # configure step fails with gcc 14 unless this error is degraded to a warning
+  export CFLAGS+=" -Wno-error=implicit-function-declaration"
+}
+
 pre_configure_target() {
   cat >config.cache <<EOF
 cf_cv_builtin_bool=yes
