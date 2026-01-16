@@ -51,7 +51,8 @@ on:
         type: string
         default: ''
 
-run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner || 'self-hosted', inputs.os || 'noble', inputs.arch || 'aarch64', inputs.debug && '/debug' || '') }}
+run-name: ${{ format('{0} ({1}/{2}/{3}{4}{5})', github.workflow, inputs.runner || 'self-hosted', inputs. os || 'noble', inputs. arch || 'aarch64', inputs.debug && '/debug' || '', inputs.cache_version && format('/cache:{0}', inputs.cache_version) || '') }}
+#run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner || 'self-hosted', inputs.os || 'noble', inputs.arch || 'aarch64', inputs.debug && '/debug' || '') }}
 #run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted', github.event_name == 'workflow_dispatch' && inputs.os || 'noble', github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64') }}
 
 env:
