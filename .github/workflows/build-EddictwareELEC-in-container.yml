@@ -286,6 +286,7 @@ jobs:
 
     - name: Host diagnostics
       id: host-diagnostics
+      if: ${{ env.DEBUG }}
       continue-on-error: true
       run: |
         set -euo pipefail
@@ -307,6 +308,7 @@ jobs:
 
     - name: In-container diagnostics
       id: in-container-diagnostics
+      if: ${{ env.DEBUG }}
       continue-on-error: true
       run: |
         set -euo pipefail
