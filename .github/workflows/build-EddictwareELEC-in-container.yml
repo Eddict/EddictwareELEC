@@ -207,7 +207,7 @@ jobs:
       uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}
         # extract at repository root so multi-path artifacts (e.g. build/.ccache, sources)
         # are restored to their correct locations
         path: .
@@ -218,7 +218,7 @@ jobs:
       uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}
         path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
 
     - name: Download persisted apt cache (artifacts) as fallback
@@ -227,7 +227,7 @@ jobs:
       uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}
         path: .apt-cache/archives
 
     - name: Prepare cache dirs for container
