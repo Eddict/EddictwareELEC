@@ -55,10 +55,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Get changed YAML files
+        id: changed-yaml
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1 || true
+          files=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} | grep -E '\.ya?ml$' || true)
+          echo "files=$files" >> $GITHUB_OUTPUT
+
       - name: Run yamllint composite action
+        if: steps.changed-yaml.outputs.files != ''
         uses: ./.github/actions/composite/yamllint
         with:
-          # yamllint_config_data: '{extends: default, rules: {line-length: disable}}'  # Optionally set yamllint config data
           yamllint_config_data: |
             extends: default
             rules:
@@ -66,9 +73,8 @@ jobs:
               line-length: disable
               comments:
                 min-spaces-from-content: 1
-          yamllint_config_file: ''  # Optionally set to .yamllint or another config file
-          yamllint_files_or_dirs: './.github/workflows/prebuild-EddictwareELEC.yml'
-          # yamllint_files_or_dirs: '**/*.yml **/*.yaml'  # Optionally override file globs
+          yamllint_config_file: ''
+          yamllint_files_or_dirs: ${{ steps.changed-yaml.outputs.files }}
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
