@@ -45,6 +45,11 @@ on:
         required: true
         type: boolean
         default: false
+      cache_version:
+        description: 'Cache version (leave empty for default)'
+        required: false
+        type: string
+        default: ''
 
 run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner || 'self-hosted', inputs.os || 'noble', inputs.arch || 'aarch64', inputs.debug && '/debug' || '') }}
 #run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted', github.event_name == 'workflow_dispatch' && inputs.os || 'noble', github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64') }}
@@ -60,6 +65,7 @@ env:
   EE_image_filename: ""
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
   EE_Registry: ghcr.io
+  CACHE_VERSION: v2
   RUNNER_TYPE:
   HOST_UID:
   HOST_GID:
@@ -180,18 +186,19 @@ jobs:
           build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
           build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
           sources
-        key: ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
+        key: ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-${{ inputs.cache_version || env.CACHE_VERSION }}-${{ hashFiles('packages/**/package.mk') }}
+        # key: ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
         restore-keys: |
-          ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-
-
+          ${{ runner.os }}-eddict-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-ccache-${{ inputs.cache_version || env.CACHE_VERSION }}-
+ 
     - name: Restore apt cache
       id: restore-apt-cache
       uses: actions/cache@v4
       with:
         path: .apt-cache/archives
-        key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
+        key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
         restore-keys: |
-          ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-
+          ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}-
 
     - name: Download persisted caches (artifacts) as fallback
       id: download-ccache-artifact
@@ -746,7 +753,7 @@ jobs:
       if: ${{ success() && !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
-        name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}
         path: |
           .ccache
           build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
@@ -758,7 +765,7 @@ jobs:
       if: ${{ success() && !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
-        name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}
         path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
         if-no-files-found: warn
 
@@ -766,7 +773,7 @@ jobs:
       if: ${{ success() && !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
-        name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
+        name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}
         path: .apt-cache/archives
         if-no-files-found: warn
 
