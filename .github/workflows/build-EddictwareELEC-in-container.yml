@@ -136,6 +136,8 @@ jobs:
         echo "DOCKER_GID=$DOCKER_GID" >> $GITHUB_ENV
         echo "IMG_UID=$IMG_UID" >> $GITHUB_ENV
         echo "IMG_GID=$IMG_GID" >> $GITHUB_ENV
+        echo "IMG_UID=$IMG_UID" >> $GITHUB_OUTPUT
+        echo "IMG_GID=$IMG_GID" >> $GITHUB_OUTPUT
         # Add outputs for cross-job usage: 
         echo "img_uid=$IMG_UID" >> $GITHUB_OUTPUT
         echo "img_gid=$IMG_GID" >> $GITHUB_OUTPUT
