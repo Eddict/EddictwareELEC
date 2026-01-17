@@ -140,16 +140,13 @@ jobs:
         echo "img_uid=$IMG_UID" >> $GITHUB_OUTPUT
         echo "img_gid=$IMG_GID" >> $GITHUB_OUTPUT
 
+  build:
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    needs: init
+    steps:
     - name: Output Runner and User IDs
       id: output-ids
       run: |
-        echo "RUNNER_TYPE: $RUNNER_TYPE"
-        echo "HOST_UID: $HOST_UID"
-        echo "HOST_GID: $HOST_GID"
-        echo "DOCKER_UID: $DOCKER_UID"
-        echo "DOCKER_GID: $DOCKER_GID"
-        echo "IMG_UID: $IMG_UID"
-        echo "IMG_GID: $IMG_GID"
         echo "RUNNER_TYPE: ${{ env.RUNNER_TYPE }}"
         echo "HOST_UID: ${{ env.HOST_UID }}"
         echo "HOST_GID: ${{ env.HOST_GID }}"
@@ -158,10 +155,6 @@ jobs:
         echo "IMG_UID: ${{ env.IMG_UID }}"
         echo "IMG_GID: ${{ env.IMG_GID }}"
 
-  build:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
-    needs: init
-    steps:
     - name: Log in to registry
       uses: docker/login-action@v3
       with:
