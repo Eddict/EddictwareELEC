@@ -150,6 +150,13 @@ jobs:
         echo "DOCKER_GID: $DOCKER_GID"
         echo "IMG_UID: $IMG_UID"
         echo "IMG_GID: $IMG_GID"
+        echo "RUNNER_TYPE: ${{ env.RUNNER_TYPE }}"
+        echo "HOST_UID: ${{ env.HOST_UID }}"
+        echo "HOST_GID: ${{ env.HOST_GID }}"
+        echo "DOCKER_UID: ${{ env.DOCKER_UID }}"
+        echo "DOCKER_GID: ${{ env.DOCKER_GID }}"
+        echo "IMG_UID: ${{ env.IMG_UID }}"
+        echo "IMG_GID: ${{ env.IMG_GID }}"
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
