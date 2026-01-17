@@ -101,6 +101,7 @@ jobs:
       run: |
         # echo "[date]: $(/bin/date -u "+%Y%m%d")"
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+        echo "DEBUG=${{ env.DEBUG }}"
 
     - name: Get docker guid
       id: get-docker-guid
