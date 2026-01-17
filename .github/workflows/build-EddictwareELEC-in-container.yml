@@ -95,6 +95,8 @@ jobs:
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       docker_guid: ${{ steps.get-docker-guid.outputs.docker_guid }}
+      img_uid: ${{ steps.determine-ids.outputs.img_uid }}
+      img_gid: ${{ steps.determine-ids.outputs.img_gid }}
     steps:
     - name: Get Date
       id: get-date
@@ -138,6 +140,9 @@ jobs:
         echo "DOCKER_GID=$DOCKER_GID" >> $GITHUB_ENV
         echo "IMG_UID=$IMG_UID" >> $GITHUB_ENV
         echo "IMG_GID=$IMG_GID" >> $GITHUB_ENV
+        # Add outputs for cross-job usage: 
+        echo "img_uid=$IMG_UID" >> $GITHUB_OUTPUT
+        echo "img_gid=$IMG_GID" >> $GITHUB_OUTPUT
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
@@ -236,11 +241,11 @@ jobs:
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
         # Align host cache ownership to it
         # chown critical cache dirs/files to the image UID/GID so container user can write
-        sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache "$BUILD_DIR" .apt-cache || true
-        sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$BUILD_DIR/.stamps" || true
-        sudo chown ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$BUILD_DIR/.cache_package_global" || true
+        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache || true
+        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.stamps" || true
+        sudo chown ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.cache_package_global" || true
         # ensure per-build ccache is owned by image uid too
-        sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$BUILD_DIR/.ccache" 2>/dev/null || true
+        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.ccache" 2>/dev/null || true
         # relax permissions as a fallback so builds don't fail due to strict host umasks
         chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache || true
         chmod 0666 "$BUILD_DIR/.cache_package_local" || true
@@ -257,9 +262,9 @@ jobs:
         # differs from the host's docker user.
         if [ -n "${IMG_UID:-}" ]; then
           echo "Aligning host cache ownership to image UID:GID ${IMG_UID}:${IMG_GID}"
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache "$BUILD_DIR" .apt-cache || true
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$BUILD_DIR/.stamps" || true
-          sudo chown ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$BUILD_DIR/.cache_package_global" || true
+          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache || true
+          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.stamps" || true
+          sudo chown ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.cache_package_global" || true
         else
           echo "IMG_UID not set; skipping chown-to-image and leaving host ownership as-is"
         fi
@@ -282,7 +287,7 @@ jobs:
     - name: Ensure workspace and build dir permissions (pre-toolchain)
       run: |
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-        sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
+        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
         sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
 
     - name: Host diagnostics
@@ -503,10 +508,10 @@ jobs:
         fi
         mkdir -p "$TARGET_TOOLCHAIN"
         # Ensure permissions before copying
-        sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$TARGET_TOOLCHAIN" || true
+        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$TARGET_TOOLCHAIN" || true
         sudo chmod -R u+rwX,g+rwX,o+rwX "$TARGET_TOOLCHAIN" || true
         docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "set -euo pipefail; if [ -d /opt/prebuilt-toolchain ]; then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true; fi"
-        sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$TARGET_TOOLCHAIN" || true
+        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$TARGET_TOOLCHAIN" || true
 
     - name: Upload toolchain artifact (after population)
       if: success() && !cancelled()
