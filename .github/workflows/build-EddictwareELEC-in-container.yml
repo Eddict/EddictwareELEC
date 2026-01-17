@@ -350,10 +350,10 @@ jobs:
       run: |
         set -euo pipefail
         pick_output_dir() {
-          if [ -w "${GITHUB_WORKSPACE}" ]; then
-            echo "${GITHUB_WORKSPACE}"
+          if [ -w "${{ github.workspace }}" ]; then
+            echo "${{ github.workspace }}"
           else
-            echo "${RUNNER_TEMP:-/tmp}"
+            echo "${{ runner.temp }}"
           fi
         }
         DIAG_DIR="$(pick_output_dir)/ci-diagnostics"
@@ -379,10 +379,10 @@ jobs:
       run: |
         set -euo pipefail
         pick_output_dir() {
-          if [ -w "${GITHUB_WORKSPACE}" ]; then
-            echo "${GITHUB_WORKSPACE}"
+          if [ -w "${{ github.workspace }}" ]; then
+            echo "${{ github.workspace }}"
           else
-            echo "${RUNNER_TEMP:-/tmp}"
+            echo "${{ runner.temp }}"
           fi
         }
         DIAG_DIR="$(pick_output_dir)/ci-diagnostics"
@@ -439,10 +439,10 @@ jobs:
       id: prepare-container-params
       run: |
         pick_output_dir() {
-          if [ -w "${GITHUB_WORKSPACE}" ]; then
-            echo "${GITHUB_WORKSPACE}"
+          if [ -w "${{ github.workspace }}" ]; then
+            echo "${{ github.workspace }}"
           else
-            echo "${RUNNER_TEMP:-/tmp}"
+            echo "${{ runner.temp }}"
           fi
         }
         # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
@@ -463,8 +463,8 @@ jobs:
 
     - name: Write build_recommend.sh
       run: |
-        if [ -w "${GITHUB_WORKSPACE}" ]; then
-          cat > "${GITHUB_WORKSPACE}/build_recommend.sh" <<'EOF'
+        if [ -w "${{ github.workspace }}" ]; then
+          cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
           #!/bin/bash
           set -euo pipefail
           NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
@@ -499,7 +499,7 @@ jobs:
           if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
           echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
           EOF
-          chmod +x "${GITHUB_WORKSPACE}/build_recommend.sh" || true
+          chmod +x "${{ github.workspace }}/build_recommend.sh" || true
         else
           echo "::warning::Cannot write build_recommend.sh to workspace (permission denied)"
         fi
@@ -643,7 +643,7 @@ jobs:
           touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
           chmod 0666 "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
           echo "Adjusting workspace ownership to ${IMG_UID}:${IMG_GID}"
-          sudo chown -R ${IMG_UID}:${IMG_GID} "${GITHUB_WORKSPACE}" || true
+          sudo chown -R ${IMG_UID}:${IMG_GID} "${{ github.workspace }}" || true
         else
           echo "Skipping chown/chmod on GitHub-hosted runner"
         fi
@@ -760,12 +760,12 @@ jobs:
         
         # Ensure the workspace is writable by the container user by initializing ownership inside a short container
         # Diagnostic: capture workspace ownership/permission snapshot before attempting chown
-        DIAG_FILE="${RUNNER_TEMP:-/tmp}/diagnostic_pre_chown.txt"
+        DIAG_FILE="${{ runner.temp }}/diagnostic_pre_chown.txt"
         if [ ${{ env.DEBUG }} ]; then
           echo "Writing pre-chown diagnostic to ${DIAG_FILE}"
           echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${DIAG_FILE}" || true
-          ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
-          ls -alR "${GITHUB_WORKSPACE}" | sed -n '1,500p' >> "${DIAG_FILE}" || true
+          ls -al "${{ github.workspace }}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
+          ls -alR "${{ github.workspace }}" | sed -n '1,500p' >> "${DIAG_FILE}" || true
           echo "END DIAGNOSTIC" >> "${DIAG_FILE}" || true
         else
           # create an empty diagnostic file for symmetry so later steps can reference it
