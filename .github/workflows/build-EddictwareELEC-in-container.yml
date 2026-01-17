@@ -173,12 +173,10 @@ jobs:
         # Alert if less than 5GB free
         if [ "$AVAIL" -lt $((5*1024*1024)) ]; then
           echo "::warning::Low disk space: only $((AVAIL/1024/1024)) GB left. Attempting cleanup."
-          if command -v docker >/dev/null 2>&1; then
-            echo "Cleaning up Docker..."
-            docker system prune -af || true
-          fi
-          echo "Cleaning up /tmp (if permitted)..."
-          if [ -w /tmp ]; then rm -rf /tmp/* || true; fi
+          echo "Cleaning up Docker..."
+          docker system prune -af || true
+          echo "Cleaning up /tmp..."
+          rm -rf /tmp/* || true
           echo "Cleaning up old build artifacts..."
           find . -type f -name '*.o' -delete || true
           find . -type f -name '*.log' -size +100M -delete || true
@@ -270,20 +268,17 @@ jobs:
         IMG_UID="${{ needs.init.outputs.img_uid }}"
         IMG_GID="${{ needs.init.outputs.img_gid }}"
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-        # Align host cache ownership to it
-        # chown critical cache dirs/files to the image UID/GID so container user can write
-        sudo chown -R $IMG_UID:$IMG_GID .ccache "$BUILD_DIR" .apt-cache || true
-        sudo chown -R $IMG_UID:$IMG_GID "$BUILD_DIR/.stamps" || true
-        sudo chown $IMG_UID:$IMG_GID "$BUILD_DIR/.cache_package_global" || true
-        # ensure per-build ccache is owned by image uid too
-        sudo chown -R $IMG_UID:$IMG_GID "$BUILD_DIR/.ccache" 2>/dev/null || true
-        # relax permissions as a fallback so builds don't fail due to strict host umasks
-        chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache || true
-        chmod 0666 "$BUILD_DIR/.cache_package_local" || true
-        mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives
-        # ensure stamps dir exists so docker won't auto-create it as root when bind-mounting
-        mkdir -p "$BUILD_DIR/.stamps"
-        # ensure the global cache is a file (scripts expect a file, not a directory)
+        if [ "${{ inputs.runner || 'self-hosted' }}" != "github" ]; then
+          sudo chown -R $IMG_UID:$IMG_GID .ccache "$BUILD_DIR" .apt-cache || true
+          sudo chown -R $IMG_UID:$IMG_GID "$BUILD_DIR/.stamps" || true
+          sudo chown $IMG_UID:$IMG_GID "$BUILD_DIR/.cache_package_global" || true
+          sudo chown -R $IMG_UID:$IMG_GID "$BUILD_DIR/.ccache" 2>/dev/null || true
+          chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache || true
+          chmod 0666 "$BUILD_DIR/.cache_package_local" || true
+        else
+          echo "Skipping chown/chmod on GitHub-hosted runner"
+        fi
+        mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives "$BUILD_DIR/.stamps"
         if [ ! -e "$BUILD_DIR/.cache_package_global" ]; then
           touch "$BUILD_DIR/.cache_package_global"
         fi
@@ -318,8 +313,12 @@ jobs:
     - name: Ensure workspace and build dir permissions (pre-toolchain)
       run: |
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
-        sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
+        if [ "${{ inputs.runner || 'self-hosted' }}" != "github" ]; then
+          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
+          sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
+        else
+          echo "Skipping chown/chmod on GitHub-hosted runner"
+        fi
 
     - name: Host diagnostics
       id: host-diagnostics
@@ -327,25 +326,21 @@ jobs:
       continue-on-error: true
       run: |
         set -euo pipefail
-        DIAG_DIR="${GITHUB_WORKSPACE}/ci-diagnostics"
-        if [ -w "${GITHUB_WORKSPACE}" ]; then
-          mkdir -p "$DIAG_DIR"
-          echo "HOST DIAGNOSTIC: $(date -u)" > "$DIAG_DIR/host.txt" || true
-          uname -a >> "$DIAG_DIR/host.txt" 2>&1 || true
-          echo "--- docker --version ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
-          docker --version >> "$DIAG_DIR/host.txt" 2>&1 || echo "docker: not found" >> "$DIAG_DIR/host.txt" || true
-          echo "--- g++ ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
-          if command -v g++ >/dev/null 2>&1; then g++ --version >> "$DIAG_DIR/host.txt" 2>&1; else echo "g++: not found on host" >> "$DIAG_DIR/host.txt"; fi
-          echo "--- libgcc_s on host ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
-          ls -l /usr/lib*/libgcc_s* >> "$DIAG_DIR/host.txt" 2>&1 || true
-          echo "--- perl/makeinfo presence ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
-          command -v perl >> "$DIAG_DIR/host.txt" 2>&1 || echo "perl: not found" >> "$DIAG_DIR/host.txt"
-          command -v makeinfo >> "$DIAG_DIR/host.txt" 2>&1 || echo "makeinfo: not found" >> "$DIAG_DIR/host.txt"
-          echo "--- workspace top files ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
-          ls -al "$PWD" | sed -n '1,200p' >> "$DIAG_DIR/host.txt" 2>&1 || true
-        else
-          echo "::warning::Cannot write diagnostics to workspace (permission denied)"
-        fi
+        DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
+        mkdir -p "$DIAG_DIR"
+        echo "HOST DIAGNOSTIC: $(date -u)" > "$DIAG_DIR/host.txt" || true
+        uname -a >> "$DIAG_DIR/host.txt" 2>&1 || true
+        echo "--- docker --version ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        docker --version >> "$DIAG_DIR/host.txt" 2>&1 || echo "docker: not found" >> "$DIAG_DIR/host.txt" || true
+        echo "--- g++ ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        if command -v g++ >/dev/null 2>&1; then g++ --version >> "$DIAG_DIR/host.txt" 2>&1; else echo "g++: not found on host" >> "$DIAG_DIR/host.txt"; fi
+        echo "--- libgcc_s on host ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        ls -l /usr/lib*/libgcc_s* >> "$DIAG_DIR/host.txt" 2>&1 || true
+        echo "--- perl/makeinfo presence ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        command -v perl >> "$DIAG_DIR/host.txt" 2>&1 || echo "perl: not found" >> "$DIAG_DIR/host.txt"
+        command -v makeinfo >> "$DIAG_DIR/host.txt" 2>&1 || echo "makeinfo: not found" >> "$DIAG_DIR/host.txt"
+        echo "--- workspace top files ---" >> "$DIAG_DIR/host.txt" 2>&1 || true
+        ls -al "$PWD" | sed -n '1,200p' >> "$DIAG_DIR/host.txt" 2>&1 || true
 
     - name: In-container diagnostics
       id: in-container-diagnostics
@@ -412,110 +407,58 @@ jobs:
         else
           MEMORY_ARG=""
         fi
-        OUTFILE="${GITHUB_WORKSPACE}/container_params.sh"
-        if [ -w "${GITHUB_WORKSPACE}" ]; then
-          echo "#!/bin/bash" > "$OUTFILE"
-          echo "# Generated by prepare-container-params" >> "$OUTFILE"
-          echo "MEMORY_ARG='${MEMORY_ARG}'" >> "$OUTFILE"
-          chmod +x "$OUTFILE" || true
-          [ "${{ env.DEBUG }}" = "true" ] && echo "[container_params.sh written]: $OUTFILE"
-        else
-          echo "::warning::Cannot write container_params.sh to workspace (permission denied)"
-        fi
+        # Write a small shell fragment into the workspace that can be sourced on the host
+        # to provide docker run flags (MEMORY_ARG) and other host-side params if needed.
+        OUTFILE="${{ github.workspace }}/container_params.sh"
+        # Write concrete value (expand MEMORY_ARG here) so the host can source it
+        echo "#!/bin/bash" > "$OUTFILE"
+        echo "# Generated by prepare-container-params" >> "$OUTFILE"
+        echo "MEMORY_ARG='${MEMORY_ARG}'" >> "$OUTFILE"
+        chmod +x "$OUTFILE" || true
+        [ "${{ env.DEBUG }}" = "true" ] && echo "[container_params.sh written]: $OUTFILE"
 
-    - name: Create build_recommend script
-      id: create-build-recommend
+    - name: Write build_recommend.sh
       run: |
-        # create a small script in the workspace to compute a safe -j inside the container
-        if [ "${{ env.DEBUG }}" = "true" ]; then
-          cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
-        #!/bin/bash
-        set -euo pipefail
-        echo "=== MAKE-RELATED ENV ==="
-        env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true
-        echo "=== CONTAINER ID/UID/GID ==="
-        id || true
-        echo "=== /build ownership (top-level) ==="
-        ls -ld /build || true
-        echo "=== cache files ownership/perm ==="
-        stat -c '%U:%G %a %n' /build/.ccache /build/build.*-13.0-devel/.cache_package_global /build/build.*-13.0-devel/.cache_package_local /build/build.*-13.0-devel/.ccache 2>/dev/null || true
-        echo "=== THREAD_CONTROL / THREADCOUNT env ==="
-        env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT' || true
-        echo "=== running pkgbuild / pkgbuilder processes ==="
-        ps -ef | egrep 'pkgbuild|pkgbuilder.py' || true
-        echo "=== CURRENT make PROCESSES ==="
-        ps -ef | grep "[m]ake" || true
-        NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
-        PER_JOB_MB=${PER_JOB_MB:-1200}
-        RESERVE_MB=${RESERVE_MB:-4096}
-        mem_bytes=0
-        if [ -f /sys/fs/cgroup/memory.max ]; then
-          memmax=$(cat /sys/fs/cgroup/memory.max)
-          if [ "$memmax" != "max" ]; then
-            mem_bytes=$memmax
-          fi
-        fi
-        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-          if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
-            memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-            if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
-              mem_bytes=$memlim
+        if [ -w "${GITHUB_WORKSPACE}" ]; then
+          cat > "${GITHUB_WORKSPACE}/build_recommend.sh" <<'EOF'
+          #!/bin/bash
+          set -euo pipefail
+          NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
+          PER_JOB_MB=${PER_JOB_MB:-1200}
+          RESERVE_MB=${RESERVE_MB:-4096}
+          mem_bytes=0
+          if [ -f /sys/fs/cgroup/memory.max ]; then
+            memmax=$(cat /sys/fs/cgroup/memory.max)
+            if [ "$memmax" != "max" ]; then
+              mem_bytes=$memmax
             fi
           fi
-        fi
-        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-          mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-          mem_bytes=$((mem_kb*1024))
-        fi
-        TOTAL_MB=$((mem_bytes/1024/1024))
-        USABLE_MB=$((TOTAL_MB-RESERVE_MB))
-        if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
-        MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
-        if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
-        CANDIDATE_J=$((NB_CORES+2))
-        if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
-        if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
-        echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
-        EOF
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+              if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
+                mem_bytes=$memlim
+              fi
+            fi
+          fi
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+            mem_bytes=$((mem_kb*1024))
+          fi
+          TOTAL_MB=$((mem_bytes/1024/1024))
+          USABLE_MB=$((TOTAL_MB-RESERVE_MB))
+          if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
+          MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
+          if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
+          CANDIDATE_J=$((NB_CORES+2))
+          if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
+          if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
+          echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
+          EOF
+          chmod +x "${GITHUB_WORKSPACE}/build_recommend.sh" || true
         else
-          # Lean non-diagnostic build script for normal runs
-          cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
-        #!/bin/bash
-        set -euo pipefail
-        NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
-        PER_JOB_MB=${PER_JOB_MB:-1200}
-        RESERVE_MB=${RESERVE_MB:-4096}
-        mem_bytes=0
-        if [ -f /sys/fs/cgroup/memory.max ]; then
-          memmax=$(cat /sys/fs/cgroup/memory.max)
-          if [ "$memmax" != "max" ]; then
-            mem_bytes=$memmax
-          fi
+          echo "::warning::Cannot write build_recommend.sh to workspace (permission denied)"
         fi
-        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-          if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
-            memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-            if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
-              mem_bytes=$memlim
-            fi
-          fi
-        fi
-        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-          mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-          mem_bytes=$((mem_kb*1024))
-        fi
-        TOTAL_MB=$((mem_bytes/1024/1024))
-        USABLE_MB=$((TOTAL_MB-RESERVE_MB))
-        if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
-        MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
-        if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
-        CANDIDATE_J=$((NB_CORES+2))
-        if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
-        if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
-        EOF
-        fi
-        
-        chmod +x "${{ github.workspace }}/build_recommend.sh" || true
 
     - name: Populate prebuilt toolchain
       id: populate-toolchain
@@ -641,29 +584,22 @@ jobs:
         BUILD_DIR: "build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
         CACHE_DIRS: ".ccache $BUILD_DIR .apt-cache $BUILD_DIR/.stamps"
       run: |
-        # Determine UID/GID dynamically
         IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
         IMG_UID=$(docker run --rm --entrypoint id "$IMAGE" -u 2>/dev/null || echo "1001")
         IMG_GID=$(docker run --rm --entrypoint id "$IMAGE" -g 2>/dev/null || echo "$IMG_UID")
-
         echo "Using UID:GID = ${IMG_UID}:${IMG_GID}"
-
-        # Adjust ownership and permissions
-        for dir in $CACHE_DIRS; do
-          sudo chown -R ${IMG_UID}:${IMG_GID} "$dir" || true
-          chmod -R u+rwX,g+rwX,o+rwX "$dir" || true
-        done
-
-        # Ensure specific files exist
-        touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
-        chmod 0666 "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
-
-        # Handle workspace ownership for self-hosted runners
         if [ "${{ inputs.runner || 'self-hosted' }}" != "github" ]; then
+          for dir in $CACHE_DIRS; do
+            sudo chown -R ${IMG_UID}:${IMG_GID} "$dir" || true
+            chmod -R u+rwX,g+rwX,o+rwX "$dir" || true
+          done
+          touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
+          chmod 0666 "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
           echo "Adjusting workspace ownership to ${IMG_UID}:${IMG_GID}"
           sudo chown -R ${IMG_UID}:${IMG_GID} "${GITHUB_WORKSPACE}" || true
+        else
+          echo "Skipping chown/chmod on GitHub-hosted runner"
         fi
-
     - name: Build ${{ env.EE_Distro }} image
       id: build-image
       env:
