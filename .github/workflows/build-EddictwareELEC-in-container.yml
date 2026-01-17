@@ -164,6 +164,33 @@ jobs:
         ref: 'master'
         clean: false
 
+    - name: Check and clean disk space before build
+      id: disk-space-check
+      run: |
+        echo "Disk space before build:"
+        df -h
+        AVAIL=$(df --output=avail -k . | tail -1)
+        # Alert if less than 5GB free
+        if [ "$AVAIL" -lt $((5*1024*1024)) ]; then
+          echo "::warning::Low disk space: only $((AVAIL/1024/1024)) GB left. Attempting cleanup."
+          echo "Cleaning up Docker..."
+          docker system prune -af || true
+          echo "Cleaning up /tmp..."
+          rm -rf /tmp/* || true
+          echo "Cleaning up old build artifacts..."
+          find . -type f -name '*.o' -delete || true
+          find . -type f -name '*.log' -size +100M -delete || true
+          echo "Disk space after cleanup:"
+          df -h
+          AVAIL2=$(df --output=avail -k . | tail -1)
+          if [ "$AVAIL2" -lt $((2*1024*1024)) ]; then
+            echo "::error::Disk space critically low (<2GB). Failing build."
+            exit 1
+          fi
+        fi
+        echo "Top 20 largest directories:"
+        du -h --max-depth=2 | sort -hr | head -20
+
     - name: Check for existing build cache (self-hosted only)
       id: check-build-cache
       if: inputs.runner == 'self-hosted'
