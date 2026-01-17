@@ -66,7 +66,7 @@ env:
   EE_image_filename: ""
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
   EE_Registry: ghcr.io
-  CACHE_VERSION: v2
+  CACHE_VERSION: v3
   RUNNER_TYPE:
   HOST_UID:
   HOST_GID:
@@ -105,11 +105,6 @@ jobs:
         echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
         echo "DEBUG=${{ env.DEBUG }}"
 
-    - name: Get docker guid
-      id: get-docker-guid
-      run: |
-        echo "docker_guid=$(id -u docker 2>/dev/null || echo 1000)" >> $GITHUB_OUTPUT
-
     - name: Compose image tag
       id: compose-image-tag
       run: |
@@ -126,6 +121,7 @@ jobs:
     - name: Determine Runner and User IDs
       id: determine-ids
       run: |
+        # echo "docker_guid=$(id -u docker 2>/dev/null || echo 1000)" >> $GITHUB_OUTPUT
         RUNNER_TYPE="${{ inputs.runner || 'self-hosted' }}"
         HOST_UID=$(id -u)
         HOST_GID=$(id -g)
@@ -143,6 +139,17 @@ jobs:
         # Add outputs for cross-job usage: 
         echo "img_uid=$IMG_UID" >> $GITHUB_OUTPUT
         echo "img_gid=$IMG_GID" >> $GITHUB_OUTPUT
+
+    - name: Output Runner and User IDs
+      id: output-ids
+      run: |
+        echo "RUNNER_TYPE: $RUNNER_TYPE"
+        echo "HOST_UID: $HOST_UID"
+        echo "HOST_GID: $HOST_GID"
+        echo "DOCKER_UID: $DOCKER_UID"
+        echo "DOCKER_GID: $DOCKER_GID"
+        echo "IMG_UID: $IMG_UID"
+        echo "IMG_GID: $IMG_GID"
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
