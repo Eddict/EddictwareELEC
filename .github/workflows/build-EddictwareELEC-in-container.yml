@@ -401,7 +401,7 @@ jobs:
       id: prepare-container-params
       run: |
         # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
-        if [ "${RUNNER_TYPE}" != "github" ]; then
+        if [ "${RUNNER_TYPE:-}" != "github" ]; then
           CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}"
           MEMORY_ARG="--memory=${CONTAINER_MEMORY}"
         else
