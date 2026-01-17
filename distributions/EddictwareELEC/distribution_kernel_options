@@ -1,0 +1,2 @@
+# EddictwareELEC
+CONFIG_LEDS_TRIGGER_ACTPWR=n

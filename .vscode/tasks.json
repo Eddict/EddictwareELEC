@@ -9,6 +9,15 @@
       "runOptions": {
           "runOn": "folderOpen"
       }
+    },
+    {
+      "type": "shell",
+      "problemMatcher": [],
+      "label": "merge EddictwareELEC kernel_options and distribution_kernel_options",
+      "linux": { "command": ". ${workspaceFolder}/.vscode/kernel_options.sh" },
+      "runOptions": {
+          "runOn": "folderOpen"
+      }
     }
   ]
 }
