@@ -367,7 +367,13 @@ jobs:
         echo "Running in-container diagnostics inside image: $IMAGE"
         # Pull image best-effort
         docker image pull "$IMAGE" || true
-        docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc '
+        # Run as root if on GitHub-hosted runner, else default user
+        if [ "${{ inputs.runner || 'self-hosted' }}" = "github" ]; then
+          USER_ARG="--user 0:0"
+        else
+          USER_ARG=""
+        fi
+        docker run --rm $USER_ARG -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc '
           set -euo pipefail
           DIAG_DIR=/build/ci-diagnostics
           mkdir -p "$DIAG_DIR"
@@ -539,7 +545,12 @@ jobs:
         IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
         echo "Running post-prebuild in-container diagnostics inside image: $IMAGE"
         docker image pull "$IMAGE" || true
-        docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc '
+        if [ "${{ inputs.runner || 'self-hosted' }}" = "github" ]; then
+          USER_ARG="--user 0:0"
+        else
+          USER_ARG=""
+        fi
+        docker run --rm $USER_ARG -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc '
           set -euo pipefail
           DIAG_DIR=/build/ci-diagnostics
           mkdir -p "$DIAG_DIR"
