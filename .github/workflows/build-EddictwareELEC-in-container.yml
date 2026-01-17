@@ -238,14 +238,16 @@ jobs:
 
     - name: Prepare cache dirs for container
       run: |
+        IMG_UID="${{ needs.init.outputs.img_uid }}"
+        IMG_GID="${{ needs.init.outputs.img_gid }}"
         BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
         # Align host cache ownership to it
         # chown critical cache dirs/files to the image UID/GID so container user can write
-        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache || true
-        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.stamps" || true
-        sudo chown ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.cache_package_global" || true
+        sudo chown -R $IMG_UID:$IMG_GID .ccache "$BUILD_DIR" .apt-cache || true
+        sudo chown -R $IMG_UID:$IMG_GID "$BUILD_DIR/.stamps" || true
+        sudo chown $IMG_UID:$IMG_GID "$BUILD_DIR/.cache_package_global" || true
         # ensure per-build ccache is owned by image uid too
-        sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.ccache" 2>/dev/null || true
+        sudo chown -R $IMG_UID:$IMG_GID "$BUILD_DIR/.ccache" 2>/dev/null || true
         # relax permissions as a fallback so builds don't fail due to strict host umasks
         chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache || true
         chmod 0666 "$BUILD_DIR/.cache_package_local" || true
@@ -256,15 +258,15 @@ jobs:
         if [ ! -e "$BUILD_DIR/.cache_package_global" ]; then
           touch "$BUILD_DIR/.cache_package_global"
         fi
-        echo "Preparing cache dirs for UID:GID ${{ env.DOCKER_UID }}:${{ env.DOCKER_GID }}"
+        echo "Preparing cache dirs for UID:GID ${IMG_UID}:${IMG_GID}"
         # Prefer aligning host ownership to the image UID/GID (IMG_UID/IMG_GID),
         # if available — this prevents ownership churn when image numeric UID
         # differs from the host's docker user.
         if [ -n "${IMG_UID:-}" ]; then
           echo "Aligning host cache ownership to image UID:GID ${IMG_UID}:${IMG_GID}"
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache || true
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.stamps" || true
-          sudo chown ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.cache_package_global" || true
+          sudo chown -R ${IMG_UID}:${IMG_GID} .ccache "$BUILD_DIR" .apt-cache || true
+          sudo chown -R ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.stamps" || true
+          sudo chown ${IMG_UID}:${IMG_GID} "$BUILD_DIR/.cache_package_global" || true
         else
           echo "IMG_UID not set; skipping chown-to-image and leaving host ownership as-is"
         fi
@@ -279,8 +281,8 @@ jobs:
         sudo chmod 0666 "$BUILD_DIR/.cache_package_local" || true
         # On self-hosted runners make workspace ownership match container user for full parity
         if [ "${{ env.RUNNER_TYPE }}" != "github" ]; then
-          echo "Chowning workspace to ${{ env.DOCKER_UID }}:${{ env.DOCKER_GID }}"
-          sudo chown -R ${{ env.DOCKER_UID }}:${{ env.DOCKER_GID }} "${GITHUB_WORKSPACE}" || true
+          echo "Chowning workspace to ${IMG_UID}:${IMG_GID}"
+          sudo chown -R ${IMG_UID}:${IMG_GID} "${GITHUB_WORKSPACE}" || true
         fi
 
     # Ensure permissions are correct before toolchain population
