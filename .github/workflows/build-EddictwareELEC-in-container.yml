@@ -246,9 +246,9 @@ jobs:
       uses: actions/cache@v4
       with:
         path: .apt-cache/archives
-        key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
+        key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env.CACHE_VERSION }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
         restore-keys: |
-          ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}-
+          ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env.CACHE_VERSION }}-
 
     - name: Download persisted caches (artifacts) as fallback
       id: download-ccache-artifact
@@ -279,12 +279,12 @@ jobs:
         name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ inputs.cache_version || env. CACHE_VERSION }}
         path: .apt-cache/archives
 
-      - name: Initialize cache directories if missing
-        run: |
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          mkdir -p . ccache "$BUILD_DIR/.ccache" "$BUILD_DIR/.stamps" . apt-cache/archives sources
-          touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local"
-          echo "Cache directories initialized (may be empty on first run)"
+    - name: Initialize cache directories if missing
+      run: |
+        BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+        mkdir -p .ccache "$BUILD_DIR/.ccache" "$BUILD_DIR/.stamps" .apt-cache/archives sources
+        touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local"
+        echo "Cache directories initialized (may be empty on first run)"
 
     - name: Prepare cache dirs for container
       run: |
