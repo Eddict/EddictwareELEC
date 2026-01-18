@@ -450,9 +450,6 @@ jobs:
       id: prepare-container-params
       run: |
         pick_output_dir() {
-          echo "Determining output directory for container_params.sh"
-          echo "github.workspace: ${{ github.workspace }}"
-          echo "runner.temp: ${{ runner.temp }}"
           if [ -w "${{ github.workspace }}" ]; then
             echo "${{ github.workspace }}"
           else
@@ -466,6 +463,9 @@ jobs:
         else
           MEMORY_ARG=""
         fi
+        echo "Determining output directory for container_params.sh"
+        echo "github.workspace: ${{ github.workspace }}"
+        echo "runner.temp: ${{ runner.temp }}"
         OUTDIR="$(pick_output_dir)"
         OUTFILE="$OUTDIR/container_params.sh"
         echo "Writing container_params.sh to: $OUTFILE"
