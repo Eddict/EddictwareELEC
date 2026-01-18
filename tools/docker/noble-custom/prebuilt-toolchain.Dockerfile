@@ -20,39 +20,54 @@ RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     mkdir -p /tmp/prebuild; \
     export BUILD_DIR=/tmp/prebuild; \
-    # Run host-toolchain builds in parallel
-    ( \
-        # run a minimal host-toolchain bootstrap; change package list as appropriate
-        # normal
-        # /src/scripts/build pkg-config:host || true; \
-        # quiet, only errors shown in build log)
-        # /src/scripts/build pkg-config:host > /dev/null 2>&1 || true; \
-        # keep logs for debugging
-        # /src/scripts/build pkg-config:host > /tmp/prebuild/pkg-config-host.log 2>&1 || true; \
-        /src/scripts/build pkg-config:host > /dev/null 2>&1 & \
-        /src/scripts/build gettext:host > /dev/null 2>&1 & \
-        /src/scripts/build xxHash:host > /dev/null 2>&1 & \
-        /src/scripts/build cmake:host > /dev/null 2>&1 & \
-        /src/scripts/build toolchain:host > /tmp/prebuild/toolchain-host.log 2>&1 & \
-        /src/scripts/build linux:host > /dev/null 2>&1 & \
-        /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 & \
-        /src/scripts/build mesa:host > /dev/null 2>&1 & \
-        /src/scripts/build zstd:host > /dev/null 2>&1 & \
+      # Run host-toolchain builds in parallel, log errors separately
+      ( \
+        /src/scripts/build pkg-config:host > /tmp/prebuild/pkg-config-host.log 2> /tmp/prebuild/pkg-config-host.err & \
+        /src/scripts/build gettext:host > /tmp/prebuild/gettext-host.log 2> /tmp/prebuild/gettext-host.err & \
+        /src/scripts/build xxHash:host > /tmp/prebuild/xxHash-host.log 2> /tmp/prebuild/xxHash-host.err & \
+        /src/scripts/build cmake:host > /tmp/prebuild/cmake-host.log 2> /tmp/prebuild/cmake-host.err & \
+        /src/scripts/build toolchain:host > /tmp/prebuild/toolchain-host.log 2> /tmp/prebuild/toolchain-host.err & \
+        /src/scripts/build linux:host > /tmp/prebuild/linux-host.log 2> /tmp/prebuild/linux-host.err & \
+        /src/scripts/build rpi-eeprom:host > /tmp/prebuild/rpi-eeprom-host.log 2> /tmp/prebuild/rpi-eeprom-host.err & \
+        /src/scripts/build mesa:host > /tmp/prebuild/mesa-host.log 2> /tmp/prebuild/mesa-host.err & \
+        /src/scripts/build zstd:host > /tmp/prebuild/zstd-host.log 2> /tmp/prebuild/zstd-host.err & \
         wait \
-    ); \
+      ); \
+    # Show only errors from host builds
+    echo "--- ERRORS FROM HOST BUILDS ---"; \
+    for f in /tmp/prebuild/*.err; do \
+    echo "== $f =="; \
+    cat "$f"; \
+    done; \
+    # Show regular output from host builds
+    echo "--- OUTPUT FROM HOST BUILDS ---"; \
+    for f in /tmp/prebuild/*.log; do \
+    echo "== $f =="; \
+    cat "$f"; \
+    done; \
     # Diagnostic: show contents of /tmp/prebuild and /tmp/prebuild/toolchain after build
     echo "--- DIAGNOSTIC: /tmp/prebuild ---"; \
     ls -l /tmp/prebuild || true; \
     echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain ---"; \
     ls -l /tmp/prebuild/toolchain || true; \
-    echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain-host.log ---"; \
-    cat /tmp/prebuild/toolchain-host.log || true; \
-    # Copy the first found toolchain dir as /opt/prebuilt-toolchain/toolchain (flat, predictable path)
+    # Diagnostic: Show regular output from host build logs
+    # for f in /tmp/prebuild/*.log; do \
+    #   echo "--- DIAGNOSTIC: $f ---"; \
+    #   cat "$f" || true; \
+    # done; \
+    # Diagnostic: Show only errors from host build logs
+    for f in /tmp/prebuild/*.err; do \
+      echo "--- DIAGNOSTIC: $f ---"; \
+      cat "$f" || true; \
+    done; \
+    # Copy all host build output directories into /opt/prebuilt-toolchain
     sudo mkdir -p /opt/prebuilt-toolchain; \
-    tcdir=$(find /tmp/prebuild -type d -name 'toolchain' | head -n1); \
-    if [ -n "$tcdir" ]; then \
-      sudo cp -a "$tcdir" /opt/prebuilt-toolchain/toolchain; \
-    fi; \
+    for d in pkg-config gettext xxHash cmake toolchain linux rpi-eeprom mesa zstd; do \
+      srcdir="/tmp/prebuild/$d"; \
+      if [ -d "$srcdir" ]; then \
+        sudo cp -a "$srcdir" "/opt/prebuilt-toolchain/$d"; \
+      fi; \
+    done; \
     # Diagnostic: confirm /opt/prebuilt-toolchain presence and permissions
     echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; \
     ls -l /opt/prebuilt-toolchain || true; \
