@@ -486,40 +486,40 @@ jobs:
       run: |
         if [ -w "${{ github.workspace }}" ]; then
           cat <<'EOF' > "${{ github.workspace }}/build_recommend.sh"
-          #!/bin/bash
-          set -euo pipefail
-          NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
-          PER_JOB_MB=${PER_JOB_MB:-1200}
-          RESERVE_MB=${RESERVE_MB:-4096}
-          mem_bytes=0
-          if [ -f /sys/fs/cgroup/memory.max ]; then
-            memmax=$(cat /sys/fs/cgroup/memory.max)
-            if [ "$memmax" != "max" ]; then
-              mem_bytes=$memmax
+        #!/bin/bash
+        set -euo pipefail
+        NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
+        PER_JOB_MB=${PER_JOB_MB:-1200}
+        RESERVE_MB=${RESERVE_MB:-4096}
+        mem_bytes=0
+        if [ -f /sys/fs/cgroup/memory.max ]; then
+          memmax=$(cat /sys/fs/cgroup/memory.max)
+          if [ "$memmax" != "max" ]; then
+            mem_bytes=$memmax
+          fi
+        fi
+        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+          if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+            memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+            if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
+              mem_bytes=$memlim
             fi
           fi
-          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-            if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
-              memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-              if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
-                mem_bytes=$memlim
-              fi
-            fi
-          fi
-          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-            mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-            mem_bytes=$((mem_kb*1024))
-          fi
-          TOTAL_MB=$((mem_bytes/1024/1024))
-          USABLE_MB=$((TOTAL_MB-RESERVE_MB))
-          if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
-          MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
-          if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
-          CANDIDATE_J=$((NB_CORES+2))
-          if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
-          if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
-          echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
-          EOF
+        fi
+        if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+          mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+          mem_bytes=$((mem_kb*1024))
+        fi
+        TOTAL_MB=$((mem_bytes/1024/1024))
+        USABLE_MB=$((TOTAL_MB-RESERVE_MB))
+        if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
+        MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
+        if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
+        CANDIDATE_J=$((NB_CORES+2))
+        if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
+        if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
+        echo "Using make -j${RECOMMENDED_J} -l${NB_CORES}"
+        EOF
           chmod +x "${{ github.workspace }}/build_recommend.sh" || true
         else
           echo "::warning::Cannot write build_recommend.sh to workspace (permission denied)"
