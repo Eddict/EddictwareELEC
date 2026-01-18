@@ -39,7 +39,7 @@ jobs:
 
       - name: Build EddictwareELEC image
         run: |
-          DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make image
+          DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image
 
       - name: List built images
         run: |
