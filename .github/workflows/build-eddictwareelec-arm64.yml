@@ -28,7 +28,7 @@ jobs:
             libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
             xsltproc rsync file \
             xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
-            libxml-parser-perl patchutils lzop nproc
+            libxml-parser-perl patchutils lzop
 
       - name: Show disk space and environment
         run: |
