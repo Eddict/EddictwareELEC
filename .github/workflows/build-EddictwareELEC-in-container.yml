@@ -450,6 +450,9 @@ jobs:
       id: prepare-container-params
       run: |
         pick_output_dir() {
+          echo "Determining output directory for container_params.sh"
+          echo "github.workspace: ${{ github.workspace }}"
+          echo "runner.temp: ${{ runner.temp }}"
           if [ -w "${{ github.workspace }}" ]; then
             echo "${{ github.workspace }}"
           else
@@ -457,7 +460,7 @@ jobs:
           fi
         }
         # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
-        if [ "${RUNNER_TYPE:-}" != "github" ]; then
+        if [ "${{ env.RUNNER_TYPE }}" != "github" ]; then
           CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}"
           MEMORY_ARG="--memory=${CONTAINER_MEMORY}"
         else
