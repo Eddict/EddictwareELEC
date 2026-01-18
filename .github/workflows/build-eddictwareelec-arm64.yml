@@ -1,0 +1,48 @@
+name: Build EddictwareELEC on ubuntu-24.04-arm
+
+description: |
+  CI workflow to build EddictwareELEC for RPi4 (aarch64) using the official build command, on a self-hosted arm64 runner.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout EddictwareELEC
+        uses: actions/checkout@v4
+        with:
+          repository: Eddict/EddictwareELEC
+          ref: master
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext xsltproc rsync file
+
+      - name: Show disk space and environment
+        run: |
+          df -h
+          uname -a
+          lscpu
+          free -h
+
+      - name: Build EddictwareELEC image
+        run: |
+          DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make image
+
+      - name: List built images
+        run: |
+          ls -lh ./target/*.img* || true
+
+      - name: Upload built image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EddictwareELEC-RPi4-aarch64-image
+          path: ./target/*.img*
+          if-no-files-found: warn
