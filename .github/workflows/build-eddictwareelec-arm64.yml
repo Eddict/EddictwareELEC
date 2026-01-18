@@ -15,6 +15,7 @@ on:
         options:
           - ubuntu-24.04
           - ubuntu-24.04-arm
+          - self-hosted
   push:
     branches: [ master ]
   pull_request:
