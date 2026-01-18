@@ -39,7 +39,8 @@ jobs:
 
       - name: Build EddictwareELEC image
         run: |
-          DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image
+          set -o pipefail
+          (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
 
       - name: List built images
         run: |
@@ -50,4 +51,11 @@ jobs:
         with:
           name: EddictwareELEC-RPi4-aarch64-image
           path: ./target/*.img*
+          if-no-files-found: warn
+
+      - name: Upload full build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build.log
+          path: build.log
           if-no-files-found: warn
