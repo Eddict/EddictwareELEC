@@ -1,19 +1,124 @@
-name: Build EddictwareELEC on ubuntu-24.04-arm
+
+name: Build EddictwareELEC (aarch64)
 
 description: |
-  CI workflow to build EddictwareELEC for RPi4 (aarch64) using the official build command, on a self-hosted arm64 runner.
+  CI workflow to build EddictwareELEC for RPi4 (aarch64) using the official build command.
 
 on:
   workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner to use (ubuntu-24.04 or ubuntu-24.04-arm)'
+        required: false
+        default: ubuntu-24.04
+        type: choice
+        options:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
 jobs:
-  build:
-    runs-on: ubuntu-24.04-arm
+  build-manual:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ inputs.runner }}
     steps:
+      - name: Checkout EddictwareELEC
+        uses: actions/checkout@v4
+        with:
+          repository: Eddict/EddictwareELEC
+          ref: master
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
+            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
+            xsltproc rsync file \
+            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
+            libxml-parser-perl patchutils lzop
+
+      - name: Show disk space and environment
+        run: |
+          df -h
+          uname -a
+          lscpu
+          free -h
+
+      - name: Build EddictwareELEC image
+        run: |
+          set -o pipefail
+          (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
+
+      - name: List built images
+        run: |
+          ls -lh ./target/*.img* || true
+
+      - name: Upload built image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EddictwareELEC-RPi4-aarch64-image
+          path: ./target/*.img*
+          if-no-files-found: warn
+
+      - name: Upload full build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build.log
+          path: build.log
+          if-no-files-found: warn
+
+  build-auto:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout EddictwareELEC
+        uses: actions/checkout@v4
+        with:
+          repository: Eddict/EddictwareELEC
+          ref: master
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
+            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
+            xsltproc rsync file \
+            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
+            libxml-parser-perl patchutils lzop
+
+      - name: Show disk space and environment
+        run: |
+          df -h
+          uname -a
+          lscpu
+          free -h
+
+      - name: Build EddictwareELEC image
+        run: |
+          set -o pipefail
+          (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
+
+      - name: List built images
+        run: |
+          ls -lh ./target/*.img* || true
+
+      - name: Upload built image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EddictwareELEC-RPi4-aarch64-image
+          path: ./target/*.img*
+          if-no-files-found: warn
+
+      - name: Upload full build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build.log
+          path: build.log
+          if-no-files-found: warn
       - name: Checkout EddictwareELEC
         uses: actions/checkout@v4
         with:
