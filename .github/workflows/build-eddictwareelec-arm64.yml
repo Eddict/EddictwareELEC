@@ -27,13 +27,21 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ${{ inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') || inputs.runner }}
     steps:
-      - name: Checkout EddictwareELEC
+      - id: checkout
+        name: Checkout EddictwareELEC
         uses: actions/checkout@v4
         with:
           repository: Eddict/EddictwareELEC
           ref: master
 
-      - name: Install build dependencies
+      - id: install_sudo
+        name: Install sudo
+        run: |
+          apt-get update
+          apt-get install -y sudo
+
+      - id: install_deps
+        name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -44,14 +52,16 @@ jobs:
             libxml-parser-perl patchutils lzop \
             default-jre zip
 
-      - name: Show disk space and environment
+      - id: show_env
+        name: Show disk space and environment
         run: |
           df -h
           uname -a
           lscpu
           free -h
 
-      - name: Build EddictwareELEC image
+      - id: build_image
+        name: Build EddictwareELEC image
         run: |
           set -o pipefail
           (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
@@ -70,18 +80,21 @@ jobs:
             (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
           fi
 
-      - name: List built images
+      - id: list_images
+        name: List built images
         run: |
           ls -lh ./target/*.img* || true
 
-      - name: Upload built image artifact
+      - id: upload_image
+        name: Upload built image artifact
         uses: actions/upload-artifact@v4
         with:
           name: EddictwareELEC-RPi4-aarch64-image
           path: ./target/*.img*
           if-no-files-found: warn
 
-      - name: Upload full build log
+      - id: upload_log
+        name: Upload full build log
         uses: actions/upload-artifact@v4
         with:
           name: build.log
@@ -92,13 +105,15 @@ jobs:
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout EddictwareELEC
+      - id: checkout
+        name: Checkout EddictwareELEC
         uses: actions/checkout@v4
         with:
           repository: Eddict/EddictwareELEC
           ref: master
 
-      - name: Install build dependencies
+      - id: install_deps
+        name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -108,30 +123,35 @@ jobs:
             xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
             libxml-parser-perl patchutils lzop
 
-      - name: Show disk space and environment
+      - id: show_env
+        name: Show disk space and environment
         run: |
           df -h
           uname -a
           lscpu
           free -h
 
-      - name: Build EddictwareELEC image
+      - id: build_image
+        name: Build EddictwareELEC image
         run: |
           set -o pipefail
           (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
 
-      - name: List built images
+      - id: list_images
+        name: List built images
         run: |
           ls -lh ./target/*.img* || true
 
-      - name: Upload built image artifact
+      - id: upload_image
+        name: Upload built image artifact
         uses: actions/upload-artifact@v4
         with:
           name: EddictwareELEC-RPi4-aarch64-image
           path: ./target/*.img*
           if-no-files-found: warn
 
-      - name: Upload full build log
+      - id: upload_log
+        name: Upload full build log
         uses: actions/upload-artifact@v4
         with:
           name: build.log
