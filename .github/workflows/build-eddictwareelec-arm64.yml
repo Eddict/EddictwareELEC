@@ -25,7 +25,7 @@ on:
 jobs:
   build-manual:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ${{ inputs.runner == 'self-hosted-sysbox' && '["self-hosted", "sysbox"]' || inputs.runner }}
+    runs-on: ${{ inputs.runner == 'self-hosted-sysbox' && '[self-hosted, sysbox]' || inputs.runner }}
     steps:
       - name: Checkout EddictwareELEC
         uses: actions/checkout@v4
