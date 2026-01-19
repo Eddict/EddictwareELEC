@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       runner:
-        description: 'Runner to use (ubuntu-24.04 or ubuntu-24.04-arm)'
+        description: 'Runner to use'
         required: false
         default: ubuntu-24.04
         type: choice
@@ -17,10 +17,11 @@ on:
           - ubuntu-24.04-arm
           - self-hosted
           - self-hosted-sysbox
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+
 jobs:
   build-manual:
     if: github.event_name == 'workflow_dispatch'
