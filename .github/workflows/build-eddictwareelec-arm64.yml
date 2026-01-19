@@ -16,6 +16,7 @@ on:
           - ubuntu-24.04
           - ubuntu-24.04-arm
           - self-hosted
+          - self-hosted-sysbox
   push:
     branches: [ master ]
   pull_request:
@@ -23,7 +24,7 @@ on:
 jobs:
   build-manual:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ inputs.runner == 'self-hosted-sysbox' && '["self-hosted", "sysbox"]' || inputs.runner }}
     steps:
       - name: Checkout EddictwareELEC
         uses: actions/checkout@v4
