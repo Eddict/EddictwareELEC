@@ -23,9 +23,9 @@ on:
   #   branches: [ master ]
 
 jobs:
-  build-manual:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ${{ inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') || inputs.runner }}
+
+  build:
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && (inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') || inputs.runner)) || 'ubuntu-24.04' }}
     steps:
       - id: checkout
         name: Checkout EddictwareELEC
@@ -33,28 +33,6 @@ jobs:
         with:
           repository: Eddict/EddictwareELEC
           ref: master
-
-      # - id: install_sudo
-      #   name: Install sudo
-      #   env:
-      #     DEBIAN_FRONTEND: noninteractive
-      #   run: |
-      #     apt-get update
-      #     apt-get install --yes -o Dpkg::Options::="--force-confnew" sudo
-
-      - id: install_deps
-        name: Install build dependencies
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          apt-get update
-          apt-get install -y \
-            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
-            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
-            xsltproc rsync file \
-            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
-            libxml-parser-perl patchutils lzop \
-            default-jre zip
 
       - id: show_env
         name: Show disk space and environment
@@ -99,108 +77,6 @@ jobs:
 
       - id: upload_log
         name: Upload full build log
-        uses: actions/upload-artifact@v4
-        with:
-          name: build.log
-          path: build.log
-          if-no-files-found: warn
-
-  build-auto:
-    if: github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-24.04
-    steps:
-      - id: checkout
-        name: Checkout EddictwareELEC
-        uses: actions/checkout@v4
-        with:
-          repository: Eddict/EddictwareELEC
-          ref: master
-
-      - id: install_deps
-        name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
-            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
-            xsltproc rsync file \
-            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
-            libxml-parser-perl patchutils lzop
-
-      - id: show_env
-        name: Show disk space and environment
-        run: |
-          df -h
-          uname -a
-          lscpu
-          free -h
-
-      - id: build_image
-        name: Build EddictwareELEC image
-        run: |
-          set -o pipefail
-          (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
-
-      - id: list_images
-        name: List built images
-        run: |
-          ls -lh ./target/*.img* || true
-
-      - id: upload_image
-        name: Upload built image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: EddictwareELEC-RPi4-aarch64-image
-          path: ./target/*.img*
-          if-no-files-found: warn
-
-      - id: upload_log
-        name: Upload full build log
-        uses: actions/upload-artifact@v4
-        with:
-          name: build.log
-          path: build.log
-          if-no-files-found: warn
-      - name: Checkout EddictwareELEC
-        uses: actions/checkout@v4
-        with:
-          repository: Eddict/EddictwareELEC
-          ref: master
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
-            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
-            xsltproc rsync file \
-            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
-            libxml-parser-perl patchutils lzop
-
-      - name: Show disk space and environment
-        run: |
-          df -h
-          uname -a
-          lscpu
-          free -h
-
-      - name: Build EddictwareELEC image
-        run: |
-          set -o pipefail
-          (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
-
-      - name: List built images
-        run: |
-          ls -lh ./target/*.img* || true
-
-      - name: Upload built image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: EddictwareELEC-RPi4-aarch64-image
-          path: ./target/*.img*
-          if-no-files-found: warn
-
-      - name: Upload full build log
         uses: actions/upload-artifact@v4
         with:
           name: build.log
