@@ -46,22 +46,23 @@ jobs:
         name: Build EddictwareELEC image
         run: |
           set -o pipefail
-          (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
           BUILDUSER="runner"
-          # BUILDUSER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          if [ "$(id -u)" = 0 ]; then
-            echo "Running as root, switching to $BUILDUSER for build."
-            if id "$BUILDUSER" >/dev/null 2>&1; then
-              echo "Ensuring $BUILDUSER owns the workspace..."
-              chown -R "$BUILDUSER" "$PWD"
-              sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log' || tail -n 1000 build.log
-            else
-              echo "User $BUILDUSER does not exist. Please create a non-root user for builds." >&2
-              exit 1
-            fi
-          else
-            (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
-          fi
+          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log' || tail -n 1000 build.log
+          # (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
+          # # BUILDUSER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          # if [ "$(id -u)" = 0 ]; then
+          #   echo "Running as root, switching to $BUILDUSER for build."
+          #   if id "$BUILDUSER" >/dev/null 2>&1; then
+          #     echo "Ensuring $BUILDUSER owns the workspace..."
+          #     chown -R "$BUILDUSER" "$PWD"
+          #     sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log' || tail -n 1000 build.log
+          #   else
+          #     echo "User $BUILDUSER does not exist. Please create a non-root user for builds." >&2
+          #     exit 1
+          #   fi
+          # else
+          #   (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
+          # fi
 
       - id: list_images
         name: List built images
