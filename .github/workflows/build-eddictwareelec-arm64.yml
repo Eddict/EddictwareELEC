@@ -47,7 +47,7 @@ jobs:
         run: |
           set -o pipefail
           BUILDUSER="runner"
-          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log' || tail -n 1000 build.log
+          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | sudo tee build.log' || tail -n 1000 build.log
           # (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
           # # BUILDUSER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           # if [ "$(id -u)" = 0 ]; then
@@ -55,7 +55,7 @@ jobs:
           #   if id "$BUILDUSER" >/dev/null 2>&1; then
           #     echo "Ensuring $BUILDUSER owns the workspace..."
           #     chown -R "$BUILDUSER" "$PWD"
-          #     sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log' || tail -n 1000 build.log
+          #     sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | sudo tee build.log' || tail -n 1000 build.log
           #   else
           #     echo "User $BUILDUSER does not exist. Please create a non-root user for builds." >&2
           #     exit 1
