@@ -34,6 +34,7 @@ jobs:
           repository: Eddict/EddictwareELEC
           ref: master
           path: ${{ github.workspace }}
+          clean: false
 
       # - id: show_env
       #   name: Show disk space and environment
@@ -60,27 +61,51 @@ jobs:
             echo "Not running as root ($(whoami)), no need to change ownership."
           fi
 
+      - id: calc_build_params
+        name: Calculate recommended make -j and -l parameters
+        run: |
+          set -euo pipefail
+          NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
+          PER_JOB_MB=${PER_JOB_MB:-1200}
+          RESERVE_MB=${RESERVE_MB:-4096}
+          mem_bytes=0
+          if [ -f /sys/fs/cgroup/memory.max ]; then
+            memmax=$(cat /sys/fs/cgroup/memory.max)
+            if [ "$memmax" != "max" ]; then
+              mem_bytes=$memmax
+            fi
+          fi
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+              if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
+                mem_bytes=$memlim
+              fi
+            fi
+          fi
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+            mem_bytes=$((mem_kb*1024))
+          fi
+          TOTAL_MB=$((mem_bytes/1024/1024))
+          USABLE_MB=$((TOTAL_MB-RESERVE_MB))
+          if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
+          MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
+          if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
+          CANDIDATE_J=$((NB_CORES+2))
+          if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
+          if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
+          RECOMMENDED_L=${NB_CORES}
+          echo "Using make -j${RECOMMENDED_J} -l${RECOMMENDED_L}"
+          echo "RECOMMENDED_J=${RECOMMENDED_J}" >> $GITHUB_ENV
+          echo "RECOMMENDED_L=${RECOMMENDED_L}" >> $GITHUB_ENV
+
       - id: build_image
         name: Build EddictwareELEC image
         run: |
           set -o pipefail
           BUILDUSER="runner"
-          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | sudo tee build.log' || tail -n 1000 build.log
-          # (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
-          # # BUILDUSER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          # if [ "$(id -u)" = 0 ]; then
-          #   echo "Running as root, switching to $BUILDUSER for build."
-          #   if id "$BUILDUSER" >/dev/null 2>&1; then
-          #     echo "Ensuring $BUILDUSER owns the workspace..."
-          #     chown -R "$BUILDUSER" "$PWD"
-          #     sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | sudo tee build.log' || tail -n 1000 build.log
-          #   else
-          #     echo "User $BUILDUSER does not exist. Please create a non-root user for builds." >&2
-          #     exit 1
-          #   fi
-          # else
-          #   (DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j$(nproc) -l$(nproc) image 2>&1 | tee build.log) || tail -n 1000 build.log
-          # fi
+          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | sudo tee build.log' || tail -n 1000 build.log
 
       - id: list_images
         name: List built images
