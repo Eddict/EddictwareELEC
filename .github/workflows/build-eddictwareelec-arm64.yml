@@ -1,4 +1,3 @@
-
 name: Build EddictwareELEC (aarch64)
 
 description: |
@@ -111,6 +110,14 @@ jobs:
           echo "Using make -j${RECOMMENDED_J} -l${RECOMMENDED_L}"
           echo "RECOMMENDED_J=${RECOMMENDED_J}" >> $GITHUB_ENV
           echo "RECOMMENDED_L=${RECOMMENDED_L}" >> $GITHUB_ENV
+
+      - name: Cache source archives
+        uses: actions/cache@v4
+        with:
+          path: sources
+          key: sources-${{ runner.os }}-${{ hashFiles('packages/*/package.mk') }}
+          restore-keys: |
+            sources-${{ runner.os }}-
 
       - id: build_image
         name: Build EddictwareELEC image
