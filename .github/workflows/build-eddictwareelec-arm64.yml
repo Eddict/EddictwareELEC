@@ -122,14 +122,14 @@ jobs:
       - id: list_images
         name: List built images
         run: |
-          ls -lh ./target/*.img* || true
+          ls -lh ./target/*.img.gz || true
 
       - id: upload_image
         name: Upload built image artifact
         uses: actions/upload-artifact@v4
         with:
           name: EddictwareELEC-RPi4-aarch64-image
-          path: ./target/*.img*
+          path: ./target/*.img.gz
           if-no-files-found: warn
 
       - id: upload_log
