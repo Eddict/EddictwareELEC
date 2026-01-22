@@ -45,8 +45,9 @@ jobs:
             xsltproc rsync file \
             xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
             libxml-parser-perl patchutils lzop \
-            default-jre zip zstd sudo dumb-init jq
-
+            default-jre zip zstd sudo dumb-init jq \
+            device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
+            
       # - id: show_env
       #   name: Show disk space and environment
       #   run: |
