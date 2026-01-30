@@ -54,17 +54,17 @@ jobs:
       #       sudo chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || true
       #     fi
 
-      - name: Install build dependencies
-        run: |
-          DEBIAN_FRONTEND=noninteractive apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
-            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
-            xsltproc rsync file \
-            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
-            libxml-parser-perl patchutils lzop \
-            default-jre zip zstd sudo dumb-init jq \
-            device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
+      # - name: Install build dependencies
+      #   run: |
+      #     DEBIAN_FRONTEND=noninteractive apt-get update
+      #     DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      #       git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
+      #       libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
+      #       xsltproc rsync file \
+      #       xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
+      #       libxml-parser-perl patchutils lzop \
+      #       default-jre zip zstd sudo dumb-init jq \
+      #       device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
             
       # - id: show_env
       #   name: Show disk space and environment
