@@ -36,23 +36,23 @@ jobs:
           path: ${{ github.workspace }}
           clean: false
 
-      - name: Fix sudo ownership (sysbox workaround)
-        if: inputs.runner == 'self-hosted-sysbox'
-        run: |
-          # Fix sudo file ownership for sysbox runners
-          # Use nsenter to fix ownership at the host/container namespace level
-          if [ -f /etc/sudo.conf ]; then
-            sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /etc/sudo.conf 2>/dev/null || \
-            sudo chown root:root /etc/sudo.conf 2>/dev/null || true
-          fi
-          if [ -f /usr/libexec/sudo/sudoers.so ]; then
-            sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || \
-            sudo chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || true
-          fi
-          if [ -f /usr/lib/sudo/sudoers.so ]; then
-            sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || \
-            sudo chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || true
-          fi
+      # - name: Fix sudo ownership (sysbox workaround)
+      #   if: inputs.runner == 'self-hosted-sysbox'
+      #   run: |
+      #     # Fix sudo file ownership for sysbox runners
+      #     # Use nsenter to fix ownership at the host/container namespace level
+      #     if [ -f /etc/sudo.conf ]; then
+      #       sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /etc/sudo.conf 2>/dev/null || \
+      #       sudo chown root:root /etc/sudo.conf 2>/dev/null || true
+      #     fi
+      #     if [ -f /usr/libexec/sudo/sudoers.so ]; then
+      #       sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || \
+      #       sudo chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || true
+      #     fi
+      #     if [ -f /usr/lib/sudo/sudoers.so ]; then
+      #       sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || \
+      #       sudo chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || true
+      #     fi
 
       - name: Install build dependencies
         run: |
