@@ -1,0 +1,169 @@
+name: Build EddictwareELEC (aarch64)
+
+description: |
+  CI workflow to build EddictwareELEC for RPi4 (aarch64) using the official build command.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner to use'
+        required: false
+        default: ubuntu-24.04
+        type: choice
+        options:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - self-hosted
+          - self-hosted-sysbox
+  # push:
+  #   branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+
+run-name: ${{ format('{0} ({1})', github.workflow, inputs.runner || 'ubuntu-24.04') }}
+
+jobs:
+  build:
+    runs-on: ${{ (github.event_name == 'workflow_dispatch' && (inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') || inputs.runner)) || 'ubuntu-24.04' }}
+    steps:
+      - id: checkout
+        name: Checkout EddictwareELEC
+        uses: actions/checkout@v4
+        with:
+          repository: Eddict/EddictwareELEC
+          ref: master
+          path: ${{ github.workspace }}
+          clean: false
+
+      - name: Fix sudo ownership (sysbox workaround)
+        if: inputs.runner == 'self-hosted-sysbox'
+        run: |
+          # Fix sudo file ownership for sysbox runners
+          # Use nsenter to fix ownership at the host/container namespace level
+          if [ -f /etc/sudo.conf ]; then
+            sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /etc/sudo.conf 2>/dev/null || \
+            sudo chown root:root /etc/sudo.conf 2>/dev/null || true
+          fi
+          if [ -f /usr/libexec/sudo/sudoers.so ]; then
+            sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || \
+            sudo chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || true
+          fi
+          if [ -f /usr/lib/sudo/sudoers.so ]; then
+            sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || \
+            sudo chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || true
+          fi
+
+      - name: Install build dependencies
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
+            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
+            xsltproc rsync file \
+            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
+            libxml-parser-perl patchutils lzop \
+            default-jre zip zstd sudo dumb-init jq \
+            device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
+            
+      # - id: show_env
+      #   name: Show disk space and environment
+      #   run: |
+      #     df -h
+      #     uname -a
+      #     lscpu
+      #     free -h
+
+      - id: chown_workspace
+        name: Chown workspace to non-root user
+        run: |
+          if [ "$(id -u)" = 0 ]; then
+            BUILDUSER="runner"
+            echo "Running as root, switching to $BUILDUSER for build."
+            if id "$BUILDUSER" >/dev/null 2>&1; then
+              echo "Ensuring $BUILDUSER owns the workspace..."
+              chown -R "$BUILDUSER" "$PWD"
+            else
+              echo "User $BUILDUSER does not exist. Please create a non-root user for builds." >&2
+              exit 1
+            fi
+          else
+            echo "Not running as root ($(whoami)), no need to change ownership."
+          fi
+
+      - id: calc_build_params
+        name: Calculate recommended make -j and -l parameters
+        run: |
+          set -euo pipefail
+          NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
+          PER_JOB_MB=${PER_JOB_MB:-1200}
+          RESERVE_MB=${RESERVE_MB:-4096}
+          mem_bytes=0
+          if [ -f /sys/fs/cgroup/memory.max ]; then
+            memmax=$(cat /sys/fs/cgroup/memory.max)
+            if [ "$memmax" != "max" ]; then
+              mem_bytes=$memmax
+            fi
+          fi
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+              if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
+                mem_bytes=$memlim
+              fi
+            fi
+          fi
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+            mem_bytes=$((mem_kb*1024))
+          fi
+          TOTAL_MB=$((mem_bytes/1024/1024))
+          USABLE_MB=$((TOTAL_MB-RESERVE_MB))
+          if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
+          MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
+          if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
+          CANDIDATE_J=$((NB_CORES+2))
+          if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
+          if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
+          RECOMMENDED_L=${NB_CORES}
+          echo "Using make -j${RECOMMENDED_J} -l${RECOMMENDED_L}"
+          echo "RECOMMENDED_J=${RECOMMENDED_J}" >> $GITHUB_ENV
+          echo "RECOMMENDED_L=${RECOMMENDED_L}" >> $GITHUB_ENV
+
+      - name: Cache source archives
+        uses: actions/cache@v4
+        with:
+          path: sources
+          key: sources-${{ runner.os }}-${{ hashFiles('packages/*/package.mk') }}
+          restore-keys: |
+            sources-${{ runner.os }}-
+
+      - id: build_image
+        name: Build EddictwareELEC image
+        env:
+          MAKEFLAGS: -s
+        run: |
+          set -o pipefail
+          BUILDUSER="runner"
+          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | sudo tee build.log'
+
+      - id: list_images
+        name: List built images
+        run: |
+          ls -lh ./target/*.img.gz || true
+
+      - id: upload_image
+        name: Upload built image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EddictwareELEC-RPi4-aarch64-image
+          path: ./target/*.img.gz
+          if-no-files-found: warn
+
+      - id: upload_log
+        name: Upload full build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build.log
+          path: build.log
+          if-no-files-found: warn
