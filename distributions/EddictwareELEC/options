@@ -50,7 +50,7 @@
 
 # use local ccache on build host, if available, for early package
 # builds before ccache has been built
-  LOCAL_CCACHE_SUPPORT="yes"
+  LOCAL_CCACHE_SUPPORT="no"
 
 ### OS CONFIGURATION ###
 
