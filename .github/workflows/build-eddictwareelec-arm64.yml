@@ -128,8 +128,12 @@ jobs:
         run: |
           set -o pipefail
           BUILDUSER="runner"
-          # sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | sudo tee build.log'
-          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=${{ env.DISTRO }} PROJECT=${{ env.PROJECT }} DEVICE=${{ env.DEVICE }} ARCH=${{ env.ARCH }} make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | sudo tee build.log'
+          sudo -u "$BUILDUSER" bash -c '
+            cd "$PWD"
+            DISTRO=${{ env.DISTRO }} PROJECT=${{ env.PROJECT }} DEVICE=${{ env.DEVICE }} ARCH=${{ env.ARCH }} \
+            make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | tee build.log
+            exit ${PIPESTATUS[0]}
+          '
 
       - id: list_images
         name: List built images
