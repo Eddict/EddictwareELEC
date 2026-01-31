@@ -26,6 +26,11 @@ run-name: ${{ format('{0} ({1})', github.workflow, inputs.runner || 'ubuntu-24.0
 jobs:
   build:
     runs-on: ${{ (github.event_name == 'workflow_dispatch' && (inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') || inputs.runner)) || 'ubuntu-24.04' }}
+    env:
+      DISTRO: EddictwareELEC
+      PROJECT: RPi
+      DEVICE: RPi4
+      ARCH: aarch64
     steps:
       - id: checkout
         name: Checkout EddictwareELEC
@@ -36,44 +41,6 @@ jobs:
           path: ${{ github.workspace }}
           clean: false
 
-      # - name: Fix sudo ownership (sysbox workaround)
-      #   if: inputs.runner == 'self-hosted-sysbox'
-      #   run: |
-      #     # Fix sudo file ownership for sysbox runners
-      #     # Use nsenter to fix ownership at the host/container namespace level
-      #     if [ -f /etc/sudo.conf ]; then
-      #       sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /etc/sudo.conf 2>/dev/null || \
-      #       sudo chown root:root /etc/sudo.conf 2>/dev/null || true
-      #     fi
-      #     if [ -f /usr/libexec/sudo/sudoers.so ]; then
-      #       sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || \
-      #       sudo chown root:root /usr/libexec/sudo/sudoers.so 2>/dev/null || true
-      #     fi
-      #     if [ -f /usr/lib/sudo/sudoers.so ]; then
-      #       sudo nsenter --mount=/proc/1/ns/mnt -- chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || \
-      #       sudo chown root:root /usr/lib/sudo/sudoers.so 2>/dev/null || true
-      #     fi
-
-      # - name: Install build dependencies
-      #   run: |
-      #     DEBIAN_FRONTEND=noninteractive apt-get update
-      #     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      #       git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
-      #       libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
-      #       xsltproc rsync file \
-      #       xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
-      #       libxml-parser-perl patchutils lzop \
-      #       default-jre zip zstd sudo dumb-init jq \
-      #       device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
-            
-      # - id: show_env
-      #   name: Show disk space and environment
-      #   run: |
-      #     df -h
-      #     uname -a
-      #     lscpu
-      #     free -h
-
       - id: chown_workspace
         name: Chown workspace to non-root user
         run: |
@@ -81,8 +48,13 @@ jobs:
             BUILDUSER="runner"
             echo "Running as root, switching to $BUILDUSER for build."
             if id "$BUILDUSER" >/dev/null 2>&1; then
-              echo "Ensuring $BUILDUSER owns the workspace..."
-              chown -R "$BUILDUSER" "$PWD"
+              echo "Ensuring $BUILDUSER owns the workspace (will chown only if needed)..."
+              # Only chown if needed (avoid unnecessary chown)
+              if [ "$(stat -c %U "$PWD")" != "$BUILDUSER" ]; then
+                chown -R "$BUILDUSER" "$PWD"
+              else
+                echo "Workspace already owned by $BUILDUSER, skipping chown."
+              fi
             else
               echo "User $BUILDUSER does not exist. Please create a non-root user for builds." >&2
               exit 1
@@ -130,6 +102,17 @@ jobs:
           echo "RECOMMENDED_J=${RECOMMENDED_J}" >> $GITHUB_ENV
           echo "RECOMMENDED_L=${RECOMMENDED_L}" >> $GITHUB_ENV
 
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache
+            ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local
+          key: ccache-${{ runner.os }}-${{ hashFiles('packages/*/package.mk') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-
+
       - name: Cache source archives
         uses: actions/cache@v4
         with:
@@ -145,7 +128,8 @@ jobs:
         run: |
           set -o pipefail
           BUILDUSER="runner"
-          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | sudo tee build.log'
+          # sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=EddictwareELEC PROJECT=RPi DEVICE=RPi4 ARCH=aarch64 make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | sudo tee build.log'
+          sudo -u "$BUILDUSER" bash -c 'cd "$PWD"; DISTRO=${{ env.DISTRO }} PROJECT=${{ env.DEVICE }} DEVICE=${{ env.PROJECT }} ARCH=${{ env.ARCH }} make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} image 2>&1 | sudo tee build.log'
 
       - id: list_images
         name: List built images
