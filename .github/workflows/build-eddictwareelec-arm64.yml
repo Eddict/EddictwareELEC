@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Eddict/EddictwareELEC
-          ref: master
+          ref: upstream
           path: ${{ github.workspace }}
           clean: false
 
