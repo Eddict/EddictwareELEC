@@ -70,6 +70,14 @@ jobs:
             xsltproc xfonts-utils rdfind libparse-yapp-perl gperf \
             libxml-parser-perl patchutils lzop
 
+      - id: install_arm_deps
+        name: Install build dependencies (for arm64 runners)
+        if: ${{ !contains(inputs.runner || '', '-arm') }}
+        run: |
+          DEBIAN_FRONTEND=noninteractive sudo apt-get update
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+            libjson-perl
+
       - id: chown_workspace
         name: Chown workspace to non-root user
         run: |
