@@ -42,7 +42,8 @@ jobs:
           clean: false
 
       - id: install_deps_org
-        name: Install build dependencies
+        name: Install build dependencies original (for non-self-hosted runners)
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
           DEBIAN_FRONTEND=noninteractive sudo apt-get update
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
