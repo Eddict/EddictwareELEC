@@ -284,17 +284,6 @@ def processPackages(args, packages):
         if pkg.isWanted() or pkgname == ROOT_PKG:
             needed_map[pkgname] = pkg
 
-    # Ensure busybox is included if referenced by any needed package (with or without target suffix)
-    busybox_needed = False
-    for pkg in needed_map.values():
-        for t in pkg.deps:
-            for d in pkg.deps[t]:
-                name, _ = split_package(d)
-                if name == "busybox":
-                    busybox_needed = True
-    if busybox_needed and "busybox" in packages and "busybox" not in needed_map:
-        needed_map["busybox"] = packages["busybox"]
-
     # Validate package dependency references
     if not args.ignore_invalid:
         for pkgname in needed_map:
