@@ -12,6 +12,7 @@ PKG_DEPENDS_TARGET="toolchain libtirpc"
 PKG_DEPENDS_INIT="toolchain libtirpc"
 PKG_LONGDESC="BusyBox combines tiny versions of many common UNIX utilities into a single small executable."
 PKG_BUILD_FLAGS="-parallel +lto +size"
+
 pre_build_target() {
   PKG_MAKE_OPTS_TARGET="ARCH=${TARGET_ARCH} \
                         HOSTCC=${HOST_CC} \
