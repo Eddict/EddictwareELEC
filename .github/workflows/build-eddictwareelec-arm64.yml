@@ -54,8 +54,15 @@ jobs:
       #       default-jre zip zstd sudo dumb-init jq \
       #       device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
 
+      - id: install_sudo
+        name: Install sudo if not present (for non-self-hosted runners)
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        run: |
+          DEBIAN_FRONTEND=noninteractive apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y sudo
+
       - id: install_deps
-        name: Install build dependencies
+        name: Install build dependencies (for non-self-hosted runners)
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
           DEBIAN_FRONTEND=noninteractive apt-get update
