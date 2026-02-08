@@ -41,6 +41,28 @@ jobs:
           path: ${{ github.workspace }}
           clean: false
 
+      # - id: install_deps
+      #   name: Install build dependencies
+      #   run: |
+      #     DEBIAN_FRONTEND=noninteractive apt-get update
+      #     DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      #       git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
+      #       libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
+      #       xsltproc rsync file \
+      #       xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
+      #       libxml-parser-perl patchutils lzop \
+      #       default-jre zip zstd sudo dumb-init jq \
+      #       device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
+
+      - id: install_deps
+        name: Install build dependencies
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        run: |
+          DEBIAN_FRONTEND=noninteractive apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xsltproc xfonts-utils rdfind libparse-yapp-perl gperf \
+            libxml-parser-perl patchutils lzop
+
       - id: chown_workspace
         name: Chown workspace to non-root user
         run: |
