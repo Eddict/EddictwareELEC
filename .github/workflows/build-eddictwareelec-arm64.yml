@@ -42,6 +42,8 @@ jobs:
         name: List installed packages before build
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
+          echo "Running apt-get update:"
+          sudo apt-get update
           echo "Listing installed packages (dpkg-query):"
           dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' | sort > installed-packages.txt
           # List top 30 by size (in KB)
