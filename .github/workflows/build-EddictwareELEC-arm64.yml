@@ -334,6 +334,23 @@ jobs:
           echo "==== ENVIRONMENT VARIABLES ===="
           env | sort | grep -i ccache || true
 
+      - id: debug_sources_cache
+        name: Debug sources cache usage
+        run: |
+          echo "==== SOURCES directory existence and stats ===="
+          if [ -d sources ]; then
+            echo "sources/ exists."
+            du -sh sources || echo "du failed"
+            echo "Top 20 files in sources/ by size:"
+            find sources -type f -exec du -h {} + | sort -hr | head -n 20
+            echo "Sample of source tarballs:"
+            find sources -type f -name '*.tar*' | head -n 10
+            echo "Sample of recent files in sources/:"
+            find sources -type f -printf '%T@ %p\n' | sort -n | tail -n 10 | cut -d' ' -f2-
+          else
+            echo "sources/ directory does not exist!"
+          fi
+
       - id: build_image
         name: Build EddictwareELEC image
         env:
