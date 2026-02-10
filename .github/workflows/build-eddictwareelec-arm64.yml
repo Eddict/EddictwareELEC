@@ -37,13 +37,14 @@ jobs:
       DEVICE: RPi4
       ARCH: aarch64
       LARGEST_SUFFIX: ${{ inputs.largest_packages_only && '(largest only)' || '' }}
+      DEBIAN_FRONTEND: noninteractive
     steps:
       - id: list_installed_packages
         name: List installed packages before build
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
           echo "Running apt-get update:"
-          sudo apt-get update
+          sudo apt-get update -qq
           echo "Listing installed packages (dpkg-query):"
           dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' | sort > installed-packages.txt
           # List top 30 by size (in KB)
@@ -70,9 +71,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y firefox google-chrome-stable microsoft-edge-stable
+            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable
           else
-            sudo apt-get purge -y firefox google-chrome-stable microsoft-edge-stable
+            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable
           fi
           sudo apt-get autoremove -y
 
@@ -81,9 +82,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli
+            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli
           else
-            sudo apt-get purge -y azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli
+            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli
           fi
           sudo apt-get autoremove -y
 
@@ -92,9 +93,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y mysql-server-core-8.0
+            sudo apt-get purge -y -qq mysql-server-core-8.0
           else
-            sudo apt-get purge -y mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common
+            sudo apt-get purge -y -qq mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common
           fi
           sudo apt-get autoremove -y
 
@@ -103,9 +104,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y powershell
+            sudo apt-get purge -y -qq powershell
           else
-            sudo apt-get purge -y apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell
+            sudo apt-get purge -y -qq apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell
           fi
           sudo apt-get autoremove -y
 
@@ -114,9 +115,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18
+            sudo apt-get purge -y -qq temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18
           else
-            sudo apt-get purge -y clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk
+            sudo apt-get purge -y -qq clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk
           fi
           sudo apt-get autoremove -y
 
@@ -125,17 +126,17 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y python3-botocore linux-azure-6.11-headers-6.11.0-1018
+            sudo apt-get purge -y -qq python3-botocore linux-azure-6.11-headers-6.11.0-1018
           else
-            sudo apt-get purge -y byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit
+            sudo apt-get purge -y -qq byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit
           fi
-          sudo apt-get autoremove -y
+          sudo apt-get autoremove -y -qq
 
       - id: apt_clean
         name: Clean up apt cache
         if: steps.list_installed_packages.outcome == 'success'
         run: |
-          sudo apt-get clean
+          sudo apt-get clean -qq
           echo "Disk usage after removing packages:"
           df -h
           du -h --max-depth=2 | sort -hr | head -n 10
@@ -161,8 +162,8 @@ jobs:
         name: Install build dependencies original (for non-self-hosted runners)
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
-          DEBIAN_FRONTEND=noninteractive sudo apt-get update
-          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y -qq \
             git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
             libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
             xsltproc rsync file \
@@ -175,8 +176,8 @@ jobs:
         name: Install build dependencies (for non-self-hosted runners)
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
-          DEBIAN_FRONTEND=noninteractive sudo apt-get update
-          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y -qq \
             xsltproc xfonts-utils rdfind libparse-yapp-perl gperf \
             libxml-parser-perl patchutils lzop
 
@@ -184,8 +185,8 @@ jobs:
         name: Install build dependencies (for arm64 runners)
         if: ${{ contains(inputs.runner || '', '-arm') }}
         run: |
-          DEBIAN_FRONTEND=noninteractive sudo apt-get update
-          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y -qq \
             libjson-perl
 
       - id: chown_workspace
