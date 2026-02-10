@@ -308,6 +308,8 @@ jobs:
 
       - id: debug_ccache_env
         name: Debug ccache environment and directory
+        env:
+          CCACHE_DIR: ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache
         run: |
           echo "==== CCACHE DEBUG ENVIRONMENT ===="
           echo "User: $(whoami)"
@@ -336,6 +338,7 @@ jobs:
         name: Build EddictwareELEC image
         env:
           MAKEFLAGS: -s
+          CCACHE_DIR: ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache
         run: |
           set -o pipefail
           echo "==== CCACHE directory preview ===="
