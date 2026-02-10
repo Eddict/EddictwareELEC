@@ -71,66 +71,66 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable
+            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable || true
           else
-            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable
+            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable || true
           fi
-          sudo apt-get autoremove -y
+          sudo apt-get autoremove -y || true
 
       - id: remove_cloud_tools
         name: Remove cloud/VM/container tools ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli
+            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli || true
           else
-            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli
+            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli || true
           fi
-          sudo apt-get autoremove -y
+          sudo apt-get autoremove -y || true
 
       - id: remove_db_servers
         name: Remove database servers/clients ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y -qq mysql-server-core-8.0
+            sudo apt-get purge -y -qq mysql-server-core-8.0 || true
           else
-            sudo apt-get purge -y -qq mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common
+            sudo apt-get purge -y -qq mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common || true
           fi
-          sudo apt-get autoremove -y
+          sudo apt-get autoremove -y || true
 
       - id: remove_web_servers
         name: Remove web servers and scripting ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y -qq powershell
+            sudo apt-get purge -y -qq powershell || true
           else
-            sudo apt-get purge -y -qq apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell
+            sudo apt-get purge -y -qq apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell || true
           fi
-          sudo apt-get autoremove -y
+          sudo apt-get autoremove -y || true
 
       - id: remove_extra_compilers
         name: Remove extra compilers/interpreters ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y -qq temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18
+            sudo apt-get purge -y -qq temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18 || true
           else
-            sudo apt-get purge -y -qq clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk
+            sudo apt-get purge -y -qq clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk || true
           fi
-          sudo apt-get autoremove -y
+          sudo apt-get autoremove -y || true
 
       - id: remove_misc_tools
         name: Remove miscellaneous tools ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
-            sudo apt-get purge -y -qq python3-botocore linux-azure-6.11-headers-6.11.0-1018
+            sudo apt-get purge -y -qq python3-botocore linux-azure-6.11-headers-6.11.0-1018 || true
           else
-            sudo apt-get purge -y -qq byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit
+            sudo apt-get purge -y -qq byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit || true
           fi
-          sudo apt-get autoremove -y -qq
+          sudo apt-get autoremove -y -qq || true
 
       - id: apt_clean
         name: Clean up apt cache
