@@ -34,6 +34,7 @@ jobs:
     steps:
       - id: list_installed_packages
         name: List installed packages before build
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
           echo "Listing installed packages (dpkg-query):"
           dpkg-query -W -f='${Package}\t${Version}\n' | sort > installed-packages.txt
@@ -41,12 +42,72 @@ jobs:
           echo "Full list saved to installed-packages.txt"
           df -h
           du -h --max-depth=2 | sort -hr | head -n 10
-          # Upload as artifact for review
-      - name: Upload installed packages list
+
+      - id: upload_installed_packages
+        name: Upload installed packages list
         uses: actions/upload-artifact@v4
         with:
           name: installed-packages
           path: installed-packages.txt
+          if-no-files-found: warn
+
+      - id: remove_browsers
+        name: Remove browsers and GUI apps
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get purge -y firefox google-chrome-stable microsoft-edge-stable
+          sudo apt-get autoremove -y
+
+      - id: remove_cloud_tools
+        name: Remove cloud/VM/container tools
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get purge -y azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent
+          sudo apt-get autoremove -y
+
+      - id: remove_db_servers
+        name: Remove database servers/clients
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get purge -y mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common
+          sudo apt-get autoremove -y
+
+      - id: remove_web_servers
+        name: Remove web servers and scripting
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get purge -y apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell
+          sudo apt-get autoremove -y
+
+      - id: remove_extra_compilers
+        name: Remove extra compilers/interpreters
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get purge -y clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk
+          sudo apt-get autoremove -y
+
+      - id: remove_misc_tools
+        name: Remove miscellaneous tools
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get purge -y byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit
+          sudo apt-get autoremove -y
+
+      - id: apt_clean
+        name: Clean up apt cache
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get clean
+          echo "Disk usage after removing packages:"
+          df -h
+          du -h --max-depth=2 | sort -hr | head -n 10
+
+      - id: upload_installed_packages_after_cleanup
+        name: Upload installed packages list after cleanup
+        uses: actions/upload-artifact@v4
+        with:
+          name: installed-packages-after-cleanup
+          path: installed-packages-after-cleanup.txt
           if-no-files-found: warn
 
       - id: checkout
