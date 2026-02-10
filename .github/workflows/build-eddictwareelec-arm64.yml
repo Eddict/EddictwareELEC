@@ -16,6 +16,11 @@ on:
           - ubuntu-24.04-arm
           - self-hosted
           - self-hosted-sysbox
+      largest_packages_only:
+        description: 'Remove only the largest packages (from installed-packages-largest.txt)'
+        required: false
+        default: true
+        type: boolean
   # push:
   #   branches: [ master ]
   # pull_request:
@@ -60,42 +65,66 @@ jobs:
         name: Remove browsers and GUI apps
         if: steps.list_installed_packages.outcome == 'success'
         run: |
-          sudo apt-get purge -y firefox google-chrome-stable microsoft-edge-stable
+          if [[ ${{ inputs.largest_packages_only }} ]]; then
+            sudo apt-get purge -y firefox google-chrome-stable microsoft-edge-stable
+          else
+            sudo apt-get purge -y firefox google-chrome-stable microsoft-edge-stable
+          fi
           sudo apt-get autoremove -y
 
       - id: remove_cloud_tools
         name: Remove cloud/VM/container tools
         if: steps.list_installed_packages.outcome == 'success'
         run: |
-          sudo apt-get purge -y azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent
+          if [[ ${{ inputs.largest_packages_only }} ]]; then
+            sudo apt-get purge -y azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli
+          else
+            sudo apt-get purge -y azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli
+          fi
           sudo apt-get autoremove -y
 
       - id: remove_db_servers
         name: Remove database servers/clients
         if: steps.list_installed_packages.outcome == 'success'
         run: |
-          sudo apt-get purge -y mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common
+          if [[ ${{ inputs.largest_packages_only }} ]]; then
+            sudo apt-get purge -y mysql-server-core-8.0
+          else
+            sudo apt-get purge -y mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common
+          fi
           sudo apt-get autoremove -y
 
       - id: remove_web_servers
         name: Remove web servers and scripting
         if: steps.list_installed_packages.outcome == 'success'
         run: |
-          sudo apt-get purge -y apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell
+          if [[ ${{ inputs.largest_packages_only }} ]]; then
+            sudo apt-get purge -y powershell
+          else
+            sudo apt-get purge -y apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell
+          fi
           sudo apt-get autoremove -y
 
       - id: remove_extra_compilers
         name: Remove extra compilers/interpreters
         if: steps.list_installed_packages.outcome == 'success'
         run: |
-          sudo apt-get purge -y clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk
+          if [[ ${{ inputs.largest_packages_only }} ]]; then
+            sudo apt-get purge -y temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18
+          else
+            sudo apt-get purge -y clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk
+          fi
           sudo apt-get autoremove -y
 
       - id: remove_misc_tools
         name: Remove miscellaneous tools
         if: steps.list_installed_packages.outcome == 'success'
         run: |
-          sudo apt-get purge -y byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit
+          if [[ ${{ inputs.largest_packages_only }} ]]; then
+            sudo apt-get purge -y python3-botocore linux-azure-6.11-headers-6.11.0-1018
+          else
+            sudo apt-get purge -y byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit
+          fi
           sudo apt-get autoremove -y
 
       - id: apt_clean
