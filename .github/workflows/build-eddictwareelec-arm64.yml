@@ -284,8 +284,14 @@ jobs:
         run: |
           echo "Cleaning /tmp, /var/tmp, and runner cache..."
           sudo rm -rf /tmp/* /var/tmp/* || true
-          sudo find /home/runner/actions-runner/cached/ -type f -name '*.log' -delete || true
-          sudo find /home/runner/actions-runner/cached/ -type f -size +100M -delete || true
+          # Clean GitHub-hosted runner caches
+          WORK_PARENT="${RUNNER_WORKSPACE:-/home/runner/work}"
+          WORK_PARENT="$(dirname "$WORK_PARENT")"
+          sudo find "$WORK_PARENT"/_* -type f -name '*.log' -delete 2>/dev/null || true
+          sudo find "$WORK_PARENT"/_* -type f -size +100M -delete 2>/dev/null || true
+          # # Clean self-hosted runner caches if present
+          # sudo find /home/runner/actions-runner/cached/ -type f -name '*.log' -delete 2>/dev/null || true
+          # sudo find /home/runner/actions-runner/cached/ -type f -size +100M -delete 2>/dev/null || true
           echo "Disk usage after cleanup:"
           df -h
           du -h --max-depth=2 | sort -hr | head -n 10
@@ -296,6 +302,14 @@ jobs:
           MAKEFLAGS: -s
         run: |
           set -o pipefail
+          echo "==== CCACHE directory preview ===="
+          find ./build.${DISTRO}-${DEVICE}.${ARCH}-13.0-devel/.ccache | head -n 20 || echo "No ccache directory found."
+          echo "==== CCACHE-LOCAL directory preview ===="
+          find ./build.${DISTRO}-${DEVICE}.${ARCH}-13.0-devel/.ccache-local | head -n 20 || echo "No ccache-local directory found."
+          echo "==== SOURCES directory preview ===="
+          find sources | head -n 20 || echo "No sources directory found."
+          echo "==== CCACHE stats before build ===="
+          ccache -s || echo "ccache not available"
           BUILDUSER="runner"
           sudo -u "$BUILDUSER" bash -c '
             cd "$PWD"
@@ -303,6 +317,8 @@ jobs:
             make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} V=0 VERBOSE=0 image 2>&1 | tee build.log
             exit ${PIPESTATUS[0]}
           '
+          echo "==== CCACHE stats after build ===="
+          ccache -s || echo "ccache not available"
 
       - id: list_images
         name: List built images
