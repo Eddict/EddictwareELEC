@@ -260,8 +260,8 @@ jobs:
           echo "RECOMMENDED_J=${RECOMMENDED_J}" >> $GITHUB_ENV
           echo "RECOMMENDED_L=${RECOMMENDED_L}" >> $GITHUB_ENV
 
-
-      - name: Cache ccache
+      - id: cache_ccache
+        name: Cache ccache
         uses: actions/cache@v4
         with:
           path: |
@@ -271,7 +271,8 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-
 
-      - name: Cache source archives
+      - id: cache_sources
+        name: Cache source archives
         uses: actions/cache@v4
         with:
           path: sources
