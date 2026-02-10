@@ -296,6 +296,32 @@ jobs:
           df -h
           du -h --max-depth=2 | sort -hr | head -n 10
 
+      - id: debug_ccache_env
+        name: Debug ccache environment and directory
+        run: |
+          echo "==== CCACHE DEBUG ENVIRONMENT ===="
+          echo "User: $(whoami)"
+          echo "CCACHE_DIR: $CCACHE_DIR"
+          echo "PWD: $PWD"
+          echo "ccache location: $(which ccache)"
+          echo "ccache version: $(ccache --version 2>&1 | head -n 1)"
+          echo "gcc location: $(which gcc)"
+          echo "gcc version: $(gcc --version | head -n 1)"
+          echo "==== ccache config (ccache -p) ===="
+          ccache -p || echo "ccache -p failed"
+          echo "==== .ccache permissions and size ===="
+          ls -lhd ./build.EddictwareELEC-RPi4.aarch64-13.0-devel/.ccache
+          ls -lhR ./build.EddictwareELEC-RPi4.aarch64-13.0-devel/.ccache | head -n 40
+          du -sh ./build.EddictwareELEC-RPi4.aarch64-13.0-devel/.ccache || echo "du failed"
+          echo "==== .ccache-local permissions and size ===="
+          ls -lhd ./build.EddictwareELEC-RPi4.aarch64-13.0-devel/.ccache-local
+          ls -lhR ./build.EddictwareELEC-RPi4.aarch64-13.0-devel/.ccache-local | head -n 40
+          du -sh ./build.EddictwareELEC-RPi4.aarch64-13.0-devel/.ccache-local || echo "du failed"
+          echo "==== ccache ownership fix (if needed) ===="
+          sudo chown -R runner:runner ./build.EddictwareELEC-RPi4.aarch64-13.0-devel/.ccache* || echo "chown failed"
+          echo "==== ENVIRONMENT VARIABLES ===="
+          env | sort | grep -i ccache || true
+
       - id: build_image
         name: Build EddictwareELEC image
         env:
