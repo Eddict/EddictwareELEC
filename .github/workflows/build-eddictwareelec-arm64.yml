@@ -37,9 +37,12 @@ jobs:
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
           echo "Listing installed packages (dpkg-query):"
-          dpkg-query -W -f='${Package}\t${Version}\n' | sort > installed-packages.txt
-          head -n 30 installed-packages.txt
-          echo "Full list saved to installed-packages.txt"
+          dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' | sort > installed-packages.txt
+          # List top 30 by size (in KB)
+          sort -k3 -n -r installed-packages.txt | head -n 30 > installed-packages-largest.txt
+          echo "Top 30 largest packages (name, version, size KB):"
+          cat installed-packages-largest.txt
+          echo "Full list saved to installed-packages.txt (size in KB in 3rd column)"
           df -h
           du -h --max-depth=2 | sort -hr | head -n 10
 
