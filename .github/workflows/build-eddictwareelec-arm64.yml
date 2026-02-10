@@ -32,6 +32,23 @@ jobs:
       DEVICE: RPi4
       ARCH: aarch64
     steps:
+      - id: list_installed_packages
+        name: List installed packages before build
+        run: |
+          echo "Listing installed packages (dpkg-query):"
+          dpkg-query -W -f='${Package}\t${Version}\n' | sort > installed-packages.txt
+          head -n 30 installed-packages.txt
+          echo "Full list saved to installed-packages.txt"
+          df -h
+          du -h --max-depth=2 | sort -hr | head -n 10
+          # Upload as artifact for review
+      - name: Upload installed packages list
+        uses: actions/upload-artifact@v4
+        with:
+          name: installed-packages
+          path: installed-packages.txt
+          if-no-files-found: warn
+
       - id: checkout
         name: Checkout EddictwareELEC
         uses: actions/checkout@v4
