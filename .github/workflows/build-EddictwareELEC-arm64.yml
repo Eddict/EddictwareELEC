@@ -152,11 +152,20 @@ jobs:
           df -h
           du -h --max-depth=2 | sort -hr | head -n 10
 
+      - id: list_installed_packages_after_cleanup
+        name: List installed packages after build
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          echo "Listing installed packages after cleanup (dpkg-query):"
+          dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' | sort > installed-packages-after-cleanup.txt
+          echo "Full list saved to installed-packages-after-cleanup.txt (size in KB in 3rd column)"
+
       - id: upload_installed_packages_after_cleanup
         name: Upload installed packages list after cleanup
+        if: steps.list_installed_packages.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
-          name: installed-packages-after-cleanup
+          name: installed-packages
           path: installed-packages-after-cleanup.txt
           if-no-files-found: warn
 
@@ -169,7 +178,7 @@ jobs:
           path: ${{ github.workspace }}
           clean: false
 
-      - id: install_deps_org
+      - id: install_deps
         name: Install build dependencies original (for non-self-hosted runners)
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
@@ -183,11 +192,6 @@ jobs:
             default-jre zip zstd sudo dumb-init jq \
             device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
 
-      - id: install_deps
-        name: Install build dependencies (for non-self-hosted runners)
-        if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
-        run: |
-          sudo apt-get update
           sudo apt-get install -y -qq \
             xsltproc xfonts-utils rdfind libparse-yapp-perl gperf \
             libxml-parser-perl patchutils lzop
