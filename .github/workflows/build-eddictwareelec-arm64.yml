@@ -152,6 +152,27 @@ jobs:
           restore-keys: |
             sources-${{ runner.os }}-
 
+      - id: check_disk_space
+        name: Check free disk space before build
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        run: |
+          echo "Disk usage before build:"
+          df -h
+          echo "Top 10 largest directories in workspace:"
+          du -h --max-depth=2 | sort -hr | head -n 10
+
+      - id: cleanup_tmp
+        name: Cleanup /tmp and unused caches
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        run: |
+          echo "Cleaning /tmp, /var/tmp, and runner cache..."
+          sudo rm -rf /tmp/* /var/tmp/* || true
+          sudo find /home/runner/actions-runner/cached/ -type f -name '*.log' -delete || true
+          sudo find /home/runner/actions-runner/cached/ -type f -size +100M -delete || true
+          echo "Disk usage after cleanup:"
+          df -h
+          du -h --max-depth=2 | sort -hr | head -n 10
+
       - id: build_image
         name: Build EddictwareELEC image
         env:
