@@ -36,6 +36,7 @@ jobs:
       PROJECT: RPi
       DEVICE: RPi4
       ARCH: aarch64
+      LARGEST_SUFFIX: ${{ inputs.largest_packages_only && '(largest only)' || '' }}
     steps:
       - id: list_installed_packages
         name: List installed packages before build
@@ -53,6 +54,7 @@ jobs:
 
       - id: upload_installed_packages
         name: Upload installed packages lists
+        if: steps.list_installed_packages.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: installed-packages
@@ -62,7 +64,7 @@ jobs:
           if-no-files-found: warn
 
       - id: remove_browsers
-        name: Remove browsers and GUI apps
+        name: Remove browsers and GUI apps ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
@@ -73,7 +75,7 @@ jobs:
           sudo apt-get autoremove -y
 
       - id: remove_cloud_tools
-        name: Remove cloud/VM/container tools
+        name: Remove cloud/VM/container tools ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
@@ -84,7 +86,7 @@ jobs:
           sudo apt-get autoremove -y
 
       - id: remove_db_servers
-        name: Remove database servers/clients
+        name: Remove database servers/clients ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
@@ -95,7 +97,7 @@ jobs:
           sudo apt-get autoremove -y
 
       - id: remove_web_servers
-        name: Remove web servers and scripting
+        name: Remove web servers and scripting ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
@@ -106,7 +108,7 @@ jobs:
           sudo apt-get autoremove -y
 
       - id: remove_extra_compilers
-        name: Remove extra compilers/interpreters
+        name: Remove extra compilers/interpreters ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
@@ -117,7 +119,7 @@ jobs:
           sudo apt-get autoremove -y
 
       - id: remove_misc_tools
-        name: Remove miscellaneous tools
+        name: Remove miscellaneous tools ${{ env.LARGEST_SUFFIX }}
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ ${{ inputs.largest_packages_only }} ]]; then
