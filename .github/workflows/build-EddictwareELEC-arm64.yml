@@ -42,6 +42,7 @@ jobs:
       ARCH: aarch64
       LARGEST_SUFFIX: ${{ inputs.remove_packages == 'largest' && '(largest only)' || (inputs.remove_packages == 'all' && '(all)' || '(none)') }}
       DEBIAN_FRONTEND: noninteractive
+      BUILDUSER: runner
     steps:
       - id: list_installed_packages
         name: List installed packages before build
@@ -203,18 +204,17 @@ jobs:
         name: Chown workspace to non-root user
         run: |
           if [ "$(id -u)" = 0 ]; then
-            BUILDUSER="runner"
-            echo "Running as root, switching to $BUILDUSER for build."
-            if id "$BUILDUSER" >/dev/null 2>&1; then
-              echo "Ensuring $BUILDUSER owns the workspace (will chown only if needed)..."
+            echo "Running as root, switching to ${{ env.BUILDUSER }} for build."
+            if id "${{ env.BUILDUSER }}" >/dev/null 2>&1; then
+              echo "Ensuring ${{ env.BUILDUSER }} owns the workspace (will chown only if needed)..."
               # Only chown if needed (avoid unnecessary chown)
-              if [ "$(stat -c %U "$PWD")" != "$BUILDUSER" ]; then
-                chown -R "$BUILDUSER" "$PWD"
+              if [ "$(stat -c %U "$PWD")" != "${{ env.BUILDUSER }}" ]; then
+                chown -R "${{ env.BUILDUSER }}" "$PWD"
               else
-                echo "Workspace already owned by $BUILDUSER, skipping chown."
+                echo "Workspace already owned by ${{ env.BUILDUSER }}, skipping chown."
               fi
             else
-              echo "User $BUILDUSER does not exist. Please create a non-root user for builds." >&2
+              echo "User ${{ env.BUILDUSER }} does not exist. Please create a non-root user for builds." >&2
               exit 1
             fi
           else
@@ -313,8 +313,9 @@ jobs:
         run: |
           echo "==== CCACHE DEBUG ENVIRONMENT ===="
           echo "User: $(whoami)"
-          echo "CCACHE_DIR: $CCACHE_DIR"
           echo "PWD: $PWD"
+          echo "BUILDUSER: ${{ env.BUILDUSER }}"
+          echo "CCACHE_DIR: ${{ env.CCACHE_DIR }}"
           echo "ccache location: $(which ccache)"
           echo "ccache version: $(ccache --version 2>&1 | head -n 1)"
           echo "gcc location: $(which gcc)"
@@ -330,7 +331,7 @@ jobs:
           ls -lhR ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local | head -n 40
           du -sh ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local || echo "du failed"
           echo "==== ccache ownership fix (if needed) ===="
-          sudo chown -R runner:runner ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache* || echo "chown failed"
+          sudo chown -R ${{ env.BUILDUSER }}:${{ env.BUILDUSER }} ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache* || echo "chown failed"
           echo "==== ENVIRONMENT VARIABLES ===="
           env | sort | grep -i ccache || true
 
@@ -341,6 +342,11 @@ jobs:
           if [ -d sources ]; then
             echo "sources/ exists."
             du -sh sources || echo "du failed"
+            echo "==== sources/ permissions and ownership ===="
+            ls -lhd sources
+            ls -lhR sources | head -n 40
+            echo "==== sources/ ownership fix (if needed) ===="
+            sudo chown -R ${{ env.BUILDUSER }}:${{ env.BUILDUSER }} sources || echo "chown failed"
             echo "Top 20 files in sources/ by size:"
             find sources -type f -exec du -h {} + | sort -hr | head -n 20
             echo "Sample of source tarballs:"
@@ -366,8 +372,7 @@ jobs:
           find sources | head -n 20 || echo "No sources directory found."
           echo "==== CCACHE stats before build ===="
           ccache -s || echo "ccache not available"
-          BUILDUSER="runner"
-          sudo -u "$BUILDUSER" bash -c '
+          sudo -u "${{ env.BUILDUSER }}" bash -c '
             cd "$PWD"
             DISTRO=${{ env.DISTRO }} PROJECT=${{ env.PROJECT }} DEVICE=${{ env.DEVICE }} ARCH=${{ env.ARCH }} \
             make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} V=0 VERBOSE=0 image 2>&1 | tee build.log
