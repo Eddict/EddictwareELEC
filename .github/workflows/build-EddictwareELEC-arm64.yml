@@ -168,6 +168,7 @@ jobs:
           name: installed-packages
           path: installed-packages-after-cleanup.txt
           if-no-files-found: warn
+          overwrite: true
 
       - id: checkout
         name: Checkout EddictwareELEC
