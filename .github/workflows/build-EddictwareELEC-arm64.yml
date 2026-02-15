@@ -16,6 +16,7 @@ on:
           - ubuntu-24.04-arm
           - self-hosted
           - self-hosted-sysbox
+          - self-hosted-arm64
       remove_packages:
         description: 'Which packages to remove before build'
         required: false
@@ -34,7 +35,11 @@ run-name: ${{ format('{0} ({1})', github.workflow, inputs.runner || 'ubuntu-24.0
 
 jobs:
   build:
-    runs-on: ${{ (github.event_name == 'workflow_dispatch' && (inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') || inputs.runner)) || 'ubuntu-24.04' }}
+    runs-on: ${{
+      (github.event_name == 'workflow_dispatch' && (
+        inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') ||
+        inputs.runner == 'self-hosted-arm64' && fromJson('["self-hosted", "ARM64"]') ||
+        inputs.runner )) || 'ubuntu-24.04' }}
     env:
       DISTRO: EddictwareELEC
       PROJECT: RPi
