@@ -51,7 +51,7 @@ jobs:
     steps:
       - id: list_installed_packages
         name: List installed packages before build
-        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.remove_packages != 'none' }}
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'ubuntu-24.04-arm' && inputs.remove_packages != 'none' }}
         run: |
           echo "Running apt-get update:"
           sudo apt-get update -qq
@@ -81,11 +81,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
-            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" firefox google-chrome-stable microsoft-edge-stable || true
           elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
-            sudo apt-get purge -y -qq firefox google-chrome-stable microsoft-edge-stable || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" firefox google-chrome-stable microsoft-edge-stable || true
           fi
 
       - id: remove_cloud_tools
@@ -93,11 +91,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
-            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli || true
           elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
-            sudo apt-get purge -y -qq azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli || true
           fi
 
       - id: remove_db_servers
@@ -105,11 +101,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
-            sudo apt-get purge -y -qq mysql-server-core-8.0 || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" mysql-server-core-8.0 || true
           elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
-            sudo apt-get purge -y -qq mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common || true
           fi
 
       - id: remove_web_servers
@@ -117,11 +111,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
-            sudo apt-get purge -y -qq powershell || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" powershell || true
           elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
-            sudo apt-get purge -y -qq apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell || true
           fi
 
       - id: remove_extra_compilers
@@ -129,11 +121,9 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
-            sudo apt-get purge -y -qq temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18 || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18 || true
           elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
-            sudo apt-get purge -y -qq clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk || true
-            sudo apt-get autoremove -y || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk || true
           fi
 
       - id: remove_misc_tools
@@ -141,11 +131,30 @@ jobs:
         if: steps.list_installed_packages.outcome == 'success'
         run: |
           if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
-            sudo apt-get purge -y -qq python3-botocore linux-azure-6.11-headers-6.11.0-1018 || true
-            sudo apt-get autoremove -y -qq || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" python3-botocore linux-azure-6.11-headers-6.11.0-1018 || true
           elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
-            sudo apt-get purge -y -qq byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit || true
-            sudo apt-get autoremove -y -qq || true
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit || true
+          fi
+
+      - id: final_cleanup
+        name: Check for both unconfigured packages and pending triggers
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          # 1. Remove all dependency packages that are no longer needed after purging the selected packages
+          sudo apt-get autoremove -y -qq || true
+
+          # 2. Check for unconfigured/broken installs first
+          if dpkg -l | grep -q '^..U'; then
+              echo "Unconfigured packages found. Configuring..."
+              sudo dpkg --configure -a
+          fi
+
+          # 3. Check for pending triggers (like update-initramfs)
+          if dpkg -l | grep -q '^..t'; then
+              echo "Pending triggers detected (e.g., initramfs/man-db). Processing..."
+              sudo dpkg --triggers-only -a
+          else
+              echo "No triggers pending. System is clean."
           fi
 
       - id: apt_clean
@@ -188,6 +197,11 @@ jobs:
         name: Install build dependencies original (for non-self-hosted runners)
         if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
         run: |
+          # as stated in https://wiki.libreelec.tv/development/build-basics
+          sudo apt update
+          sudo apt upgrade -y -qq
+          sudo apt install -y -qq bc curl g++ gcc git gperf make openjdk-11-jre-headless rsync unzip xfonts-utils xsltproc xz-utils zip
+
           sudo apt-get update
           sudo apt-get install -y -qq \
             git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
@@ -223,6 +237,26 @@ jobs:
               else
                 echo "Workspace already owned by ${{ env.BUILDUSER }}, skipping chown."
               fi
+              ---
+              echo "Recursively chowning workspace to ${{ env.BUILDUSER }}..."
+              chown -R "${{ env.BUILDUSER }}" "$PWD"
+
+              # -quit causes find to exit immediately after it finds the first match
+              if [ -n "$(find "$PWD" ! -user ${{ env.BUILDUSER }} -print -quit)" ]; then
+                  echo "Evaluation: TRUE (Mismatched owner found)"
+              fi
+              # for each owner mismatch, fix ownership (only if needed)
+              find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} +
+              # for each owner mismatch, also ensure permissions are 755 (only if needed)
+              find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
+              # Fix Directories (755)
+              find "$PWD" -type d ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
+              # Fix Files (644)
+              find "$PWD" -type f ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 644 {} +
+              # fix both ownership and permissions only when they are wrong
+              find "$PWD" \( ! -user ${{ env.BUILDUSER }} -o ! -perm 755 \) -exec chown -c ${{ env.BUILDUSER }} {} + -exec chmod -c 755 {} +
+
+
             else
               echo "User ${{ env.BUILDUSER }} does not exist. Please create a non-root user for builds." >&2
               exit 1
