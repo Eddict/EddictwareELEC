@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="rpi-eeprom"
-PKG_VERSION="a34ba1bcc4f46a2f4c7f3b1e806a238fdacd3698"
-PKG_SHA256="f68e3bf83cd3de9e24ec9740763960791e20103096f6809b8e5cd0588bcf7db4"
-PKG_LICENSE="BSD-3/custom"
+PKG_VERSION="32e85eda5c86982d8309a6e6bcbaebfa45220b04"
+PKG_SHA256="d37fcdd94abb65c43855575f934a4af34b8d3294f79042270ee6f1c7ee209409"
+PKG_LICENSE="BSD-3-Clause"
 PKG_SITE="https://github.com/raspberrypi/rpi-eeprom"
 PKG_URL="https://github.com/raspberrypi/rpi-eeprom/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="pciutils"
@@ -54,6 +54,7 @@ makeinstall_target() {
     cp -PRv ${PKG_BUILD}/rpi-eeprom-update ${INSTALL}/usr/bin/.rpi-eeprom-update.real
     cp -PRv ${PKG_BUILD}/rpi-eeprom-config ${INSTALL}/usr/bin
     cp -PRv ${PKG_BUILD}/rpi-eeprom-digest ${INSTALL}/usr/bin
+    cp -PRv ${PKG_BUILD}/rpi-bootloader-version ${INSTALL}/usr/bin
 
   mkdir -p ${INSTALL}/etc/default
     cp -PRv ${PKG_DIR}/config/rpi-eeprom-update-default ${INSTALL}/etc/default/rpi-eeprom-update

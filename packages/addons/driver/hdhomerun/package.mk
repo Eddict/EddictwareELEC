@@ -4,9 +4,9 @@
 
 PKG_NAME="hdhomerun"
 PKG_VERSION="7.0"
-PKG_REV="1"
+PKG_REV="0"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-only"
 PKG_SITE="http://www.silicondust.com/products/hdhomerun/dvbt/"
 PKG_URL=""
 PKG_DEPENDS_TARGET="toolchain"

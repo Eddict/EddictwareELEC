@@ -8,11 +8,15 @@ PKG_LICENSE="Apache-2.0"
 PKG_SITE="https://podman.io"
 PKG_DEPENDS_TARGET="conmon gpgme podman-bin libseccomp netavark runc"
 PKG_SECTION="service/system"
+PKG_SHORTDESC="Daemonless container engine for OCI Containers"
 PKG_LONGDESC="Podman is a daemonless container engine for developing, managing, and running OCI Containers."
 PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="Podman"
+PKG_ADDON_ICON_NAME="none"
+PKG_ADDON_ICON_SIZE="300"
+PKG_ADDON_ICON_OFFSET='+5'
 PKG_ADDON_TYPE="xbmc.service"
 
 addon() {

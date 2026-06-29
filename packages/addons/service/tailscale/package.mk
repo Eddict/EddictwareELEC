@@ -1,9 +1,9 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2026-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="tailscale"
-PKG_VERSION="1.96.4"
-PKG_REV="0"
+PKG_VERSION="1.98.4"
+PKG_REV="3"
 PKG_ARCH="any"
 PKG_LICENSE="BSD-3-Clause"
 PKG_SITE="https://tailscale.com"
@@ -15,20 +15,21 @@ PKG_TOOLCHAIN="manual"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="Tailscale"
+PKG_ADDON_ICON_SIZE="170"
 PKG_ADDON_TYPE="xbmc.service"
 
 case "${ARCH}" in
-  x86_64)
+  "x86_64")
+    PKG_SHA256="e6c08a8ee7e63e69aaf1b62ecd12672b3883fbcd2a176bf6cfa42a15fdce0b6b"
     TAILSCALE_ARCH="amd64"
-    PKG_SHA256="a1cba18826b1f91cb25ef7f5b8259b5258339b42db7867af9269e21829ea78cc"
     ;;
-  arm)
+  "arm")
+    PKG_SHA256="18d4568fe5c72ac31fdac4a8af233770a0357673e6a32f315d04eb0453f495bd"
     TAILSCALE_ARCH="arm"
-    PKG_SHA256="6c8731f096147aaf9e187b39f892692fb2bd56dc2eb1fb8fd06982164f339869"
     ;;
-  aarch64)
+  "aarch64")
+    PKG_SHA256="3cb068eb1368b6bb218d0ef0aa0a7a679a7156b7c979e2279cc2c2321b5f05c7"
     TAILSCALE_ARCH="arm64"
-    PKG_SHA256="a27249bc70d7b37a68f8be7f5c4507ea5f354e592dce43cb5d4f3e742b313c3c"
     ;;
 esac
 

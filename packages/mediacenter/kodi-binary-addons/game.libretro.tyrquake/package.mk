@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.tyrquake"
-PKG_VERSION="0.62.0.51-Omega"
-PKG_SHA256="8445ad91158fbefbd287e31a2aa23ac66e81fb0abdc24e304eeac6467d1ffd23"
-PKG_REV="2"
+PKG_VERSION="0.62.0.53-Omega"
+PKG_SHA256="d8496096d0106e20e056c56c504def396f9d1828bfb86292511fe6c975ff13ac"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/kodi-game/game.libretro.tyrquake"
 PKG_URL="https://github.com/kodi-game/game.libretro.tyrquake/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-tyrquake"

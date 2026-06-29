@@ -158,7 +158,16 @@ class Flatpak:
             return None
         return info['name']
 
-    def start(self, appid: str, args: list | None = None, env: dict | None = None, run_env: dict | None = None) -> bool:
+    def start(
+        self,
+        appid: str,
+        args: list | None = None,
+        env: dict | None = None,
+        flatpak_args: list | None = None,
+        run_env: dict | None = None,
+        wayland: bool = True,
+        pulseaudio: bool = True,
+    ) -> bool:
 
         info = self.get_application_info(appid)
         if info is None:
@@ -169,14 +178,28 @@ class Flatpak:
 
         runargs = [self.target]
         if env is not None:
-            for k, v in env:
-                runargs.append('--env={k}={v}')
+            for k, v in env.items():
+                runargs.append(f'--env={k}={v}')
+
+        if flatpak_args is not None:
+            runargs.extend(flatpak_args)
 
         runargs.append(appid)
         if args is not None:
             runargs.extend(args)
 
-        return eh.run_external_program(executable=self.flatpak_run, args=runargs, env=run_env, name=name)
+        flatpak_run_env = {}
+        if pulseaudio:
+            flatpak_run_env['KODI_FLATPAK_PULSEAUDIO'] = 'yes'
+        else:
+            flatpak_run_env['KODI_FLATPAK_PULSEAUDIO'] = 'no'
+
+        if run_env is not None:
+            flatpak_run_env.update(run_env)
+
+        return eh.run_external_program(
+            executable=self.flatpak_run, args=runargs, env=flatpak_run_env, name=name, wayland=wayland
+        )
 
     def find_application_icon(self, appid: str) -> str | None:
         for i in ['512x512', '256x256', '128x128', '64x64', '48x48', '32x32']:

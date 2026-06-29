@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2021-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="pipewire"
-PKG_VERSION="1.6.4"
-PKG_SHA256="e31ae906dc7fee1c56ccc4279247b385685b926b3f900cebd910d4bd4403d86b"
-PKG_LICENSE="LGPL"
+PKG_VERSION="1.6.7"
+PKG_SHA256="a618c0a159055e2443f638c5c9f4b904e6902b655c09a7ff84546fa2447aedf8"
+PKG_LICENSE="MIT"
 PKG_SITE="https://pipewire.org"
 PKG_URL="https://github.com/PipeWire/pipewire/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain alsa-lib dbus glib libpthread-stubs libsndfile libusb ncurses systemd"

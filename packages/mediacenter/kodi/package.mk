@@ -3,9 +3,9 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="kodi"
-PKG_VERSION="5481bf680fddf4c0bc42ccf51520391ec868881e"
-PKG_SHA256="044d5258841f2b8c8ab47bfdb6238c7d956ce8f374a50760839488b841e63917"
-PKG_LICENSE="GPL"
+PKG_VERSION="bd71b628f9632d17aef03b2322780f95a1ae292b"
+PKG_SHA256="caeba9dfa1eda6f5c80058bd59b81904d98c7d95c7c6ff214f8c01ed1093296c"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/xbmc/xbmc/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain JsonSchemaBuilder:host TexturePacker:host Python3 zlib systemd lzo pcre2 swig:host libass curl exiv2 fontconfig fribidi tinyxml tinyxml2 libjpeg-turbo freetype libcdio taglib libxml2 libxslt nlohmann-json sqlite ffmpeg crossguid libdvdnav libfmt lirc libfstrcmp flatbuffers:host flatbuffers libudfread spdlog libxkbcommon"
@@ -371,6 +371,11 @@ post_makeinstall_target() {
   # nvidia: Enable USLEEP to reduce CPU load while rendering
   if listcontains "${GRAPHIC_DRIVERS}" "nvidia"; then
     echo "__GL_YIELD=USLEEP" >> ${INSTALL}/usr/lib/kodi/kodi.conf
+  fi
+
+  # nvidia-ng: prevent high GPU power consumption during video decode
+  if listcontains "${GRAPHIC_DRIVERS}" "nvidia-ng"; then
+    echo "CUDA_DISABLE_PERF_BOOST=1" >> ${INSTALL}/usr/lib/kodi/kodi.conf
   fi
 
   mkdir -p ${INSTALL}/usr/sbin
