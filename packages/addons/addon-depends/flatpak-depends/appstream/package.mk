@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2026-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="appstream"
-PKG_VERSION="1.1.2"
-PKG_SHA256="564ec87b16e9e4ee81fb021e612250fd27f3a3ecd31c209a5dd1ff59def3022d"
-PKG_LICENSE="LGPL-2.1"
+PKG_VERSION="1.1.3"
+PKG_SHA256="437c0564facc63f36b7b7907293182446a9c535619a09ec93840147f685c2f64"
+PKG_LICENSE="LGPL-2.1-or-later"
 PKG_SITE="https://github.com/ximion/appstream"
 PKG_URL="https://github.com/ximion/appstream/archive/v${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_HOST="toolchain:host curl:host itstool:host libfyaml:host libxml2:host libxmlb:host"
@@ -33,7 +33,10 @@ PKG_MESON_OPTS_TARGET="-Dstemming=false \
                        -Dapidocs=false \
                        -Dman=false"
 
+pre_configure_host() {
+  export PKG_CONFIG_PATH="$(get_build_dir curl)/.host-install/lib/pkgconfig"
+}
+
 pre_configure_target() {
   export TARGET_LDFLAGS+=" -lm"
 }
-

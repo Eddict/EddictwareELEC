@@ -19,6 +19,7 @@ class FlatpakGui:
         self.addon_name = self.addon.getAddonInfo('name')
         self.addon_path = self.addon.getAddonInfo('path')
         self.addon_icon = self.addon.getAddonInfo('icon')
+        self.flatpak_icon = os.path.join(self.addon_path, 'resources', 'media', 'icon.png')
 
         flatpak_exe = os.path.join(self.addon_path, 'bin', 'flatpak')
         flatpak_run = os.path.join(self.addon_path, 'bin', 'flatpak-run-wrapper')
@@ -140,7 +141,10 @@ class FlatpakGui:
         remote_url: str | None = None,
         args: list | None = None,
         env: dict | None = None,
+        flatpak_args: list | None = None,
         run_env: dict | None = None,
+        wayland: bool = True,
+        pulseaudio: bool = True,
     ) -> bool:
 
         if not self.flatpak.get_commit(appid):
@@ -160,7 +164,15 @@ class FlatpakGui:
             if not ok:
                 return False
 
-        return self.flatpak.start(appid=appid, args=args, env=env, run_env=run_env)
+        return self.flatpak.start(
+            appid=appid,
+            args=args,
+            env=env,
+            flatpak_args=flatpak_args,
+            run_env=run_env,
+            wayland=wayland,
+            pulseaudio=pulseaudio,
+        )
 
     def show_info(self, appid: str) -> None:
         info = self.flatpak.get_application_info(appid)

@@ -3,9 +3,9 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="samba"
-PKG_VERSION="4.24.1"
-PKG_SHA256="217151ca318a5576f8e0de72ba0acdf08157ecf12adac42d1af86db0b09a5f5a"
-PKG_LICENSE="GPLv3+"
+PKG_VERSION="4.24.3"
+PKG_SHA256="4a5e0ed1ea192b798c873d9957c50a5767c10c2767cccb00d56ecc427e94f8e9"
+PKG_LICENSE="GPL-3.0-or-later"
 PKG_SITE="https://www.samba.org"
 PKG_URL="https://download.samba.org/pub/samba/stable/${PKG_NAME}-${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="autotools:host gcc:host heimdal:host attr connman e2fsprogs gnutls libaio libunwind popt Python3 readline talloc wsdd2 zlib"

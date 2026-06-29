@@ -2,10 +2,10 @@
 # Copyright (C) 2026-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="gnupg"
-PKG_REV="0"
-PKG_VERSION="2.5.19"
-PKG_SHA256="722aa8a426dd9b44e0d194b73bfee3a3e617d65674cd4d1d062e6df29f1788c6"
-PKG_LICENSE="GPL-3.0"
+PKG_REV="2"
+PKG_VERSION="2.5.20"
+PKG_SHA256="6461266e99c308419a379abe6c356d54c214136c4589bd65951091138989ffc6"
+PKG_LICENSE="GPL-3.0-or-later"
 PKG_SITE="https://www.gnupg.org"
 PKG_URL="https://www.gnupg.org/ftp/gcrypt/gnupg/gnupg-${PKG_VERSION}.tar.bz2"
 PKG_DEPENDS_TARGET="toolchain libassuan libgcrypt libgpg-error libksba libnpth zlib"
@@ -48,7 +48,7 @@ PKG_CONFIGURE_OPTS_TARGET="--disable-doc \
 
 pre_configure_target() {
    export LIBGCRYPT_CONFIG="${SYSROOT_PREFIX}/usr/bin/libgcrypt-config"
- 
+
    CFLAGS+=" -I$(get_install_dir libassuan)/usr/include \
              -I$(get_install_dir libksba)/usr/include \
              -I$(get_install_dir libnpth)/usr/include "

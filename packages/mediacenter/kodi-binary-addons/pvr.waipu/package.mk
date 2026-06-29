@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="pvr.waipu"
 PKG_VERSION="22.9.2-Piers"
 PKG_SHA256="3391d50fe91625cb735b9e95f02902f45d17d6e966dde58263343dece238c2a9"
-PKG_REV="1"
+PKG_REV="2"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/flubshi/pvr.waipu"
 PKG_URL="https://github.com/flubshi/pvr.waipu/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform nlohmann-json"

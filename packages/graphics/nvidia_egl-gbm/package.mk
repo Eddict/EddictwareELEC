@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2026-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="nvidia_egl-gbm"
@@ -20,4 +20,3 @@ makeinstall_target() {
     ln -sf libnvidia-egl-gbm.so.${PKG_VERSION}                                  ${INSTALL}/usr/lib/libnvidia-egl-gbm.so.1
     ln -sf libnvidia-egl-gbm.so.1                                               ${INSTALL}/usr/lib/libnvidia-egl-gbm.so
 }
-

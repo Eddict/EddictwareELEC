@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2021-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="fcft"
@@ -21,5 +21,3 @@ if [ "${DISPLAYSERVER}" != "wl" ]; then
   PKG_DEPENDS_CONFIG="tllist"
   PKG_MESON_OPTS_TARGET+=" --default-library static"
 fi
-
-

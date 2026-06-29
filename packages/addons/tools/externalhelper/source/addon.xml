@@ -6,8 +6,10 @@
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
   </requires>
+  <extension point="xbmc.python.script" library="default.py">
+    <provides>executable</provides>
+  </extension>
   <extension point="xbmc.python.module" library="resources/lib/" />
-  <extension point="xbmc.python.script" library="default.py" />
   <extension point="xbmc.addon.metadata">
     <summary>@PKG_SHORTDESC@</summary>
     <description>
