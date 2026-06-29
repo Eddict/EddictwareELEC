@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="amlogic-boot-fip"
-PKG_LICENSE="nonfree"
-PKG_VERSION="4e2848a9579e68afe015865309ea6df7096a50e5"
-PKG_SHA256="270803e6ed0148ca62bd72b4a142e8848fff9ffc630b931b5842afeb87320618"
+PKG_LICENSE="LicenseRef-nonfree"
+PKG_VERSION="42d372123631066fb77fbcbb612dc3eb41a3f6f9"
+PKG_SHA256="dede20dd7666a33b33442252b994f4033cfafe3fb6d11c86019dc3ae61d55227"
 PKG_SITE="https://github.com/LibreELEC/amlogic-boot-fip"
 PKG_URL="https://github.com/LibreELEC/amlogic-boot-fip/archive/${PKG_VERSION}.tar.gz"
 PKG_LONGDESC="Firmware Image Package (FIP) sources used to sign Amlogic u-boot binaries in LibreELEC images"

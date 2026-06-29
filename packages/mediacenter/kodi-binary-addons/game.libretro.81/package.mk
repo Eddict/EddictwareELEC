@@ -2,11 +2,11 @@
 # Copyright (C) 2023-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.81"
-PKG_VERSION="1.0.0.31-Omega"
-PKG_SHA256="cd93461146b0be71854e9a6d04357e63bd42146ff2195e63734093a2615a8b4e"
-PKG_REV="2"
+PKG_VERSION="1.0.0.32-Omega"
+PKG_SHA256="a7103984f5b70ce45100e1d78060923487d0d2b045193064a8815ada6216b0de"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPLv3"
+PKG_LICENSE="GPL-3.0-only"
 PKG_SITE="https://github.com/kodi-game/game.libretro.81"
 PKG_URL="https://github.com/kodi-game/game.libretro.81/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-81"

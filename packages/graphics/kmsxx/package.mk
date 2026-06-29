@@ -1,9 +1,9 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2022-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="kmsxx"
-PKG_VERSION="9c6600529d4e0f6c72bc2429728ab01617fb5349"
-PKG_SHA256="254794daf263565b033d742cf35c0388c040b201be4466ce1ade3bb5c924731b"
+PKG_VERSION="73a82c3afb9af0a392d9d572ed2f6cd1e091a487"
+PKG_SHA256="3976d34acecdcc83f263922702e1dbe295ebcdf1c989d0197d811ddd4dc0b6da"
 PKG_LICENSE="MPL-2.0"
 PKG_SITE="https://github.com/tomba/kmsxx"
 PKG_URL="https://github.com/tomba/kmsxx/archive/${PKG_VERSION}.tar.gz"

@@ -3,9 +3,9 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="kodi"
-PKG_VERSION="d89b908687ddef7f6c3eaacc1a7fb940afb3d361"
-PKG_SHA256="1d0d02069fca1754df09d7f4f3a1047ffa1331dc953fe4a51cc9eb614f5f5021"
-PKG_LICENSE="GPL"
+PKG_VERSION="bd71b628f9632d17aef03b2322780f95a1ae292b"
+PKG_SHA256="caeba9dfa1eda6f5c80058bd59b81904d98c7d95c7c6ff214f8c01ed1093296c"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="http://www.kodi.tv"
 PKG_URL="https://github.com/xbmc/xbmc/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain JsonSchemaBuilder:host TexturePacker:host Python3 zlib systemd lzo pcre2 swig:host libass curl exiv2 fontconfig fribidi tinyxml tinyxml2 libjpeg-turbo freetype libcdio taglib libxml2 libxslt nlohmann-json sqlite ffmpeg crossguid libdvdnav libfmt lirc libfstrcmp flatbuffers:host flatbuffers libudfread spdlog libxkbcommon"
@@ -13,6 +13,10 @@ PKG_DEPENDS_UNPACK="commons-lang3 commons-text groovy"
 PKG_DEPENDS_HOST="toolchain"
 PKG_LONGDESC="A free and open source cross-platform media player."
 PKG_BUILD_FLAGS="+speed"
+
+if [ "${TARGET_ARCH}" = "arm" ]; then
+  PKG_BUILD_FLAGS+=" -gold"
+fi
 
 configure_package() {
   # Single threaded LTO is very slow so rely on Kodi for parallel LTO support
@@ -313,6 +317,9 @@ makeinstall_host() {
 
 pre_configure_target() {
   export LIBS="${LIBS} -lncurses"
+  if [ "${TARGET_ARCH}" = "arm" ]; then
+    LDFLAGS+=" -Wl,--allow-shlib-undefined"
+  fi
 }
 
 post_makeinstall_target() {
@@ -364,6 +371,11 @@ post_makeinstall_target() {
   # nvidia: Enable USLEEP to reduce CPU load while rendering
   if listcontains "${GRAPHIC_DRIVERS}" "nvidia"; then
     echo "__GL_YIELD=USLEEP" >> ${INSTALL}/usr/lib/kodi/kodi.conf
+  fi
+
+  # nvidia-ng: prevent high GPU power consumption during video decode
+  if listcontains "${GRAPHIC_DRIVERS}" "nvidia-ng"; then
+    echo "CUDA_DISABLE_PERF_BOOST=1" >> ${INSTALL}/usr/lib/kodi/kodi.conf
   fi
 
   mkdir -p ${INSTALL}/usr/sbin
@@ -453,5 +465,4 @@ post_install() {
   enable_service kodi-reboot.service
   enable_service kodi-waitonnetwork.service
   enable_service kodi.service
-  enable_service kodi-lirc-suspend.service
 }

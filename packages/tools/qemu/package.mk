@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="qemu"
-PKG_VERSION="10.2.0"
-PKG_SHA256="9e30ad1b8b9f7b4463001582d1ab297f39cfccea5d08540c0ca6d6672785883a"
-PKG_LICENSE="GPL"
+PKG_VERSION="11.0.1"
+PKG_SHA256="0d235f5820278d914a3155ec27af8e4258d697ea892895570807d69c0cb8cd64"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://www.qemu.org"
 PKG_URL="https://download.qemu.org/qemu-${PKG_VERSION}.tar.xz"
 PKG_DEPENDS_HOST="toolchain:host distlib:host glib:host pixman:host Python3:host zlib:host"

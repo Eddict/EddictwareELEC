@@ -2,11 +2,11 @@
 # Copyright (C) 2023-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.vice_xplus4"
-PKG_VERSION="3.9.0.30-Omega"
-PKG_SHA256="392ba7b88fb0a9f4c9710c5084bdc82c0e296a5fe81a965f4f3720a38c4e81a4"
-PKG_REV="2"
+PKG_VERSION="3.10.0.35-Omega"
+PKG_SHA256="60ba9524447aa77d3c9ca6b7ce00549695a18ccbd6a04969ac06b868bb7acea6"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPLv2"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/kodi-game/game.libretro.vice_xplus4"
 PKG_URL="https://github.com/kodi-game/game.libretro.vice_xplus4/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-vice_xplus4"

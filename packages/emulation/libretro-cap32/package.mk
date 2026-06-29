@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libretro-cap32"
-PKG_VERSION="a5d96c5ebbda3bc89a3bd1c1691a20f5eacc232d"
-PKG_SHA256="c9010df18c86ab98ea77c1960b17ddde381f2ac57120792c266a87b518d0b86b"
-PKG_LICENSE="GPLv2"
+PKG_VERSION="4abfb8be233bec630f369379fb6c1d92d31f1c7d"
+PKG_SHA256="45c92ca63aaf2d12c81b9c1de28b0a301b1c37c5b5de7fcfd44fe303c45662b9"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/libretro/libretro-cap32"
 PKG_URL="https://github.com/libretro/libretro-cap32/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"

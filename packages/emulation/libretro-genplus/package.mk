@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libretro-genplus"
-PKG_VERSION="cecccacf767b1c8e86af3e315223b052a7f81b95"
-PKG_SHA256="8a3fa4dada19046a953f7ed65be9ff0f5eb47e169a917fe6e3616b5cf187acc7"
-PKG_LICENSE="Non-commercial"
+PKG_VERSION="252694adb9ebf2abcc7a1340d4078dce53d8954f"
+PKG_SHA256="e466a9757bc7a0e85e3a9a0bfc25e7d5f068ac01e8515b726a0b30d8f92e5970"
+PKG_LICENSE="LicenseRef-Non-commercial"
 PKG_SITE="https://github.com/ekeeke/Genesis-Plus-GX"
 PKG_URL="https://github.com/libretro/Genesis-Plus-GX/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"

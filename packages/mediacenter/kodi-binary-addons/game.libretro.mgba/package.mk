@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.mgba"
-PKG_VERSION="0.11.0.56-Omega"
-PKG_SHA256="07123a7b7ebfacaefdeebe5871366a99a0fd966a0206ae0b320887d3235e2a87"
-PKG_REV="2"
+PKG_VERSION="0.11.0.57-Omega"
+PKG_SHA256="e30bda02270fbef074a61cc78a9e2a124bfa70aa168c1e2d972e3f6182cf7864"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="MPL-2.0"
 PKG_SITE="https://github.com/kodi-game/game.libretro.mgba"
 PKG_URL="https://github.com/kodi-game/game.libretro.mgba/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-mgba"

@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.mesen"
-PKG_VERSION="0.9.9.41-Omega"
-PKG_SHA256="869fa88bcee64a7d92867e47994deb42e8a2bd606d71218dc8d72c5814e0617c"
-PKG_REV="2"
+PKG_VERSION="0.9.9.42-Omega"
+PKG_SHA256="cc9b6b404298ae5e965cdacad511523a8ac0bfd3b13f0d3887527c39f1a25a8f"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-3.0-or-later"
 PKG_SITE="https://github.com/kodi-game/game.libretro.mesen"
 PKG_URL="https://github.com/kodi-game/game.libretro.mesen/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-mesen"

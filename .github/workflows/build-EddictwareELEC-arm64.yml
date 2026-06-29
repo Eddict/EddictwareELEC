@@ -1,0 +1,458 @@
+name: Build EddictwareELEC (aarch64)
+
+description: |
+  CI workflow to build EddictwareELEC for RPi4 (aarch64) using the official build command.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner to use'
+        required: false
+        default: ubuntu-24.04
+        type: choice
+        options:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - self-hosted
+          - self-hosted-sysbox
+          - self-hosted-arm64
+          - arc-runner-set
+      remove_packages:
+        description: 'Which packages to remove before build'
+        required: false
+        default: largest
+        type: choice
+        options:
+          - none
+          - largest
+          - all
+  # push:
+  #   branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+
+run-name: ${{ format('{0} ({1})', github.workflow, inputs.runner || 'ubuntu-24.04') }}
+
+env:
+  DISTRO: EddictwareELEC
+  PROJECT: RPi
+  DEVICE: RPi4
+  ARCH: aarch64
+  DEBIAN_FRONTEND: noninteractive
+  BUILDUSER: runner
+
+jobs:
+  build:
+    runs-on: ${{
+      (github.event_name == 'workflow_dispatch' && (
+        inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') ||
+        inputs.runner == 'self-hosted-arm64' && fromJson('["self-hosted", "ARM64"]') ||
+        inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
+        inputs.runner )) || 'ubuntu-24.04' }}
+    env:
+      CCACHE_DIR:
+      CCACHE_LOCAL_DIR:
+      LARGEST_SUFFIX: ${{ inputs.remove_packages == 'largest' && '(largest only)' || (inputs.remove_packages == 'all' && '(all)' || '(none)') }}
+    steps:
+      - id: set_derived_env
+        name: Set derived environment variables
+        run: |
+          CCACHE_DIR_VALUE="./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache"
+          echo "CCACHE_DIR=${CCACHE_DIR_VALUE}" >> "$GITHUB_ENV"
+          echo "CCACHE_LOCAL_DIR=${CCACHE_DIR_VALUE}-local" >> "$GITHUB_ENV"
+      
+      - id: list_installed_packages
+        name: List installed packages before build
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' && inputs.runner != 'ubuntu-24.04-arm' && inputs.remove_packages != 'none' }}
+        run: |
+          echo "Running apt-get update:"
+          sudo apt-get update -qq
+          echo "Listing installed packages (dpkg-query):"
+          dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' | sort > installed-packages.txt
+          # List top 30 by size (in KB)
+          sort -k3 -n -r installed-packages.txt | head -n 30 > installed-packages-largest.txt
+          echo "Top 30 largest packages (name, version, size KB):"
+          cat installed-packages-largest.txt
+          echo "Full list saved to installed-packages.txt (size in KB in 3rd column)"
+          df -h
+          du -h --max-depth=2 | sort -hr | head -n 10
+
+      - id: upload_installed_packages
+        name: Upload installed packages lists
+        if: steps.list_installed_packages.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: installed-packages
+          path: |
+            installed-packages.txt
+            installed-packages-largest.txt
+          if-no-files-found: warn
+
+      - id: remove_browsers
+        name: Remove browsers and GUI apps ${{ env.LARGEST_SUFFIX }}
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" firefox google-chrome-stable microsoft-edge-stable || true
+          elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" firefox google-chrome-stable microsoft-edge-stable || true
+          fi
+
+      - id: remove_cloud_tools
+        name: Remove cloud/VM/container tools ${{ env.LARGEST_SUFFIX }}
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" azure-cli google-cloud-cli kubectl containerd.io docker-ce snapd google-cloud-cli-anthoscli || true
+          elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" azure-cli google-cloud-cli kubectl podman docker-ce docker-ce-cli containerd.io open-vm-tools lxd-installer lxd-agent-loader cloud-init cloud-guest-utils overlayroot walinuxagent snapd google-cloud-cli-anthoscli || true
+          fi
+
+      - id: remove_db_servers
+        name: Remove database servers/clients ${{ env.LARGEST_SUFFIX }}
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" mysql-server-core-8.0 || true
+          elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" mysql-server* mysql-client* postgresql-* sqlite3 mediainfo sphinxsearch freetds-common || true
+          fi
+
+      - id: remove_web_servers
+        name: Remove web servers and scripting ${{ env.LARGEST_SUFFIX }}
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" powershell || true
+          elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" apache2* nginx* php* php8.3-* ruby* ruby3.2-* powershell || true
+          fi
+
+      - id: remove_extra_compilers
+        name: Remove extra compilers/interpreters ${{ env.LARGEST_SUFFIX }}
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" temurin-8-jdk temurin-11-jdk temurin-17-jdk temurin-21-jdk temurin-25-jdk llvm-16-dev llvm-17-dev llvm-18-dev libllvm16t64 libllvm17t64 libllvm18 libllvm19 libllvm20 llvm-16 llvm-17 llvm-18 || true
+          elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" clang-* clang-tidy-* clang-tools-* llvm-* gfortran-* python3.12* temurin-*-jdk || true
+          fi
+
+      - id: remove_misc_tools
+        name: Remove miscellaneous tools ${{ env.LARGEST_SUFFIX }}
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          if [[ "${{ inputs.remove_packages }}" == "largest" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" python3-botocore linux-azure-6.11-headers-6.11.0-1018 || true
+          elif [[ "${{ inputs.remove_packages }}" == "all" ]]; then
+            sudo apt-get purge -y -qq -o Dpkg::Options::="--no-triggers" byobu htop tmux screen mercurial git-ftp git-lfs shellcheck snapd session-manager-plugin parallel upx-ucl tree pastebinit || true
+          fi
+
+      - id: final_cleanup
+        name: Check for both unconfigured packages and pending triggers
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          # 1. Remove all dependency packages that are no longer needed after purging the selected packages
+          sudo apt-get autoremove -y -qq || true
+
+          # 2. Check for unconfigured/broken installs first
+          if dpkg -l | grep -q '^..U'; then
+              echo "Unconfigured packages found. Configuring..."
+              sudo dpkg --configure -a
+          fi
+
+          # 3. Check for pending triggers (like update-initramfs)
+          if dpkg -l | grep -q '^..t'; then
+              echo "Pending triggers detected (e.g., initramfs/man-db). Processing..."
+              sudo dpkg --triggers-only -a
+          else
+              echo "No triggers pending. System is clean."
+          fi
+
+      - id: apt_clean
+        name: Clean up apt cache
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          sudo apt-get clean -qq
+          echo "Disk usage after removing packages:"
+          df -h
+          du -h --max-depth=2 | sort -hr | head -n 10
+
+      - id: list_installed_packages_after_cleanup
+        name: List installed packages after build
+        if: steps.list_installed_packages.outcome == 'success'
+        run: |
+          echo "Listing installed packages after cleanup (dpkg-query):"
+          dpkg-query -W -f='${Package}\t${Version}\t${Installed-Size}\n' | sort > installed-packages-after-cleanup.txt
+          echo "Full list saved to installed-packages-after-cleanup.txt (size in KB in 3rd column)"
+
+      - id: upload_installed_packages_after_cleanup
+        name: Upload installed packages list after cleanup
+        if: steps.list_installed_packages.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: installed-packages
+          path: installed-packages-after-cleanup.txt
+          if-no-files-found: warn
+          overwrite: true
+
+      - id: checkout
+        name: Checkout EddictwareELEC
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ${{ github.repository }}
+          ref: upstream
+          path: ${{ github.workspace }}
+          clean: false
+
+      - id: install_deps
+        name: Install build dependencies (for non-self-hosted runners)
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
+        run: |
+          # as stated in https://wiki.libreelec.tv/development/build-basics
+          sudo apt-get update
+          sudo apt-get upgrade -y -qq
+          sudo apt-get install -y -qq bc curl g++ gcc git gperf make openjdk-11-jre-headless rsync unzip xfonts-utils xsltproc xz-utils zip
+
+          # sudo apt-get update
+          sudo apt-get install -y -qq \
+            git make gcc g++ bc bzip2 unzip wget python3 python3-pip xz-utils \
+            libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev gawk flex gettext \
+            xsltproc rsync file \
+            xfonts-utils libjson-perl rdfind libparse-yapp-perl gperf \
+            libxml-parser-perl patchutils lzop \
+            default-jre zip zstd sudo dumb-init jq \
+            device-tree-compiler ccache kmod keyutils openssl elfutils u-boot-tools pigz mtools squashfs-tools
+
+
+      - id: install_arm_deps
+        name: Install build dependencies (for arm64 runners)
+        if: ${{ contains(inputs.runner || '', '-arm') }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y -qq \
+            libjson-perl
+
+      - id: chown_workspace
+        name: Chown workspace to non-root user
+        run: |
+          if [ "$(id -u)" = 0 ]; then
+            echo "Running as root, switching to ${{ env.BUILDUSER }} for build."
+            if id "${{ env.BUILDUSER }}" >/dev/null 2>&1; then
+              echo "Ensuring ${{ env.BUILDUSER }} owns the workspace (will chown only if needed)..."
+              # Only chown if needed (avoid unnecessary chown)
+              if [ "$(stat -c %U "$PWD")" != "${{ env.BUILDUSER }}" ]; then
+                chown -R "${{ env.BUILDUSER }}" "$PWD"
+              else
+                echo "Workspace already owned by ${{ env.BUILDUSER }}, skipping chown."
+              fi
+              ---
+              echo "Recursively chowning workspace to ${{ env.BUILDUSER }}..."
+              chown -R "${{ env.BUILDUSER }}" "$PWD"
+
+              # -quit causes find to exit immediately after it finds the first match
+              if [ -n "$(find "$PWD" ! -user ${{ env.BUILDUSER }} -print -quit)" ]; then
+                  echo "Evaluation: TRUE (Mismatched owner found)"
+              fi
+              # for each owner mismatch, fix ownership (only if needed)
+              find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} +
+              # for each owner mismatch, also ensure permissions are 755 (only if needed)
+              find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
+              # Fix Directories (755)
+              find "$PWD" -type d ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
+              # Fix Files (644)
+              find "$PWD" -type f ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 644 {} +
+              # fix both ownership and permissions only when they are wrong
+              find "$PWD" \( ! -user ${{ env.BUILDUSER }} -o ! -perm 755 \) -exec chown -c ${{ env.BUILDUSER }} {} + -exec chmod -c 755 {} +
+
+
+            else
+              echo "User ${{ env.BUILDUSER }} does not exist. Please create a non-root user for builds." >&2
+              exit 1
+            fi
+          else
+            echo "Not running as root ($(whoami)), no need to change ownership."
+          fi
+
+      - id: calc_build_params
+        name: Calculate recommended make -j and -l parameters
+        run: |
+          set -euo pipefail
+          NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
+          PER_JOB_MB=${PER_JOB_MB:-1200}
+          RESERVE_MB=${RESERVE_MB:-4096}
+          mem_bytes=0
+          if [ -f /sys/fs/cgroup/memory.max ]; then
+            memmax=$(cat /sys/fs/cgroup/memory.max)
+            if [ "$memmax" != "max" ]; then
+              mem_bytes=$memmax
+            fi
+          fi
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
+              memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+              if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
+                mem_bytes=$memlim
+              fi
+            fi
+          fi
+          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
+            mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+            mem_bytes=$((mem_kb*1024))
+          fi
+          TOTAL_MB=$((mem_bytes/1024/1024))
+          USABLE_MB=$((TOTAL_MB-RESERVE_MB))
+          if [ "$USABLE_MB" -lt 256 ]; then USABLE_MB=256; fi
+          MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
+          if [ "$MAX_J_BY_RAM" -lt 1 ]; then MAX_J_BY_RAM=1; fi
+          CANDIDATE_J=$((NB_CORES+2))
+          if [ "$CANDIDATE_J" -gt "$MAX_J_BY_RAM" ]; then RECOMMENDED_J=$MAX_J_BY_RAM; else RECOMMENDED_J=$CANDIDATE_J; fi
+          if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
+          RECOMMENDED_L=${NB_CORES}
+          echo "Using make -j${RECOMMENDED_J} -l${RECOMMENDED_L}"
+          echo "RECOMMENDED_J=${RECOMMENDED_J}" >> $GITHUB_ENV
+          echo "RECOMMENDED_L=${RECOMMENDED_L}" >> $GITHUB_ENV
+
+      - id: cache_ccache
+        name: Cache ccache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.CCACHE_DIR }}
+            ${{ env.CCACHE_LOCAL_DIR }}
+          key: ccache-${{ runner.os }}-${{ hashFiles('packages/*/package.mk') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-
+
+      - id: cache_sources
+        name: Cache source archives
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: sources
+          key: sources-${{ runner.os }}-${{ hashFiles('packages/*/package.mk') }}
+          restore-keys: |
+            sources-${{ runner.os }}-
+
+      - id: check_disk_space
+        name: Check free disk space before build
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
+        run: |
+          echo "Disk usage before build:"
+          df -h
+          echo "Top 10 largest directories in workspace:"
+          du -h --max-depth=2 | sort -hr | head -n 10
+
+      - id: cleanup_tmp
+        name: Cleanup /tmp and unused caches
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
+        run: |
+          echo "Cleaning /tmp, /var/tmp, and runner cache..."
+          sudo rm -rf /tmp/* /var/tmp/* || true
+          # Clean GitHub-hosted runner caches
+          WORK_PARENT="${RUNNER_WORKSPACE:-/home/runner/work}"
+          WORK_PARENT="$(dirname "$WORK_PARENT")"
+          sudo find "$WORK_PARENT"/_* -type f -name '*.log' -delete 2>/dev/null || true
+          sudo find "$WORK_PARENT"/_* -type f -size +100M -delete 2>/dev/null || true
+          # # Clean self-hosted runner caches if present
+          # sudo find /home/runner/actions-runner/cached/ -type f -name '*.log' -delete 2>/dev/null || true
+          # sudo find /home/runner/actions-runner/cached/ -type f -size +100M -delete 2>/dev/null || true
+          echo "Disk usage after cleanup:"
+          df -h
+          du -h --max-depth=2 | sort -hr | head -n 10
+
+      - id: debug_ccache_env
+        name: Debug ccache environment and directory
+        run: |
+          echo "==== CCACHE DEBUG ENVIRONMENT ===="
+          echo "User: $(whoami)"
+          echo "PWD: $PWD"
+          echo "BUILDUSER: ${{ env.BUILDUSER }}"
+          echo "CCACHE_DIR: ${{ env.CCACHE_DIR }}"
+          echo "ccache location: $(which ccache)"
+          echo "ccache version: $(ccache --version 2>&1 | head -n 1)"
+          echo "gcc location: $(which gcc)"
+          echo "gcc version: $(gcc --version | head -n 1)"
+          echo "==== ccache config (ccache -p) ===="
+          ccache -p || echo "ccache -p failed"
+          echo "==== .ccache permissions and size ===="
+          mkdir -p ${{ env.CCACHE_DIR }}
+          ls -lhd ${{ env.CCACHE_DIR }}
+          ls -lhR ${{ env.CCACHE_DIR }} | head -n 40
+          du -sh ${{ env.CCACHE_DIR }} || echo "du failed"
+          echo "==== .ccache-local permissions and size ===="
+          mkdir -p ${{ env.CCACHE_DIR }}-local
+          ls -lhd ${{ env.CCACHE_DIR }}-local
+          ls -lhR ${{ env.CCACHE_DIR }}-local | head -n 40
+          du -sh ${{ env.CCACHE_DIR }}-local || echo "du failed"
+          echo "==== ccache ownership fix (if needed) ===="
+          sudo chown -R ${{ env.BUILDUSER }}:${{ env.BUILDUSER }} ${{ env.CCACHE_DIR }}* || echo "chown failed"
+          echo "==== ENVIRONMENT VARIABLES ===="
+          env | sort | grep -i ccache || true
+
+      - id: debug_sources_cache
+        name: Debug sources cache usage
+        run: |
+          echo "==== SOURCES directory existence and stats ===="
+          if [ -d sources ]; then
+            echo "sources/ exists."
+            du -sh sources || echo "du failed"
+            echo "==== sources/ permissions and ownership ===="
+            ls -lhd sources
+            ls -lhR sources | head -n 40
+            echo "==== sources/ ownership fix (if needed) ===="
+            sudo chown -R ${{ env.BUILDUSER }}:${{ env.BUILDUSER }} sources || echo "chown failed"
+            echo "Top 20 files in sources/ by size:"
+            find sources -type f -exec du -h {} + | sort -hr | head -n 20
+            echo "Sample of source tarballs:"
+            find sources -type f -name '*.tar*' | head -n 10
+            echo "Sample of recent files in sources/:"
+            find sources -type f -printf '%T@ %p\n' | sort -n | tail -n 10 | cut -d' ' -f2-
+          else
+            echo "sources/ directory does not exist!"
+          fi
+
+      - id: build_image
+        name: Build EddictwareELEC image
+        env:
+          MAKEFLAGS: -s
+        run: |
+          set -o pipefail
+          echo "==== CCACHE directory preview ===="
+          find ${{ env.CCACHE_DIR }} | head -n 20 || echo "No ccache directory found."
+          echo "==== CCACHE-LOCAL directory preview ===="
+          find ${{ env.CCACHE_DIR }}-local | head -n 20 || echo "No ccache-local directory found."
+          echo "==== SOURCES directory preview ===="
+          find sources | head -n 20 || echo "No sources directory found."
+          echo "==== CCACHE stats before build ===="
+          ccache -s || echo "ccache not available"
+          sudo -u "${{ env.BUILDUSER }}" bash -c '
+            cd "$PWD"
+            DISTRO=${{ env.DISTRO }} PROJECT=${{ env.PROJECT }} DEVICE=${{ env.DEVICE }} ARCH=${{ env.ARCH }} \
+            make -j2 -l2 V=0 VERBOSE=0 image 2>&1 | tee build.log
+            # make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} V=0 VERBOSE=0 image 2>&1 | tee build.log
+            exit ${PIPESTATUS[0]}
+          '
+          echo "==== CCACHE stats after build ===="
+          ccache -s || echo "ccache not available"
+
+      - id: list_images
+        name: List built images
+        run: |
+          ls -lh ./target/*.img.gz || true
+
+      - id: upload_image
+        name: Upload built image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: EddictwareELEC-RPi4-aarch64-image
+          path: ./target/*.img.gz
+          if-no-files-found: warn
+
+      - id: upload_log
+        name: Upload full build log
+        uses: actions/upload-artifact@v7
+        with:
+          name: build.log
+          path: build.log
+          if-no-files-found: warn

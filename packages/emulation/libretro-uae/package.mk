@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libretro-uae"
-PKG_VERSION="9e2aa770a9b6b0a4e1f4fc05eb0db6c8e7aba8ee"
-PKG_SHA256="b7a4975800f413bd333f999572515aef0467261a366d7f5c61de1c7825ac2edf"
-PKG_LICENSE="GPL"
+PKG_VERSION="20e019d4405e33472a3c20824c53bcd79f474a1b"
+PKG_SHA256="5632a68e02c4496b799136630dfe3d0071f70178a41806e6711ec774d8bfeaac"
+PKG_LICENSE="GPL-2.0-only"
 PKG_SITE="https://github.com/libretro/libretro-uae"
 PKG_URL="https://github.com/libretro/libretro-uae/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"

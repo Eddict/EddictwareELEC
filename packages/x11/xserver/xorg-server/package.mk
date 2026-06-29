@@ -3,9 +3,9 @@
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="xorg-server"
-PKG_VERSION="21.1.21"
-PKG_SHA256="c0cbe5545b3f645bae6024b830d1d1154a956350683a4e52b2fff5b0fa1ab519"
-PKG_LICENSE="OSS"
+PKG_VERSION="21.1.23"
+PKG_SHA256="e39832e5617dadaf072fdf9f0e19e5d2e1c2a13607ac280bac1aba9f8fe14634"
+PKG_LICENSE="MIT"
 PKG_SITE="http://www.X.org"
 PKG_URL="https://www.x.org/releases/individual/xserver/${PKG_NAME}-${PKG_VERSION}.tar.xz"
 PKG_DEPENDS_TARGET="toolchain util-macros font-util xorgproto libpciaccess libX11 libXfont2 libXinerama libxcvt libxshmfence libxkbfile libdrm openssl freetype pixman systemd xorg-launch-helper"

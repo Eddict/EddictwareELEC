@@ -3,9 +3,9 @@
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libgcrypt"
-PKG_VERSION="1.12.0"
-PKG_SHA256="0311454e678189bad62a7e9402a9dd793025efff6e7449898616e2fc75e0f4f5"
-PKG_LICENSE="GPLv2"
+PKG_VERSION="1.12.2"
+PKG_SHA256="7ce33c2492221a0436f96a8500215e9f3e3dcb5fd26a757cd415e7a843babd5e"
+PKG_LICENSE="LGPL-2.1-or-later"
 PKG_SITE="https://www.gnupg.org/"
 PKG_URL="https://www.gnupg.org/ftp/gcrypt/libgcrypt/${PKG_NAME}-${PKG_VERSION}.tar.bz2"
 PKG_DEPENDS_TARGET="autotools:host gcc:host libgpg-error"

@@ -4,8 +4,8 @@
     {
       "type": "shell",
       "problemMatcher": [],
-      "label": "git pull",
-      "command": "git pull; echo 'git pulled!'",
+      "label": "git fetch",
+      "command": "git fetch --all; echo 'git fetched!'",
       "runOptions": {
           "runOn": "folderOpen"
       }

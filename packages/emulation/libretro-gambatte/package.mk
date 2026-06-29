@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libretro-gambatte"
-PKG_VERSION="b75225203ffea8b65124bb31acb598e91e7f22d9"
-PKG_SHA256="52352417d719221ae2813b3dec8277508319171fe74e35196a9765881fb109bd"
-PKG_LICENSE="GPLv2"
+PKG_VERSION="2147d9257911b484b07666994ceecc4c5a2cb318"
+PKG_SHA256="2538d76176e4aa11de33c4b7d484cc1b5fec877e4819a044d3553ae25f6066ff"
+PKG_LICENSE="GPL-2.0-only"
 PKG_SITE="https://github.com/libretro/gambatte-libretro"
 PKG_URL="https://github.com/libretro/gambatte-libretro/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"

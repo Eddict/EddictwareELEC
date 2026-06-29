@@ -3,11 +3,11 @@
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="pvr.vuplus"
-PKG_VERSION="22.3.3-Piers"
-PKG_SHA256="67d1b8656bf46f261d92e221f2c39b0bd7f3d6ab268ddedc23cec69f276efa36"
-PKG_REV="3"
+PKG_VERSION="22.3.6-Piers"
+PKG_SHA256="344edd84930843f79bd40a2b3f773344abe4e20f9d8aec0dd5fe1efc5881416b"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/kodi-pvr/pvr.vuplus"
 PKG_URL="https://github.com/kodi-pvr/pvr.vuplus/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform nlohmann-json"

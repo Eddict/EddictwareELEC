@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="imagedecoder.heif"
-PKG_VERSION="22.0.1-Piers"
-PKG_SHA256="e6a9eff46e0995242995da501db18324c2189dfff654713664e57c6ed1cf9f74"
+PKG_VERSION="22.0.2-Piers"
+PKG_SHA256="09a5e35fd2eee28cdf530f439e29e7cf1f4d0eee72f501e3e4f059c66cec7acc"
 PKG_REV="6"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/xbmc/imagedecoder.heif"
 PKG_URL="https://github.com/xbmc/imagedecoder.heif/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libheif tinyxml2"

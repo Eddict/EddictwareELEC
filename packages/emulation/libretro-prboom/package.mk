@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libretro-prboom"
-PKG_VERSION="b3e5f8b2e8855f9c6fc7ff7a0036e4e61379177d"
-PKG_SHA256="e4a7eb96ab547027e0fbd9d27d0057d522b19e604656a0b34f00853795a4cc47"
-PKG_LICENSE="GPLv2"
+PKG_VERSION="01b7411dab3ba8da6cdbc4fa83ac207f038f524d"
+PKG_SHA256="7e92376aae19c11bdb4e5ebc572635b01b66c704768dde6458d6a0df1e4bb407"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/libretro/libretro-prboom"
 PKG_URL="https://github.com/libretro/libretro-prboom/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"

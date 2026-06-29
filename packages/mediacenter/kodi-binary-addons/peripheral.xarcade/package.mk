@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="peripheral.xarcade"
-PKG_VERSION="22.0.2-Piers"
-PKG_SHA256="fe004117b8d2c953e438962b878a5b11d9c772867391863f92dd7c2c827d3ca1"
-PKG_REV="3"
+PKG_VERSION="22.0.3-Piers"
+PKG_SHA256="ca391349b0184083ee76918ae37359f2df541597812476c4a18b0c5e0b3d62d1"
+PKG_REV="2"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/kodi-game/peripheral.xarcade"
 PKG_URL="https://github.com/kodi-game/peripheral.xarcade/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform"

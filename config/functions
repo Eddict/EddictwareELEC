@@ -381,6 +381,12 @@ setup_toolchain() {
     MAKEFLAGS+=" V=1 VERBOSE=1"
   fi
 
+  # NDEBUG flag
+  if [ "${BUILD_WITH_DEBUG}" != "yes" ] && flag_enabled "ndebug" "yes"; then
+    TARGET_CFLAGS+=" -DNDEBUG"
+    TARGET_CXXFLAGS+=" -DNDEBUG"
+  fi
+
   # average load limit
   if [ "${CONCURRENCY_LOAD}" != "0" ]; then
     NINJA_OPTS+=" -l${CONCURRENCY_LOAD}"
@@ -459,9 +465,9 @@ setup_toolchain() {
         echo "SET(CMAKE_C_COMPILER   $CC)"  >> $CMAKE_CONF
         echo "SET(CMAKE_CXX_COMPILER $CXX)" >> $CMAKE_CONF
         echo "SET(CMAKE_CPP_COMPILER $CPP)" >> $CMAKE_CONF
-        echo "SET(CMAKE_ASM_FLAGS_MINSIZEREL -DDUMMYOPT)" >> $CMAKE_CONF
-        echo "SET(CMAKE_CXX_FLAGS_MINSIZEREL -DDUMMYOPT)" >> $CMAKE_CONF
-        echo "SET(CMAKE_C_FLAGS_MINSIZEREL -DDUMMYOPT)" >> $CMAKE_CONF
+        echo "SET(CMAKE_ASM_FLAGS_RELEASE \"\")" >> $CMAKE_CONF
+        echo "SET(CMAKE_CXX_FLAGS_RELEASE \"\")" >> $CMAKE_CONF
+        echo "SET(CMAKE_C_FLAGS_RELEASE \"\")" >> $CMAKE_CONF
         echo "SET(CMAKE_FIND_ROOT_PATH  $SYSROOT_PREFIX)"   >> $CMAKE_CONF
         echo "SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $CMAKE_CONF
         echo "SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)"  >> $CMAKE_CONF
@@ -530,9 +536,9 @@ setup_toolchain() {
         echo "SET(CMAKE_C_COMPILER   $CC)"  >> $CMAKE_CONF
         echo "SET(CMAKE_CXX_COMPILER $CXX)" >> $CMAKE_CONF
         echo "SET(CMAKE_CPP_COMPILER $CXX)" >> $CMAKE_CONF
-        echo "SET(CMAKE_ASM_FLAGS_RELEASE -DDUMMYOPT)" >> $CMAKE_CONF
-        echo "SET(CMAKE_CXX_FLAGS_RELEASE -DDUMMYOPT)" >> $CMAKE_CONF
-        echo "SET(CMAKE_C_FLAGS_RELEASE -DDUMMYOPT)" >> $CMAKE_CONF
+        echo "SET(CMAKE_ASM_FLAGS_RELEASE \"\")" >> $CMAKE_CONF
+        echo "SET(CMAKE_CXX_FLAGS_RELEASE \"\")" >> $CMAKE_CONF
+        echo "SET(CMAKE_C_FLAGS_RELEASE \"\")" >> $CMAKE_CONF
         echo "SET(CMAKE_AR $AR CACHE FILEPATH "Archiver")" >> $CMAKE_CONF # hum?
         echo "SET(CMAKE_FIND_ROOT_PATH  $TOOLCHAIN)" >> $CMAKE_CONF
         echo "SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)" >> $CMAKE_CONF
@@ -605,7 +611,9 @@ $(python3 -c "import os; print('cpp_args = {}'.format([x for x in os.getenv('CXX
 $(python3 -c "import os; print('cpp_link_args = {}'.format([x for x in os.getenv('LDFLAGS').split()]))")
 
 [properties]
-root = '$TOOLCHAIN'
+root = '${TOOLCHAIN}'
+sys_root = ''
+pkg_config_libdir = '${TOOLCHAIN}/lib/pkgconfig:${TOOLCHAIN}/share/pkgconfig'
 ${!properties}
 EOF
 }
@@ -649,7 +657,9 @@ $(python3 -c "import os; print('cpp_link_args = {}'.format([x for x in os.getenv
 [properties]
 ipc_rmid_deferred_release = true
 needs_exe_wrapper = true
-root = '$SYSROOT_PREFIX/usr'
+root = '${SYSROOT_PREFIX}/usr'
+sys_root = '${SYSROOT_PREFIX}'
+pkg_config_libdir = '${SYSROOT_PREFIX}/usr/lib/pkgconfig:${SYSROOT_PREFIX}/usr/share/pkgconfig'
 ${!properties}
 EOF
 }

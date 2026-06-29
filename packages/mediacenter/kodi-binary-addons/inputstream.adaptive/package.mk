@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="inputstream.adaptive"
-PKG_VERSION="22.3.7-Piers"
-PKG_SHA256="4ab9bd7fff89c92ec0f5e263a56cc85054b54c08df30ba3abcced1cf575fa4a0"
+PKG_VERSION="22.3.17-Piers"
+PKG_SHA256="de33f269410fdc9c94683eb574602d0686ee69398359f6fb269cc8d627d43694"
 PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/xbmc/inputstream.adaptive"
 PKG_URL="https://github.com/xbmc/inputstream.adaptive/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform bento4 nlohmann-json nss pugixml"

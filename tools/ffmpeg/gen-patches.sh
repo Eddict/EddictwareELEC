@@ -2,7 +2,7 @@
 
 # base ffmpeg version
 FFMPEG_REPO="git://source.ffmpeg.org/ffmpeg.git"
-FFMPEG_VERSION="8.0.1"
+FFMPEG_VERSION="8.1.2"
 
 ALL_FEATURE_SETS="v4l2-drmprime v4l2-request libreelec rpi vf-deinterlace-v4l2m2m postproc"
 
@@ -42,13 +42,12 @@ create_patch() {
       ;;
     rpi)
       REPO="https://github.com/jc-kynesim/rpi-ffmpeg"
-      REFSPEC="test/8.0.1/main"
+      REFSPEC="test/8.1.2/main"
       PATCH_CREATE_DIFF="yes"
       ;;
     postproc)
-      REPO="https://github.com/michaelni/FFmpeg.git"
-      REFSPEC="sourceplugin-libpostproc-8.0"
-      PATCH_CREATE_DIFF="yes"
+      REPO="https://github.com/LibreELEC/FFmpeg"
+      REFSPEC="libpostproc-n${FFMPEG_VERSION}"
       ;;
     *)
       echo "illegal feature set ${FEATURE_SET}"
@@ -61,7 +60,7 @@ create_patch() {
   BASE_REV=$(git rev-parse FETCH_HEAD)
 
   PATCH_DIR="packages/multimedia/ffmpeg/patches/${FEATURE_SET}"
-  PATCH_FILE="${PATCH_DIR}/ffmpeg-001-${FEATURE_SET}.patch"
+  PATCH_FILE="${PATCH_DIR}/0001-${FEATURE_SET}.patch"
   mkdir -p "${LE_ROOT}/${PATCH_DIR}"
 
   git fetch "${REPO}" "${REFSPEC}"

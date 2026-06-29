@@ -3,9 +3,9 @@
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libopenmpt"
-PKG_VERSION="0.8.4"
-PKG_SHA256="627f9bf11aacae615a1f2c982c7e88cb21f11b2d6f0267946f7c82c5eae4943b"
-PKG_LICENSE="BSD"
+PKG_VERSION="0.8.7"
+PKG_SHA256="275c29ef47be9992f62a35fcc96f7ca05c06d2fd05c9298b8dee9f743f75b089"
+PKG_LICENSE="BSD-3-Clause"
 PKG_SITE="https://lib.openmpt.org/libopenmpt/"
 PKG_URL="https://lib.openmpt.org/files/libopenmpt/src/${PKG_NAME}-${PKG_VERSION}+release.autotools.tar.gz"
 PKG_DEPENDS_TARGET="toolchain libogg libvorbis zlib"

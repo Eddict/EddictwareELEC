@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libretro-vbam"
-PKG_VERSION="d4be8da8dff03eb6a8d221f5cd4c0e899268a8bd"
-PKG_SHA256="5275a27a6131b8d2a86df5439323b6f55e4ff90907eb43bf90240bfbd619f129"
-PKG_LICENSE="GPLv2"
+PKG_VERSION="c6a055ed2800066ebf854aa547194c569a27b1f7"
+PKG_SHA256="04f99dba914b2be04becc56f39cbeaf35291d7d49e72c7ec23a0b867cdcb53b6"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/visualboyadvance-m/visualboyadvance-m"
 PKG_URL="https://github.com/visualboyadvance-m/visualboyadvance-m/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"

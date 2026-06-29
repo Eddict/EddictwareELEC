@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2021-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.fbneo"
-PKG_VERSION="1.0.0.88-Omega"
-PKG_SHA256="4475cb2a2e08a3e51b7d8b1139ecf321435f9b842e3651a252cb184f21e5147e"
-PKG_REV="2"
+PKG_VERSION="1.0.0.96-Omega"
+PKG_SHA256="6264c1cd50eabb3ab7b6a7e29de0c70b7238a4f606dc1855020c7e624277e485"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="LicenseRef-Non-commercial"
 PKG_SITE="https://github.com/kodi-game/game.libretro.fbneo"
 PKG_URL="https://github.com/kodi-game/game.libretro.fbneo/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-fbneo"

@@ -4,9 +4,9 @@
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="vdr"
-PKG_VERSION="2.7.8"
-PKG_SHA256="c1417b486b99356856764ad51d67d7ae157dd7d82398487f9776269c99973c88"
-PKG_LICENSE="GPL"
+PKG_VERSION="2.8.2"
+PKG_SHA256="e4084a9553851ce06b3c8707c5eef002f9ddbe8e45f27a49563e9eef1547205a"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="http://www.tvdr.de"
 PKG_URL="https://github.com/vdr-projects/vdr/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain bzip2 fontconfig freetype libcap libiconv libjpeg-turbo"

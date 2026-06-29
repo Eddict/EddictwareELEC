@@ -1,24 +1,24 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="rustc-snapshot"
 PKG_VERSION="$(get_pkg_version rust)"
-PKG_LICENSE="MIT"
+PKG_LICENSE="MIT OR Apache-2.0"
 PKG_SITE="https://www.rust-lang.org"
 PKG_LONGDESC="rustc bootstrap compiler"
 PKG_TOOLCHAIN="manual"
 
 case "${MACHINE_HARDWARE_NAME}" in
   "aarch64")
-    PKG_SHA256="1a9045695892ec08d8e9751bf7cf7db71fe27a6202dd12ce13aca48d0602dbde"
+    PKG_SHA256="76b1a6e8dd1636e364d4bbba685485ff44eee5ff6434add089bab4c703c7e19d"
     PKG_URL="https://static.rust-lang.org/dist/rustc-${PKG_VERSION}-${MACHINE_HARDWARE_NAME}-unknown-linux-gnu.tar.xz"
     ;;
   "arm")
-    PKG_SHA256="8c90d996b29c6e7018738697af47660b410767039657bb3c739c94b64d9c9916"
+    PKG_SHA256="59c5a66930aa51c151b23558a3127bbdf2eb62c22937541b33cf64c1c9f63aee"
     PKG_URL="https://static.rust-lang.org/dist/rustc-${PKG_VERSION}-${MACHINE_HARDWARE_NAME}-unknown-linux-gnueabihf.tar.xz"
     ;;
   "x86_64")
-    PKG_SHA256="00c6e6740ea6a795e33568cd7514855d58408a1180cd820284a7bbf7c46af715"
+    PKG_SHA256="7d7fa1d0cfb0fab71a956bb78f41107202c17f30ab56c45288e869a37fd9633d"
     PKG_URL="https://static.rust-lang.org/dist/rustc-${PKG_VERSION}-${MACHINE_HARDWARE_NAME}-unknown-linux-gnu.tar.xz"
     ;;
 esac

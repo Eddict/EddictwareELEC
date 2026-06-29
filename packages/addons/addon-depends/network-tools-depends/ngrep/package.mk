@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="ngrep"
-PKG_VERSION="1.48.3"
-PKG_SHA256="7c69777c21cc491368b2f1fe057d1d44febcf42413a885b59badeade5264a066"
-PKG_LICENSE="GPL"
+PKG_VERSION="1.49.0"
+PKG_SHA256="6c94b31681316b7469a3ace92d2aeec7c9f490bd6782453dff2ade0e289a3348"
+PKG_LICENSE="LicenseRef-ngrep AND BSD-3-Clause"
 PKG_SITE="https://github.com/jpr5/ngrep"
 PKG_URL="https://github.com/jpr5/ngrep/archive/v${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain libpcap pcre2"

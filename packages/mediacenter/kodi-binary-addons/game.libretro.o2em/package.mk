@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.o2em"
-PKG_VERSION="1.18.0.49-Omega"
-PKG_SHA256="f2a9e6dcf75b05704205c8d4a2a28cfa141f0b29a564a21e8714696479025f21"
-PKG_REV="2"
+PKG_VERSION="1.18.0.50-Omega"
+PKG_SHA256="856d205f29033647e716bd8b68f999a4dfac81472a611ffb06eec4de58c42647"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="Artistic-2.0"
 PKG_SITE="https://github.com/kodi-game/game.libretro.o2em"
 PKG_URL="https://github.com/kodi-game/game.libretro.o2em/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-o2em"

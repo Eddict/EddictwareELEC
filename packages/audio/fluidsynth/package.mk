@@ -3,9 +3,9 @@
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="fluidsynth"
-PKG_VERSION="2.5.2"
-PKG_SHA256="1dcb13308b3aa383db658c60a7b63d73d0ff4601ccee589582ba7a816475410e"
-PKG_LICENSE="GPL"
+PKG_VERSION="2.5.5"
+PKG_SHA256="0827eefc06f66157c332d7bd0d65ee81be5d4c795f214db7ba0e1c70ee394430"
+PKG_LICENSE="LGPL-2.1-or-later"
 PKG_SITE="http://fluidsynth.org/"
 PKG_URL="https://github.com/FluidSynth/fluidsynth/archive/v${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain glib libsndfile gcem"

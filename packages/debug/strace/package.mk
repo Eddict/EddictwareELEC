@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="strace"
-PKG_VERSION="6.18"
-PKG_SHA256="0ad5dcba973a69e779650ef1cb335b12ee60716fc7326609895bd33e6d2a7325"
-PKG_LICENSE="BSD"
+PKG_VERSION="7.1"
+PKG_SHA256="81743ecf2a5b44186b2f5038afdc8beda7e5c70aed15b4fbfbcc6e9ece24490f"
+PKG_LICENSE="LGPL-2.1-or-later"
 PKG_SITE="https://strace.io/"
 PKG_URL="https://strace.io/files/${PKG_VERSION}/strace-${PKG_VERSION}.tar.xz"
 PKG_DEPENDS_TARGET="toolchain"

@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="mediainfo"
-PKG_VERSION="25.10"
-PKG_SHA256="366b325101ab1a9a4ee79fbdb8e3dd9e78bcc0a21c0f9b1966313aaed3d33502"
-PKG_LICENSE="GPL"
+PKG_VERSION="26.05"
+PKG_SHA256="f852093f9050022d699606eeabb38b24da5523d0212fab64dc4e4d3e46b56de1"
+PKG_LICENSE="BSD-2-Clause"
 PKG_SITE="https://mediaarea.net/en/MediaInfo/Download/Source"
 PKG_URL="https://mediaarea.net/download/source/mediainfo/${PKG_VERSION}/mediainfo_${PKG_VERSION}.tar.xz"
 PKG_DEPENDS_TARGET="toolchain libmediainfo"

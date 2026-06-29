@@ -3,11 +3,11 @@
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="visualization.shadertoy"
-PKG_VERSION="22.0.2-Piers"
-PKG_SHA256="d698483c495d440cd3f25f1166d0353c9bf81955cbd780b75166e8ab4058a54d"
+PKG_VERSION="22.1.0-Piers"
+PKG_SHA256="4d839d02a2e2529610ab33f3f9946a581809832575ebee136a42b1e4f57f3798"
 PKG_REV="3"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/xbmc/visualization.shadertoy"
 PKG_URL="https://github.com/xbmc/visualization.shadertoy/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform glm jsoncpp"

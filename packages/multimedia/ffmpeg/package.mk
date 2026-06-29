@@ -3,23 +3,24 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="ffmpeg"
-PKG_VERSION="8.0.1"
-PKG_SHA256="05ee0b03119b45c0bdb4df654b96802e909e0a752f72e4fe3794f487229e5a41"
-PKG_LICENSE="GPL-3.0-only"
+PKG_VERSION="8.1.2"
+PKG_SHA256="464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c"
+PKG_LICENSE="GPL-3.0-or-later"
 PKG_SITE="https://ffmpeg.org"
 PKG_URL="http://ffmpeg.org/releases/ffmpeg-${PKG_VERSION}.tar.xz"
 PKG_DEPENDS_TARGET="toolchain zlib bzip2 openssl speex libxml2"
 PKG_LONGDESC="FFmpeg is a complete, cross-platform solution to record, convert and stream audio and video."
 PKG_PATCH_DIRS="postproc libreelec"
+PKG_NO_REFRESH_PATCHES="tools/ffmpeg/gen-patches.sh"
 
 PKG_FFMPEG_REQUEST_DISABLE="--disable-libudev --disable-v4l2-request"
 PKG_FFMPEG_REQUEST_ENABLE="--enable-libudev --enable-v4l2-request"
 
 case "${PROJECT}" in
   Amlogic)
-    PKG_VERSION="3abbcb6a1f8a70921543ceb6b4d573df97223cd9"
-    PKG_FFMPEG_BRANCH="test/8.0.1/main"
-    PKG_SHA256="91b9fa499919ff2b8db8046202279188ad0f7798638798ddbbb6d279ff2db820"
+    PKG_VERSION="3a4c4864e5790539ef00eeef8a229dbf19dc62e0"
+    PKG_FFMPEG_BRANCH="test/8.1.1/main"
+    PKG_SHA256="c1755a73a4ac9a004bbdcb1cbf6b75308de7a9e918cdf8630d6e50ff25b4e0ed"
     PKG_URL="https://github.com/jc-kynesim/rpi-ffmpeg/archive/${PKG_VERSION}.tar.gz"
     ;;
   Generic)
@@ -136,7 +137,7 @@ fi
 
 configure_target() {
   ./configure --prefix="/usr" \
-              --cpu="${TARGET_CPU}" \
+              --cpu="${TARGET_CPU}${TARGET_CPU_FLAGS}" \
               --arch="${TARGET_ARCH}" \
               --enable-cross-compile \
               --cross-prefix="${TARGET_PREFIX}" \
@@ -185,6 +186,7 @@ configure_target() {
               --disable-hardcoded-tables \
               --disable-encoders \
               --enable-encoder=ac3 \
+              --enable-encoder=eac3 \
               --enable-encoder=aac \
               --enable-encoder=wmav2 \
               --enable-encoder=mjpeg \

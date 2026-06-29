@@ -3,12 +3,12 @@
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="mesa"
-PKG_VERSION="25.3.4"
-PKG_SHA256="3a0fc6ec070b45ae25dc2ccb5e52fae1d89141f7c39c4a91fe4eaa80dfff9deb"
-PKG_LICENSE="OSS"
+PKG_VERSION="26.1.3"
+PKG_SHA256="7725004e724b34c6d4fbaf5c48fc6c6223aa9f2741d6d7782c699b049356fc45"
+PKG_LICENSE="MIT"
 PKG_SITE="http://www.mesa3d.org/"
 PKG_URL="https://mesa.freedesktop.org/archive/mesa-${PKG_VERSION}.tar.xz"
-PKG_DEPENDS_HOST="toolchain:host expat:host libclc:host libdrm:host Mako:host pyyaml:host spirv-tools:host"
+PKG_DEPENDS_HOST="toolchain:host expat:host libclc:host libdrm:host llvm:host Mako:host pyyaml:host spirv-tools:host"
 PKG_DEPENDS_TARGET="toolchain expat libdrm Mako:host pyyaml:host"
 PKG_LONGDESC="Mesa is a 3-D graphics library with an API."
 
@@ -19,12 +19,20 @@ if [ "${DEVICE}" = "Dragonboard" ]; then
 fi
 
 PKG_MESON_OPTS_HOST="-Dglvnd=disabled \
-                     -Dgallium-drivers=iris \
+                     -Dgallium-drivers= \
                      -Dplatforms= \
                      -Dglx=disabled \
-                     -Dvulkan-drivers= \
+                     -Dvulkan-drivers=imagination \
                      -Dshared-llvm=disabled \
-                     -Dtools=panfrost"
+                     -Dtools=panfrost \
+                     -Dvideo-codecs= \
+                     -Dbuild-tests=false \
+                     -Denable-glcpp-tests=false \
+                     -Dmesa-clc=enabled \
+                     -Dinstall-mesa-clc=true \
+                     -Dprecomp-compiler=enabled \
+                     -Dinstall-precomp-compiler=true \
+                     -Dimagination-srv=false"
 
 PKG_MESON_OPTS_TARGET="-Dgallium-drivers=${GALLIUM_DRIVERS// /,} \
                        -Dgallium-extra-hud=false \
@@ -63,7 +71,12 @@ else
   PKG_MESON_OPTS_TARGET+=" -Ddraw-use-llvm=false"
 fi
 
-if listcontains "${GRAPHIC_DRIVERS}" "(iris|panfrost)"; then
+if listcontains "${GRAPHIC_DRIVERS}" "imagination"; then
+  PKG_DEPENDS_TARGET+=" spirv-tools"
+  PKG_MESON_OPTS_TARGET+=" -Dimagination-srv=true"
+fi
+
+if listcontains "${GRAPHIC_DRIVERS}" "(imagination|iris|panfrost)"; then
   if [ "${USE_REUSABLE}" = "yes" ]; then
     PKG_DEPENDS_TARGET+=" mesa-reusable"
   else
@@ -109,7 +122,10 @@ else
 fi
 
 makeinstall_host() {
-  host_files="src/compiler/clc/mesa_clc src/compiler/spirv/vtn_bindgen2 src/panfrost/clc/panfrost_compile"
+  host_files="src/compiler/clc/mesa_clc \
+              src/compiler/spirv/vtn_bindgen2 \
+              src/imagination/pco/uscgen/pco_clc \
+              src/panfrost/clc/panfrost_compile"
 
   if listcontains "${BUILD_REUSABLE}" "(all|mesa:host)"; then
     # Build the reusable mesa:host for both local and to be added to a GitHub release

@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2021-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="libretro-dosbox-pure"
-PKG_VERSION="d743cfd9342c083ef6d3cecfc08c9af28a1481c8"
-PKG_SHA256="22bc51eb9cd7c846c2ae10e13b25707ee8ae24a33c11f822e82c9b70df260bfc"
-PKG_LICENSE="GPLv2"
+PKG_VERSION="42485508b705e215d161eb581dec1984551fa9c2"
+PKG_SHA256="dd8030298b1e04376442d7dd0ac32c13b5804d5ccbc96ad6eb10c604e677e052"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/libretro/dosbox-pure"
 PKG_URL="https://github.com/libretro/dosbox-pure/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"

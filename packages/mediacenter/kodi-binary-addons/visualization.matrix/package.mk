@@ -1,16 +1,17 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2020-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="visualization.matrix"
-PKG_VERSION="22.0.2-Piers"
-PKG_SHA256="78e5698aa12c10b98a2118dd2d367f4072710affd96dcc4c1cbec53a9badf86b"
-PKG_REV="3"
-PKG_LICENSE="GPL"
+PKG_VERSION="22.1.0-Piers"
+PKG_SHA256="27989276ad22949b27cc31154b62a8e193255ea135154c0a434ebed66d50900d"
+PKG_REV="1"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/xbmc/visualization.matrix"
 PKG_URL="https://github.com/xbmc/visualization.matrix/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform glm"
 PKG_SECTION=""
-PKG_LONGDESC="visualization.matrix"
+PKG_SHORTDESC="Matrix digital rain music visualization"
+PKG_LONGDESC="Matrix digital rain music visualization"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_TYPE="xbmc.player.musicviz"

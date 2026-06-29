@@ -3,10 +3,10 @@
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="xf86-video-nvidia"
-PKG_VERSION="590.48.01"
-PKG_SHA256="d57a303ef837d27fa875e871e69a5caacf2a6239bbad2542d179cfb01c0c4ae5"
+PKG_VERSION="580.159.04"
+PKG_SHA256="eae631a3281b17b2cd2ac8fcc9cf370e4327d3b2c36a3b2646ff386501ab03a5"
 PKG_ARCH="x86_64"
-PKG_LICENSE="nonfree"
+PKG_LICENSE="LicenseRef-nonfree"
 PKG_SITE="https://www.nvidia.com/en-us/drivers/unix/"
 PKG_URL="http://us.download.nvidia.com/XFree86/Linux-x86_64/${PKG_VERSION}/NVIDIA-Linux-x86_64-${PKG_VERSION}-no-compat32.run"
 PKG_DEPENDS_TARGET="util-macros xorg-server libglvnd"

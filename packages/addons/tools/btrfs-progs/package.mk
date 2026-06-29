@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="btrfs-progs"
-PKG_VERSION="6.17.1"
-PKG_SHA256="6eba55443b7c0c4dfa91619f8629cfa75e27734f76e564ca83bff6b6e344a5ff"
-PKG_REV="0"
+PKG_VERSION="7.0"
+PKG_SHA256="315e05569f93a595533158cb6bcca526509f519b5be1948b53525a7cb9c046b5"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-only"
 PKG_SITE="https://btrfs.readthedocs.io/"
 PKG_URL="https://github.com/kdave/btrfs-progs/archive/v${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain util-linux zlib systemd lzo"
@@ -19,6 +19,8 @@ PKG_BUILD_FLAGS="-sysroot"
 
 PKG_IS_ADDON="yes"
 PKG_ADDON_NAME="BTRFS Tools"
+PKG_ADDON_ICON_NAME="TOOLS"
+PKG_ADDON_ICON_SIZE="300"
 PKG_ADDON_TYPE="xbmc.python.script"
 
 PKG_CONFIGURE_OPTS_TARGET="--disable-backtrace \

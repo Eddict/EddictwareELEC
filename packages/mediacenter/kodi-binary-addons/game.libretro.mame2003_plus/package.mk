@@ -1,11 +1,11 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.mame2003_plus"
-PKG_VERSION="0.0.1.92-Omega"
-PKG_SHA256="20166e2485a31cf006844fc98df294421afc86eec0067d44bd97254ac5e0015e"
-PKG_REV="2"
-PKG_LICENSE="GPL"
+PKG_VERSION="0.0.1.98-Omega"
+PKG_SHA256="af97344208060fc2a59fb22612aa5ad6476e9f0ca18c63f30b248019dd07bc6d"
+PKG_REV="1"
+PKG_LICENSE="LicenseRef-MAME"
 PKG_SITE="https://github.com/kodi-game/game.libretro.mame2003_plus"
 PKG_URL="https://github.com/kodi-game/game.libretro.mame2003_plus/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-mame2003_plus"

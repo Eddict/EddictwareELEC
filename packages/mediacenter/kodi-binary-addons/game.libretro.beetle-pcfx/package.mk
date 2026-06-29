@@ -1,12 +1,12 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="game.libretro.beetle-pcfx"
-PKG_VERSION="0.9.36.44-Omega"
-PKG_SHA256="849acbe2483b034bd08c2c63d7ec934bcd56b3844d2015fdfbc0451b919b5da7"
-PKG_REV="2"
+PKG_VERSION="0.9.36.46-Omega"
+PKG_SHA256="8e4afe64996ff1f28adfb99c47f39e0247cb027ecbf3c6841382b82bb5956fb8"
+PKG_REV="1"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
+PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="https://github.com/kodi-game/game.libretro.beetle-pcfx"
 PKG_URL="https://github.com/kodi-game/game.libretro.beetle-pcfx/archive/${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain kodi-platform libretro-beetle-pcfx"

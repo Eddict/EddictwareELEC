@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: GPL-2.0
+# SPDX-License-Identifier: GPL-2.0-only
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="pv"
-PKG_VERSION="1.10.3"
-PKG_SHA256="aa1630c79af6960a8922ffa64d2c3e7f87486da21fcb57e277824294fd266742"
-PKG_LICENSE="GNU"
+PKG_VERSION="1.11.0"
+PKG_SHA256="fc02c9fc2b82b20a92cc8d98f844be63f22abd98751a8e4abc875e1d803662eb"
+PKG_LICENSE="GPL-3.0-or-later"
 PKG_SITE="http://www.ivarch.com/programs/pv.shtml"
 PKG_URL="http://www.ivarch.com/programs/sources/pv-${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"
