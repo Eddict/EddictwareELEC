@@ -84,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: installed-packages
-          archive: false
+          archive: true
           path: |
             installed-packages.txt
             installed-packages-largest.txt
