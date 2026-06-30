@@ -84,6 +84,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: installed-packages
+          archive: false
           path: |
             installed-packages.txt
             installed-packages-largest.txt
@@ -193,6 +194,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: installed-packages
+          archive: false
           path: installed-packages-after-cleanup.txt
           if-no-files-found: warn
           overwrite: true
