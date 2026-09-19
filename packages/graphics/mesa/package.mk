@@ -3,8 +3,8 @@
 # Copyright (C) 2018-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="mesa"
-PKG_VERSION="26.2.1"
-PKG_SHA256="c47e81bddc4760360a41ac3c5acec38acb81f9d750ecef47e7f3adc7021a4442"
+PKG_VERSION="26.2.3"
+PKG_SHA256="1628058a8d2c0615975de5a15ab7bbb9638c50000b5bed9456ff423ea034a81f"
 PKG_LICENSE="MIT"
 PKG_SITE="http://www.mesa3d.org/"
 PKG_URL="https://mesa.freedesktop.org/archive/mesa-${PKG_VERSION}.tar.xz"
@@ -16,6 +16,15 @@ get_graphicdrivers
 
 if [ "${DEVICE}" = "Dragonboard" ]; then
   PKG_DEPENDS_TARGET+=" libarchive libxml2 lua54"
+fi
+
+# workaround: on 32-bit arm gcc emits a VFP literal pool load that is more than
+# the 1020 byte vldr range away from its pool in the panfrost midgard compiler:
+# {standard input}: Error: co-processor offset out of range
+# dropping SLP vectorisation removes the 64-bit vector constants that overflow
+# the pool. seen with gcc 16.2.0 and mesa 26.2.2 on RK3288.
+if [ "${ARCH}" = "arm" ]; then
+  TARGET_CFLAGS+=" -fno-tree-slp-vectorize"
 fi
 
 PKG_MESON_OPTS_HOST="-Dglvnd=disabled \

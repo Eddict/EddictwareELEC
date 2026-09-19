@@ -3,8 +3,8 @@
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="automake"
-PKG_VERSION="1.18.1"
-PKG_SHA256="168aa363278351b89af56684448f525a5bce5079d0b6842bd910fdd3f1646887"
+PKG_VERSION="1.19"
+PKG_SHA256="e3e2c2e3abf37898138db5b6c1d1dc35c9160c5978be7947d2c741705251d445"
 PKG_LICENSE="GPL-2.0-or-later"
 PKG_SITE="http://sources.redhat.com/automake/"
 PKG_URL="${GNU_MIRROR}/automake/${PKG_NAME}-${PKG_VERSION}.tar.xz"
