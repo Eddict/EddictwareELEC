@@ -1,4 +1,7 @@
-ARG BASE_IMAGE=ghcr.io/eddictnl/eddictwareelec:noble
+ARG REPO_OWNER
+ARG OS
+
+ARG BASE_IMAGE=ghcr.io/${REPO_OWNER}/eddictwareelec:${OS}
 FROM ${BASE_IMAGE} AS builder
 
 # Copy repo into the image so the project's build scripts can run

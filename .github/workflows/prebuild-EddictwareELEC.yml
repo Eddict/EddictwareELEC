@@ -124,6 +124,8 @@ jobs:
           tags: |
             ${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ inputs.os }}-${{ inputs.arch }}
           build-args: |
+            REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
+            OS=${{ inputs.os }}
             DISTRO=${{ env.EE_Distro }}
             PROJECT=${{ env.EE_Project }}
             DEVICE=${{ env.EE_Device }}
