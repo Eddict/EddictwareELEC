@@ -141,6 +141,10 @@ jobs:
             sudo mkdir -p "$BUILD_DIR"
           fi
 
+          DOCKER_UID=$(id -u docker 2>/dev/null || echo 1000)
+          DOCKER_GID=$(id -g docker 2>/dev/null || echo 1000)
+          echo "DOCKER_UID=$DOCKER_UID" | sudo tee -a $GITHUB_OUTPUT
+          echo "DOCKER_GID=$DOCKER_GID" | sudo tee -a $GITHUB_OUTPUT
           sudo chown -R $DOCKER_UID:$DOCKER_GID "$BUILD_DIR" || true
 
           # Add diagnostics to verify ownership and permissions
