@@ -68,7 +68,8 @@ jobs:
         if id -u docker >/dev/null 2>&1; then
           echo "docker-guid=$(id -u docker)" >> $GITHUB_OUTPUT
         else
-          echo "docker-guid=$(id -u)" >> $GITHUB_OUTPUT
+          # echo "docker-guid=$(id -u)" >> $GITHUB_OUTPUT
+          echo "docker-guid=1001" >> $GITHUB_OUTPUT
         fi
       shell: bash
 
