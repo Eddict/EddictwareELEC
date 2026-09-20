@@ -41,7 +41,7 @@ RUN set -eux; \
         /src/scripts/build mesa:host > /dev/null 2>&1 & \
         /src/scripts/build zstd:host > /dev/null 2>&1 & \
         wait \
-    ); \
+    );
 
 # # Build host-toolchain packages into a temporary build dir inside the image.
 # # Adjust the package list if you need more/less prebuilt packages.
