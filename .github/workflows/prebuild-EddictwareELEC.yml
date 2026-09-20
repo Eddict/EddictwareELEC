@@ -130,6 +130,7 @@ jobs:
             PROJECT=${{ env.EE_Project }}
             DEVICE=${{ env.EE_Device }}
             ARCH=${{ env.EE_Arch }}
+            DIAG_OUTPUT=${{ inputs.debug }}
 
       # Ensure ownership alignment for the build directory
       - name: Fix permissions for build directory
@@ -147,7 +148,9 @@ jobs:
           echo "DOCKER_GID=$DOCKER_GID" | sudo tee -a $GITHUB_OUTPUT
           sudo chown -R $DOCKER_UID:$DOCKER_GID "$BUILD_DIR" || true
 
-          # Add diagnostics to verify ownership and permissions
-          echo "=== Ownership and Permissions Diagnostics ==="
-          ls -ld "$BUILD_DIR"
-          find "$BUILD_DIR" -maxdepth 2 -exec stat -c "%U:%G %a %n" {} \;
+          if [ ${{ inputs.debug }} ]; then
+            # Add diagnostics to verify ownership and permissions
+            echo "=== Ownership and Permissions Diagnostics ==="
+            ls -ld "$BUILD_DIR"
+            find "$BUILD_DIR" -maxdepth 2 -exec stat -c "%U:%G %a %n" {} \;
+          fi
