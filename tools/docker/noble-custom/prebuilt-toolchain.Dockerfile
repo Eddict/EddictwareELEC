@@ -20,7 +20,7 @@ ARG DIAG_OUTPUT=false
 
 # Build host-toolchain packages into a temporary build dir inside the image.
 # Adjust the package list if you need more/less prebuilt packages.
-RUN set -eu; \
+RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     mkdir -p /tmp/prebuild; \
     export BUILD_DIR=/tmp/prebuild; \
@@ -45,7 +45,6 @@ RUN set -eu; \
         wait \
     ); \
     if [ "$DIAG_OUTPUT" = "true" ]; then \
-        set -x; \
         # Diagnostic: show contents of /tmp/prebuild and /tmp/prebuild/toolchain after build
         echo "--- DIAGNOSTIC: /tmp/prebuild ---"; \
         ls -l /tmp/prebuild || true; \
