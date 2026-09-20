@@ -69,12 +69,14 @@ jobs:
       packages: write
     env:
       IMAGE_NAME: eddictwareelec-prebuilt
+      IMAGE_OS: ${{ inputs.os }}
+      IMAGE_DEBUG: ${{ inputs.debug }}
       EE_REGISTRY: ghcr.io
       EE_REGISTRY_OWNER:
       EE_Distro: EddictwareELEC
       EE_Project: RPi
       EE_Device: RPi4
-      EE_Arch: ${{ inputs.arch || 'aarch64' }}
+      EE_Arch: ${{ inputs.arch }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -110,15 +112,15 @@ jobs:
           # platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ inputs.os }}-${{ inputs.arch }}
+            ${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_OS }}-${{ env.EE_Arch }}
           build-args: |
             REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
-            OS=${{ inputs.os }}
+            OS=${{ env.IMAGE_OS }}
             DISTRO=${{ env.EE_Distro }}
             PROJECT=${{ env.EE_Project }}
             DEVICE=${{ env.EE_Device }}
             ARCH=${{ env.EE_Arch }}
-            DIAG_OUTPUT=${{ inputs.debug }}
+            DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
 
       # Ensure ownership alignment for the build directory
       - name: Fix permissions for build directory
@@ -136,7 +138,7 @@ jobs:
           echo "DOCKER_GID=$DOCKER_GID" | sudo tee -a $GITHUB_OUTPUT
           sudo chown -R $DOCKER_UID:$DOCKER_GID "$BUILD_DIR" || true
 
-          if [ ${{ inputs.debug }} ]; then
+          if [ ${{ env.IMAGE_DEBUG }} ]; then
             # Add diagnostics to verify ownership and permissions
             echo "=== Ownership and Permissions Diagnostics ==="
             ls -ld "$BUILD_DIR"

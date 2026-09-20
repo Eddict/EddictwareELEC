@@ -27,6 +27,12 @@ RUN set -eu; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     mkdir -p /tmp/prebuild; \
     export BUILD_DIR=/tmp/prebuild; \
+    # Keep the toolchain log only when diagnostics are on, otherwise discard it
+    if [ "$DIAG_OUTPUT" = "true" ]; then \
+        toolchain_log=/tmp/prebuild/toolchain-host.log; \
+    else \
+        toolchain_log=/dev/null; \
+    fi; \
     # Run host-toolchain builds in parallel
     ( \
         # run a minimal host-toolchain bootstrap; change package list as appropriate
@@ -40,7 +46,7 @@ RUN set -eu; \
         /src/scripts/build gettext:host > /dev/null 2>&1 & \
         /src/scripts/build xxHash:host > /dev/null 2>&1 & \
         /src/scripts/build cmake:host > /dev/null 2>&1 & \
-        /src/scripts/build toolchain:host > /tmp/prebuild/toolchain-host.log 2>&1 & \
+        /src/scripts/build toolchain:host > "$toolchain_log" 2>&1 & \
         /src/scripts/build linux:host > /dev/null 2>&1 & \
         /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 & \
         /src/scripts/build mesa:host > /dev/null 2>&1 & \
