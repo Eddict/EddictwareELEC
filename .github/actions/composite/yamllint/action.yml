@@ -8,7 +8,7 @@ author: 'EddictwareELEC maintainers'
 
 inputs:
   yamllint_config_data:
-    description: 'Yamllint config data (optional)'
+    description: 'Yamllint config data (optional, defaults to variable ''cfg'' value in the action)'
     required: false
     default: ''
   yamllint_config_file:
@@ -16,9 +16,9 @@ inputs:
     required: false
     default: ''
   yamllint_files_or_dirs:
-    description: 'Files or globs to lint (optional, default: all YAML files)'
+    description: 'Files or globs to lint (optional, defaults to the calling workflow file)'
     required: false
-    default: '**/*.yml **/*.yaml'
+    default: '' #'**/*.yml **/*.yaml'
 
 runs:
   using: 'composite'
@@ -26,9 +26,39 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v6
 
+    - name: Resolve yamllint config
+      id: lint-config
+      shell: bash
+      env:
+        REQUESTED_CONFIG: ${{ inputs.yamllint_config_data }}
+      run: |
+        if [[ -n "$REQUESTED_CONFIG" ]]; then
+          cfg="$REQUESTED_CONFIG"
+        else
+          cfg='{extends: default, rules: {document-start: disable, line-length: disable, comments: {min-spaces-from-content: 1}}}'
+        fi
+        echo "config_data=$cfg" >> "$GITHUB_OUTPUT"
+
+    - name: Resolve yamllint target
+      id: lint-target
+      shell: bash
+      env:
+        REQUESTED_TARGETS: ${{ inputs.yamllint_files_or_dirs }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+        REPOSITORY: ${{ github.repository }}
+      run: |
+        if [[ -n "$REQUESTED_TARGETS" ]]; then
+          target="$REQUESTED_TARGETS"
+        else
+          # E.g. owner/repo/.github/workflows/ci.yml@refs/heads/main
+          target="${WORKFLOW_REF#"$REPOSITORY"/}"
+          target="${target%@*}"
+        fi
+        printf 'file_or_dir=%s\n' "$target" >> "$GITHUB_OUTPUT"
+
     - name: Run yamllint
       uses: ibiqlik/action-yamllint@v3
       with:
-        config_data: ${{ inputs.yamllint_config_data }}
+        config_data: ${{ steps.lint-config.outputs.config_data }}
         config_file: ${{ inputs.yamllint_config_file }}
-        file_or_dir: ${{ inputs.yamllint_files_or_dirs }}
+        file_or_dir: ${{ steps.lint-target.outputs.file_or_dir }}

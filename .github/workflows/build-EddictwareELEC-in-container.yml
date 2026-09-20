@@ -149,6 +149,9 @@ jobs:
         ref: ${{ github.ref_name }}
         # clean: false
 
+    - name: Run yamllint composite action
+      uses: ./.github/actions/composite/yamllint
+
     - name: Check for existing build cache (self-hosted only)
       id: check-build-cache
       if: inputs.runner == 'self-hosted' || inputs.runner == 'aws'

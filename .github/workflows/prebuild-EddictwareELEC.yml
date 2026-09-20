@@ -60,18 +60,6 @@ jobs:
 
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
-        with:
-          # yamllint_config_data: '{extends: default, rules: {line-length: disable}}'  # Optionally set yamllint config data
-          yamllint_config_data: |
-            extends: default
-            rules:
-              document-start: disable
-              line-length: disable
-              comments:
-                min-spaces-from-content: 1
-          yamllint_config_file: ''  # Optionally set to .yamllint or another config file
-          yamllint_files_or_dirs: './.github/workflows/prebuild-EddictwareELEC.yml'
-          # yamllint_files_or_dirs: '**/*.yml **/*.yaml'  # Optionally override file globs
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
