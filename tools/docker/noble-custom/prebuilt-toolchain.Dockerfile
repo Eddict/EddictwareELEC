@@ -1,5 +1,5 @@
-ARG REPO_OWNER
-ARG OS
+ARG REPO_OWNER=eddict
+ARG OS=noble
 
 ARG BASE_IMAGE=ghcr.io/${REPO_OWNER}/eddictwareelec:${OS}
 FROM ${BASE_IMAGE} AS builder
