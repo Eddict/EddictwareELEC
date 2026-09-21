@@ -102,8 +102,8 @@ jobs:
       runner_type: ${{ steps.determine-ids.outputs.RUNNER_TYPE }}
       host_uid: ${{ steps.determine-ids.outputs.HOST_UID }}
       host_gid: ${{ steps.determine-ids.outputs.HOST_GID }}
-      docker_uid: ${{ steps.determine-ids.outputs.DOCKER_UID }}
-      docker_gid: ${{ steps.determine-ids.outputs.DOCKER_GID }}
+      # docker_uid: ${{ steps.determine-ids.outputs.DOCKER_UID }}
+      # docker_gid: ${{ steps.determine-ids.outputs.DOCKER_GID }}
       img_uid: ${{ steps.determine-ids.outputs.IMG_UID }}
       img_gid: ${{ steps.determine-ids.outputs.IMG_GID }}
 
@@ -133,21 +133,34 @@ jobs:
           RUNNER_TYPE="${{ inputs.runner || 'self-hosted' }}"
           HOST_UID=$(id -u)
           HOST_GID=$(id -g)
-          DOCKER_UID=$(id -u docker 2>/dev/null || echo 1000)
-          DOCKER_GID=$(id -g docker 2>/dev/null || echo 1000)
-          IMG_UID=$(docker run --rm --entrypoint id $EE_Distro_tag -u 2>/dev/null || echo $DOCKER_UID)
-          IMG_GID=$(docker run --rm --entrypoint id $EE_Distro_tag -g 2>/dev/null || echo $DOCKER_GID)
+
+          # If the image check fails, fall back to the actual runtime host user/group
+          if ! IMG_UID=$(docker run --rm --entrypoint id "$EE_Distro_tag" -u 2>/dev/null); then
+            echo "::warning::Failed to fetch image UID from $EE_Distro_tag. Falling back to Host UID ($HOST_UID)."
+            IMG_UID=$HOST_UID
+          fi
+
+          if ! IMG_GID=$(docker run --rm --entrypoint id "$EE_Distro_tag" -g 2>/dev/null); then
+            echo "::warning::Failed to fetch image GID from $EE_Distro_tag. Falling back to Host GID ($HOST_GID)."
+            IMG_GID=$HOST_GID
+          fi
+
+          # Output clean, reliable variables to the next steps
           echo "RUNNER_TYPE=$RUNNER_TYPE" | sudo tee -a $GITHUB_OUTPUT
           echo "HOST_UID=$HOST_UID" | sudo tee -a $GITHUB_OUTPUT
           echo "HOST_GID=$HOST_GID" | sudo tee -a $GITHUB_OUTPUT
-          echo "DOCKER_UID=$DOCKER_UID" | sudo tee -a $GITHUB_OUTPUT
-          echo "DOCKER_GID=$DOCKER_GID" | sudo tee -a $GITHUB_OUTPUT
           echo "IMG_UID=$IMG_UID" | sudo tee -a $GITHUB_OUTPUT
           echo "IMG_GID=$IMG_GID" | sudo tee -a $GITHUB_OUTPUT
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
     needs: init
+    env:
+      HOST_UID: ${{ needs.init.outputs.host_uid }}
+      HOST_GID: ${{ needs.init.outputs.host_gid }}
+      IMG_UID: ${{ needs.init.outputs.img_uid }}
+      IMG_GID: ${{ needs.init.outputs.img_gid }}
+      CHMOD_SYNTAX: u=rwx,g=rwxs,o=rx # add the Group Sticky Bit (g+s) to enforce group write permissions
     steps:
       - name: Log in to registry
         uses: docker/login-action@v4
@@ -238,76 +251,22 @@ jobs:
 
       - name: Prepare cache dirs for container
         run: |
-          [ ${{ env.DEBUG }} ] && ls -al $PWD
-          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
+          [ -n "${{ env.DEBUG }}" ] && ls -al "$PWD" && echo "----------------------------------------"
 
           BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          # Align host cache ownership to it
-          # chown critical cache dirs/files to the image UID/GID so container user can write
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache || true
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.stamps" || true
-          sudo chown ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.cache_package_global" || true
-          # ensure per-build ccache is owned by image uid too
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.ccache" 2>/dev/null || true
-          # relax permissions as a fallback so builds don't fail due to strict host umasks
-          chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache || true
-          chmod 0666 "$BUILD_DIR/.cache_package_local" || true
-          mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives
-          # ensure stamps dir exists so docker won't auto-create it as root when bind-mounting
-          mkdir -p "$BUILD_DIR/.stamps"
-          # ensure the global cache is a file (scripts expect a file, not a directory)
-          if [ ! -e "$BUILD_DIR/.cache_package_global" ]; then
-            touch "$BUILD_DIR/.cache_package_global"
-          fi
-          echo "Preparing cache dirs for UID:GID ${{ needs.init.outputs.docker_uid }}:${{ needs.init.outputs.docker_gid }}"
-          # Prefer aligning host ownership to the image UID/GID (IMG_UID/IMG_GID),
-          # if available — this prevents ownership churn when image numeric UID
-          # differs from the host's docker user.
-          if [ -n "${IMG_UID:-}" ]; then
-            echo "Aligning host cache ownership to image UID:GID ${IMG_UID}:${IMG_GID}"
-            sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache || true
-            sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.stamps" || true
-            sudo chown ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$BUILD_DIR/.cache_package_global" || true
-          else
-            echo "IMG_UID not set; skipping chown-to-image and leaving host ownership as-is"
-          fi
-          # allow the container user to create/remove files in cache dirs
-          chmod -R 0775 .ccache "$BUILD_DIR" .apt-cache || true
-          chmod -R 0775 "$BUILD_DIR/.stamps" || true
-          chmod 0664 "$BUILD_DIR/.cache_package_global" || true
-          # Make build tree writable so container processes (including hosted runners
-          # with rootless or user-mapped Docker) can create cache files.
-          sudo chmod -R a+rwX "$BUILD_DIR" || true
-          touch "$BUILD_DIR/.cache_package_local" || true
-          sudo chmod 0666 "$BUILD_DIR/.cache_package_local" || true
-          # On self-hosted runners make workspace ownership match container user for full parity
+          mkdir -p .ccache "$BUILD_DIR/.stamps" .apt-cache/archives
+          touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local"
+
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "$BUILD_DIR" .apt-cache || true
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "$BUILD_DIR" .apt-cache || true
+          
+          sudo chmod a=rw "$BUILD_DIR/.cache_package_global" || true
+          sudo chmod a=rw "$BUILD_DIR/.cache_package_local" || true
+
           if [ "${{ needs.init.outputs.runner_type }}" != "github" ]; then
-            echo "Chowning workspace to ${{ needs.init.outputs.docker_uid }}:${{ needs.init.outputs.docker_gid }}"
-            sudo chown -R ${{ needs.init.outputs.docker_uid }}:${{ needs.init.outputs.docker_gid }} "${GITHUB_WORKSPACE}" || true
+            echo "Self-hosted runner detected: Aligning full workspace ownership"
+            sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${GITHUB_WORKSPACE}" || true
           fi
-
-      # Ensure permissions are correct before toolchain population
-      - name: Ensure workspace and build dir permissions (pre-toolchain)
-        run: |
-          [ ${{ env.DEBUG }} ] && echo "[img_uid]: ${{ needs.init.outputs.img_uid }}"
-          [ ${{ env.DEBUG }} ] && echo "[img_gid]: ${{ needs.init.outputs.img_gid }}"
-          [ ${{ env.DEBUG }} ] && echo "[pwd]: $PWD"
-          [ ${{ env.DEBUG }} ] && echo "[github.workspace]: ${{ github.workspace }}"
-          [ ${{ env.DEBUG }} ] && ls -al $PWD
-          [ ${{ env.DEBUG }} ] && ls -al "${GITHUB_WORKSPACE}"
-          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
-
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
-          sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
-
-          [ ${{ env.DEBUG }} ] && ls -al $PWD
-          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
-
-          [ ${{ env.DEBUG }} ] && cat /etc/passwd
-          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
-          [ ${{ env.DEBUG }} ] && cat /etc/group
-          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
 
       - name: Host diagnostics
         id: host-diagnostics
@@ -338,9 +297,20 @@ jobs:
           set -euo pipefail
           IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
           echo "Running in-container diagnostics inside image: $IMAGE"
+          
           # Pull image best-effort
           docker image pull "$IMAGE" || true
-          docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc '
+          
+          # Run container with matched image user and supplementary host group
+          docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
+            -v "${{ github.workspace }}:/build" \
+            -w /build \
+            "$IMAGE" bash -lc '
+            # Force group-write permissions for any diagnostic file created here
+            umask 0002
+            
             set -euo pipefail
             DIAG_DIR=/build/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container.log"
@@ -403,7 +373,7 @@ jobs:
           echo "#!/bin/bash" > "$OUTFILE"
           echo "# Generated by prepare-container-params" >> "$OUTFILE"
           echo "MEMORY_ARG='${MEMORY_ARG}'" >> "$OUTFILE"
-          chmod +x "$OUTFILE" || true
+          sudo chmod +x "$OUTFILE" || true
           [ ${{ env.DEBUG }} ] && echo "[container_params.sh written]: $OUTFILE"
 
       - name: Create build_recommend script
@@ -498,7 +468,7 @@ jobs:
           EOF
           fi
 
-          chmod +x "${{ github.workspace }}/build_recommend.sh" || true
+          sudo chmod +x "${{ github.workspace }}/build_recommend.sh" || true
 
       - name: Populate prebuilt toolchain
         id: populate-toolchain
@@ -511,7 +481,15 @@ jobs:
           echo "DOCKER_DEBUG=${DOCKER_DEBUG}"
           echo "Looking for prebuilt image: $PREBUILT_IMAGE"
           # Diagnostic: check /opt/prebuilt-toolchain in prebuilt image
-          docker run --rm "$PREBUILT_IMAGE" bash -c 'echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; ls -l /opt/prebuilt-toolchain || true; find /opt/prebuilt-toolchain -type f | xargs ls -l || true; stat /opt/prebuilt-toolchain || true'
+          docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
+            "$PREBUILT_IMAGE" bash -c '
+            umask 0002
+            echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"
+            ls -l /opt/prebuilt-toolchain || true
+            find /opt/prebuilt-toolchain -type f | xargs ls -l || true
+            stat /opt/prebuilt-toolchain || true'
           if ! docker ${DOCKER_DEBUG} image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
             echo "Prebuilt image not present locally, attempting to pull"
             if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE"; then
@@ -527,10 +505,18 @@ jobs:
           fi
           mkdir -p "$TARGET_TOOLCHAIN"
           # Ensure permissions before copying
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$TARGET_TOOLCHAIN" || true
-          sudo chmod -R u+rwX,g+rwX,o+rwX "$TARGET_TOOLCHAIN" || true
-          docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "set -euo pipefail; if [ -d /opt/prebuilt-toolchain ]; then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true; fi"
-          sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} "$TARGET_TOOLCHAIN" || true
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$TARGET_TOOLCHAIN" || true
+          docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
+            -v "${{ github.workspace }}:/build" \
+            "$PREBUILT_IMAGE" bash -lc "
+            umask 0002
+            set -euo pipefail
+            if [ -d /opt/prebuilt-toolchain ];
+              then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true
+            fi"
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "$TARGET_TOOLCHAIN" || true
 
       - name: Upload toolchain artifact (after population)
         if: success() && !cancelled()
@@ -547,7 +533,12 @@ jobs:
           if [ ! -d "$TARGET_TOOLCHAIN" ]; then
             echo "Toolchain directory missing. Attempting to recreate."
             mkdir -p "$TARGET_TOOLCHAIN"
-            docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true"
+            docker run --rm \
+            -v "${{ github.workspace }}:/build" \
+            "$PREBUILT_IMAGE" bash -lc "
+            umask 0002
+            cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true
+            "
           fi
 
       - name: In-container diagnostics (post-prebuild)
@@ -558,7 +549,10 @@ jobs:
           IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
           echo "Running post-prebuild in-container diagnostics inside image: $IMAGE"
           docker image pull "$IMAGE" || true
-          docker run --rm -v "${{ github.workspace }}:/build" -w /build "$IMAGE" bash -lc '
+          docker run --rm \
+            -v "${{ github.workspace }}:/build" \
+            -w /build "$IMAGE" bash -lc '
+            umask 0002
             set -euo pipefail
             DIAG_DIR=/build/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container-post.log"
@@ -617,22 +611,13 @@ jobs:
           if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
           docker $DOCKER_DEBUG image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
           # Determine image numeric UID/GID for CAN_WRITE test; prefer image UID when available
-          if [ -n "${IMG_UID}" ]; then
-            echo "Image UID:GID for CAN_WRITE test = ${IMG_UID}:${IMG_GID}"
-            DOCKER_UID=${IMG_UID}
-            DOCKER_GID=${IMG_GID}
+          if [ -n "${{ env.IMG_UID }}" ]; then
+            echo "Image UID:GID for CAN_WRITE test = ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
           fi
           # (image UID/GID chown moved below after BUILD_DIR is set)
           # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
           BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
           # decide mount strategy based on runner input: always use named docker volumes for runtime
-          # Only set DOCKER_UID from the host docker_uid if it wasn't already
-          # determined from the image (IMG_UID). This prevents overriding the
-          # image-detected UID used for the CAN_WRITE test above.
-          if [ -z "${DOCKER_UID:-}" ]; then
-            DOCKER_UID=${{ needs.init.outputs.docker_uid }}
-          fi
-          DOCKER_GID=${DOCKER_GID:-${DOCKER_UID}}
           # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
           VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
           [ ${{ env.DEBUG }} ] && echo "[VOLUME_PREFIX]: $VOLUME_PREFIX"
@@ -651,14 +636,16 @@ jobs:
           # Runner workspace will be mounted directly into the container at /build
           echo "Using runner workspace mount -v \\${{ github.workspace }}:/build"
 
-          # test whether the DOCKER_UID can create files in the mounted workspace; if not, we'll run the build as root
-          CAN_WRITE=$(docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v "${{ github.workspace }}:/build" alpine sh -c "touch /build/.perm_test >/dev/null 2>&1 && echo OK || echo FAIL") || CAN_WRITE=FAIL
+          # test whether the IMG_UID can create files in the mounted workspace; if not, we'll run the build as root
+          CAN_WRITE=$(docker run --rm --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} --group-add ${{ env.HOST_GID }} -v "${{ github.workspace }}:/build" alpine sh -c "touch /build/.perm_test >/dev/null 2>&1 && echo OK || echo FAIL") || CAN_WRITE=FAIL
           if [ "${CAN_WRITE}" != "OK" ]; then
-            echo "Volume not writable by ${DOCKER_UID}; will run build container as root"
+            echo "Volume not writable by ${{ env.IMG_UID }}; will run build container as root"
             USER_ARG=""
+            GROUP_ARG=""
           else
-            echo "Volume writable by ${DOCKER_UID}; running build container as that UID"
-            USER_ARG="--user ${DOCKER_UID}:${DOCKER_GID}"
+            echo "Volume writable by ${{ env.IMG_UID }}; running build container as that UID"
+            USER_ARG="--user ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
+            GROUP_ARG="--group-add ${{ env.HOST_GID }}"
           fi
 
           # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
@@ -725,6 +712,7 @@ jobs:
             -v ${{ github.workspace }}:/build \
             -w /build \
             ${USER_ARG} \
+            ${GROUP_ARG} \
             -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
             -e DISABLE_COLORS=no \
             -e MTCOLORS=auto \
@@ -737,7 +725,7 @@ jobs:
             -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
             -e RUNNER_TYPE=${{ needs.init.outputs.runner_type }} \
             "${{ needs.init.outputs.output_ee_distro_tag }}" bash -lc \
-            ". /build/build_recommend.sh && git config --global --add safe.directory /build || true; make -j${RECOMMENDED_J} -l${NB_CORES} image"
+            "umask 0002 && . /build/build_recommend.sh && git config --global --add safe.directory /build || true; make -j${RECOMMENDED_J} -l${NB_CORES} image"
           docker_exit_code=$?
             # --volumes-from ${{ env.DistroCodeName }}-ccache \
             # -e CCACHE_DIR=/build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
@@ -847,8 +835,8 @@ jobs:
         run: |
           BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
           mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives "$BUILD_DIR/.stamps"
-          sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
-          sudo chown -R $(id -u):$(id -g) .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
 
       - name: Verify artifact availability
         run: |
@@ -866,7 +854,14 @@ jobs:
           if [ ! -d "$TARGET_TOOLCHAIN" ]; then
             echo "Toolchain directory missing. Attempting to recreate."
             mkdir -p "$TARGET_TOOLCHAIN"
-            docker run --rm -v "${{ github.workspace }}:/build" "$PREBUILT_IMAGE" bash -lc "cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true"
+            docker run --rm \
+              --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+              --group-add ${{ env.HOST_GID }} \
+              -v "${{ github.workspace }}:/build" \
+              "$PREBUILT_IMAGE" bash -lc "
+                umask 0002
+                cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true
+              "
           fi
 
       - name: Add detailed logging for make command
@@ -889,20 +884,20 @@ jobs:
           IMG_UID=$(docker run --rm --entrypoint id "$IMAGE" -u 2>/dev/null || echo "1001")
           IMG_GID=$(docker run --rm --entrypoint id "$IMAGE" -g 2>/dev/null || echo "$IMG_UID")
 
-          echo "Using UID:GID = ${IMG_UID}:${IMG_GID}"
+          echo "Using UID:GID = ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
 
           # Adjust ownership and permissions
           for dir in $CACHE_DIRS; do
-            sudo chown -R ${IMG_UID}:${IMG_GID} "$dir" || true
-            chmod -R u+rwX,g+rwX,o+rwX "$dir" || true
+            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$dir" || true
+            sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$dir" || true
           done
 
           # Ensure specific files exist
           touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
-          chmod 0666 "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
+          sudo chmod -R a=rw "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
 
           # Handle workspace ownership for self-hosted runners
           if [ "${{ inputs.runner || 'self-hosted' }}" != "github" ]; then
-            echo "Adjusting workspace ownership to ${IMG_UID}:${IMG_GID}"
-            sudo chown -R ${IMG_UID}:${IMG_GID} "${GITHUB_WORKSPACE}" || true
+            echo "Adjusting workspace ownership to ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
+            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${GITHUB_WORKSPACE}" || true
           fi
