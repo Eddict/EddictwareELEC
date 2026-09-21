@@ -301,6 +301,11 @@ jobs:
           [ ${{ env.DEBUG }} ] && ls -al $PWD
           [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
 
+          [ ${{ env.DEBUG }} ] && cat /etc/passwd
+          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
+          [ ${{ env.DEBUG }} ] && cat /etc/group
+          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
+
       - name: Host diagnostics
         id: host-diagnostics
         continue-on-error: true
