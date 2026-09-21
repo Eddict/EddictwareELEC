@@ -66,19 +66,17 @@ jobs:
       inputs.runner == 'self-hosted' && 'self-hosted' ||
       inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
       'ubuntu-latest' }}
-
+    needs: yamllint
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
       artifact-metadata: write
-
     env:
       RUNNER_CHOICE: ${{ inputs.runner || 'github' }}
       ENVIRONMENT_CHOICE: ${{ inputs.environment || 'noble' }}
       BUILDKIT_PROGRESS: 'auto' # 'plain' 'quiet'
-
     steps:
       - name: Get docker guid
         id: get-docker-guid

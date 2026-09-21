@@ -85,6 +85,7 @@ jobs:
 
   init:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
+    needs: yamllint
     permissions:
       contents: read
       packages: read
