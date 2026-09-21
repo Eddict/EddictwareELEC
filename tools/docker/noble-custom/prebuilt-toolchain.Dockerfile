@@ -41,7 +41,25 @@ RUN set -eux; \
         /src/scripts/build mesa:host > /dev/null 2>&1 & \
         /src/scripts/build zstd:host > /dev/null 2>&1 & \
         wait \
-    );
+    ); \
+    # Diagnostic: show contents of /tmp/prebuild and /tmp/prebuild/toolchain after build
+    echo "--- DIAGNOSTIC: /tmp/prebuild ---"; \
+    ls -l /tmp/prebuild || true; \
+    echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain ---"; \
+    ls -l /tmp/prebuild/toolchain || true; \
+    echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain-host.log ---"; \
+    cat /tmp/prebuild/toolchain-host.log || true; \
+    # Copy the first found toolchain dir as /opt/prebuilt-toolchain/toolchain (flat, predictable path)
+    sudo mkdir -p /opt/prebuilt-toolchain; \
+    tcdir=$(find /tmp/prebuild -type d -name 'toolchain' | head -n1); \
+    if [ -n "$tcdir" ]; then \
+      sudo cp -a "$tcdir" /opt/prebuilt-toolchain/toolchain; \
+    fi; \
+    # Diagnostic: confirm /opt/prebuilt-toolchain presence and permissions
+    echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; \
+    ls -l /opt/prebuilt-toolchain || true; \
+    find /opt/prebuilt-toolchain -type f | xargs ls -l || true; \
+    stat /opt/prebuilt-toolchain || true
 
 # # Build host-toolchain packages into a temporary build dir inside the image.
 # # Adjust the package list if you need more/less prebuilt packages.
