@@ -42,6 +42,25 @@ env:
   RUNNER_TOOL_CACHE: /toolcache
 
 jobs:
+  yamllint:
+    runs-on: ${{
+      inputs.runner == 'self-hosted' && 'self-hosted' ||
+      inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
+      'ubuntu-latest' }}
+    steps:
+      - name: Checkout yaml files
+        uses: actions/checkout@v7
+        # with: { sparse-checkout: "/.github/**/*.yml\n/.github/**/*.yaml", sparse-checkout-cone-mode: false, filter: "blob:none" }
+        with:
+          sparse-checkout: |
+            /.github/**/*.yml
+            /.github/**/*.yaml
+          sparse-checkout-cone-mode: false
+          filter: "blob:none"
+
+      - name: Run yamllint composite action
+        uses: ./.github/actions/composite/yamllint
+
   build:
     runs-on: ${{
       inputs.runner == 'self-hosted' && 'self-hosted' ||
@@ -61,19 +80,6 @@ jobs:
       BUILDKIT_PROGRESS: 'auto' # 'plain' 'quiet'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-        # with: { sparse-checkout: "/.github/**/*.yml\n/.github/**/*.yaml", sparse-checkout-cone-mode: false, filter: "blob:none" }
-        with:
-          sparse-checkout: |
-            /.github/**/*.yml
-            /.github/**/*.yaml
-          sparse-checkout-cone-mode: false
-          filter: "blob:none"
-
-      - name: Run yamllint composite action
-        uses: ./.github/actions/composite/yamllint
-
       - name: Get docker guid
         id: get-docker-guid
         run: |

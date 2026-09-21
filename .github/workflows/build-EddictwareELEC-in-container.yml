@@ -68,6 +68,21 @@ defaults:
     shell: bash
 
 jobs:
+  yamllint:
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
+    steps:
+      - name: Checkout yaml files
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            /.github/**/*.yml
+            /.github/**/*.yaml
+          sparse-checkout-cone-mode: false
+          filter: "blob:none"
+
+      - name: Run yamllint composite action
+        uses: ./.github/actions/composite/yamllint
+
   init:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
     permissions:
@@ -92,9 +107,6 @@ jobs:
       img_gid: ${{ steps.determine-ids.outputs.IMG_GID }}
 
     steps:
-      - name: Run yamllint composite action
-        uses: ./.github/actions/composite/yamllint
-
       - name: Get Date
         id: get-date
         run: |
