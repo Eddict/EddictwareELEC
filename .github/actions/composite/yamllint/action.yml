@@ -25,6 +25,7 @@ runs:
   steps:
     - name: Checkout code
       uses: actions/checkout@v6
+      with: { sparse-checkout: "**/*.yml\n**/*.yaml", sparse-checkout-cone-mode: false, filter: "blob:none" }
 
     - name: Resolve yamllint config
       id: lint-config

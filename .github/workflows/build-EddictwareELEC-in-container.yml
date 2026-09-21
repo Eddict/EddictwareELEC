@@ -92,6 +92,9 @@ jobs:
       img_gid: ${{ steps.determine-ids.outputs.IMG_GID }}
 
     steps:
+    - name: Run yamllint composite action
+      uses: ./.github/actions/composite/yamllint
+
     - name: Get Date
       id: get-date
       run: |
@@ -148,9 +151,6 @@ jobs:
       with:
         ref: ${{ github.ref_name }}
         # clean: false
-
-    - name: Run yamllint composite action
-      uses: ./.github/actions/composite/yamllint
 
     - name: Check for existing build cache (self-hosted only)
       id: check-build-cache
