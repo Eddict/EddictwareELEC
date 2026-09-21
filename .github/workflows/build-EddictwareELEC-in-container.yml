@@ -286,6 +286,14 @@ jobs:
       # Ensure permissions are correct before toolchain population
       - name: Ensure workspace and build dir permissions (pre-toolchain)
         run: |
+          [ ${{ env.DEBUG }} ] && echo "[img_uid]: ${{ needs.init.outputs.img_uid }}"
+          [ ${{ env.DEBUG }} ] && echo "[img_gid]: ${{ needs.init.outputs.img_gid }}"
+          [ ${{ env.DEBUG }} ] && echo "[pwd]: $PWD"
+          [ ${{ env.DEBUG }} ] && echo "[github.workspace]: ${{ github.workspace }}"
+          [ ${{ env.DEBUG }} ] && ls -al $PWD
+          [ ${{ env.DEBUG }} ] && ls -al "${GITHUB_WORKSPACE}"
+          [ ${{ env.DEBUG }} ] && echo "----------------------------------------"
+ 
           BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
           sudo chown -R ${{ needs.init.outputs.img_uid }}:${{ needs.init.outputs.img_gid }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
           sudo chmod -R u+rwX,g+rwX,o+rwX .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps" || true
@@ -631,6 +639,7 @@ jobs:
           [ ${{ env.DEBUG }} ] && echo "[MOUNT_APT]: $MOUNT_APT"
           # Runner workspace will be mounted directly into the container at /build
           echo "Using runner workspace mount -v \\${{ github.workspace }}:/build"
+
           # test whether the DOCKER_UID can create files in the mounted workspace; if not, we'll run the build as root
           CAN_WRITE=$(docker run --rm --user ${DOCKER_UID}:${DOCKER_GID} -v "${{ github.workspace }}:/build" alpine sh -c "touch /build/.perm_test >/dev/null 2>&1 && echo OK || echo FAIL") || CAN_WRITE=FAIL
           if [ "${CAN_WRITE}" != "OK" ]; then
