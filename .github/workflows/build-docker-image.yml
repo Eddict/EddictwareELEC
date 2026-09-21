@@ -112,7 +112,7 @@ jobs:
       - name: Log in to registry
         uses: docker/login-action@v4
         with:
-          # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
+          # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # https:// #:5000
           # username: ${{ secrets.REGISTRY_USER }}
           # password: ${{ secrets.REGISTRY_PWD }}
           registry: ${{ env.REGISTRY }}
@@ -146,7 +146,7 @@ jobs:
           #   debug = false
           #   [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}"]
           #     http = false
-  #        buildkitd-flags: '"--progress ''plain''"'
+          # buildkitd-flags: '"--progress ''plain''"'
 
       # - name: Cache Docker layers
       #   uses: actions/cache@v5
