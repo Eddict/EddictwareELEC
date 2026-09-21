@@ -49,7 +49,7 @@ on:
         default: false
 
 run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner || 'self-hosted', inputs.os || 'noble', inputs.arch || 'aarch64', inputs.debug && '/debug' || '') }}
-#run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted', github.event_name == 'workflow_dispatch' && inputs.os || 'noble', github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64') }}
+# run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted', github.event_name == 'workflow_dispatch' && inputs.os || 'noble', github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64') }}
 
 env:
   DEBUG: ${{ inputs.debug }}
@@ -93,9 +93,9 @@ jobs:
       id-token: write
     if: github.event_name == 'workflow_dispatch' || github.actor != 'Eddict'
     # if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
-      # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
+    #   && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
-      BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
+      BUILDKIT_PROGRESS: 'auto' # 'plain' 'quiet'
     # Expose step outputs as job outputs
     outputs:
       output_ee_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
@@ -152,7 +152,7 @@ jobs:
       - name: Log in to registry
         uses: docker/login-action@v4
         with:
-          # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
+          # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000
           # username: ${{ secrets.REGISTRY_USER }}
           # password: ${{ secrets.REGISTRY_PWD }}
           registry: ${{ env.EE_Registry }}
@@ -478,7 +478,7 @@ jobs:
           if [ "$RECOMMENDED_J" -gt $((NB_CORES*2)) ]; then RECOMMENDED_J=$((NB_CORES*2)); fi
           EOF
           fi
-          
+
           chmod +x "${{ github.workspace }}/build_recommend.sh" || true
 
       - name: Populate prebuilt toolchain
@@ -685,7 +685,7 @@ jobs:
 
           # USER_ARG already set by the CAN_WRITE test above (prefers the container UID when writable).
           # Do not override here; RUNNER_TYPE is used only for MEMORY_ARG and git handling.
-          
+
           # Ensure the workspace is writable by the container user by initializing ownership inside a short container
           # Diagnostic: capture workspace ownership/permission snapshot before attempting chown
           DIAG_FILE="${RUNNER_TEMP:-/tmp}/diagnostic_pre_chown.txt"
@@ -736,7 +736,6 @@ jobs:
         run: |
           [ ${{ env.DEBUG }} ] && echo "[github.workspace]: ${{ github.workspace }}"
           [ ${{ env.DEBUG }} ] && ls -al ${{ github.workspace }}
-      
 
       # https://stackoverflow.com/a/57877438
       # Artifacts uploaded below — download steps for cache fallbacks exist earlier.
