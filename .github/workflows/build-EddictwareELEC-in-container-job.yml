@@ -121,110 +121,110 @@ jobs:
       output_get_distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
       output_meta_tags: ${{ steps.meta.outputs.tags }}
     steps:
-    - name: Checkout repository scripts
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        ref: ${{ github.event.repository.default_branch }}
-        path: ${{ github.workspace }}
-        clean: false # otherwise .ccache subfolder gets deleted
-        show-progress: false
-        set-safe-directory: true # this is the default, but just to be sure
-        sparse-checkout: |
-          .github/actions/composite
-          .github/actions/scripts
-#        sparse-checkout-cone-mode: false
-#        path: .
-#        filter: .github/actions/scripts
+      - name: Checkout repository scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: ${{ github.workspace }}
+          clean: false # otherwise .ccache subfolder gets deleted
+          show-progress: false
+          set-safe-directory: true # this is the default, but just to be sure
+          sparse-checkout: |
+            .github/actions/composite
+            .github/actions/scripts
+  #        sparse-checkout-cone-mode: false
+  #        path: .
+  #        filter: .github/actions/scripts
 
-    - name: Initialize environment
-      id: set-multi
-      run: |
-        .github/actions/scripts/set_multi.sh ${{ runner.temp }}
-        .github/actions/scripts/set_multi.sh
+      - name: Initialize environment
+        id: set-multi
+        run: |
+          .github/actions/scripts/set_multi.sh ${{ runner.temp }}
+          .github/actions/scripts/set_multi.sh
 
-    - name: Checkout repository
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        ref: ${{ github.event.repository.default_branch }}
-        path: ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: ${{ github.workspace }}
 
-    - uses: ./.github/actions/composite/init-env-vars
-      id: get-env-vars
-      name: Init environment variables
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ./.github/actions/composite/init-env-vars
+        id: get-env-vars
+        name: Init environment variables
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Compose image tag
-      id: compose-image-tag
-      run: |
-        dTag="${{ env.EE_Registry }}/${{ github.repository_owner }}/${{ env.EE_Distro }}-${DistroCodeName@L}"
-        # Use ,, to convert all characters to lowercase
-        echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
-        # run: echo "backend_image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
+      - name: Compose image tag
+        id: compose-image-tag
+        run: |
+          dTag="${{ env.EE_Registry }}/${{ github.repository_owner }}/${{ env.EE_Distro }}-${DistroCodeName@L}"
+          # Use ,, to convert all characters to lowercase
+          echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
+          # run: echo "backend_image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
-    - name: Login to (private) Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ${{ env.EE_Registry }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to (private) Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.EE_Registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract Docker metadata
-      id: meta
-      uses: docker/metadata-action@v6
-      with:
-        context: workflow
-        images: name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }},enable=true
-        # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
-        tags: type=raw,value=latest
-        # flavor: latest=true
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          context: workflow
+          images: name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }},enable=true
+          # images: name=${{ secrets.REGISTRY_FQDN }}/${{ github.repository_owner }}/${{ env.DistroCodeName }},enable=true
+          tags: type=raw,value=latest
+          # flavor: latest=true
 
-    - name: Echo Docker metadata
-      id: echo-meta
-      run: |
-        echo "steps.meta.outputs.version = ${{ steps.meta.outputs.version }}"
-        echo "steps.meta.outputs.tags = ${{ steps.meta.outputs.tags }}"
-        echo "steps.meta.outputs.labels = ${{ steps.meta.outputs.labels }}"
-        echo "steps.meta.outputs.annotations = ${{ steps.meta.outputs.annotations }}"
-        echo "steps.meta.outputs.json = ${{ steps.meta.outputs.json }}"
+      - name: Echo Docker metadata
+        id: echo-meta
+        run: |
+          echo "steps.meta.outputs.version = ${{ steps.meta.outputs.version }}"
+          echo "steps.meta.outputs.tags = ${{ steps.meta.outputs.tags }}"
+          echo "steps.meta.outputs.labels = ${{ steps.meta.outputs.labels }}"
+          echo "steps.meta.outputs.annotations = ${{ steps.meta.outputs.annotations }}"
+          echo "steps.meta.outputs.json = ${{ steps.meta.outputs.json }}"
 
-    - name: Prepare build directory
-      id: prepare-build-dir
-      if: ${{ 0 == 1 }}
-      run: |
-        debug=false
-        [ "$debug" = true ] && echo "[pwd]: $PWD"
-        [ "$debug" = true ] && ls -al $PWD
-        [ "$debug" = true ] && echo "github.workspace: ${{ github.workspace }}"
-        [ "$debug" = true ] && ls -al ${{ github.workspace }}
-        [ "$debug" = true ] && export
-        [ "$debug" = true ] && echo "output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}"
-        [ "$debug" = true ] && ls -al ${{ steps.get-env-vars.outputs.output_get_pwd }}
-        [ "$debug" = true ] && echo "output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}"
-        [ "$debug" = true ] && echo "output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}"
-        [ "$debug" = true ] && echo "whoami: $(whoami)"
-        # echo "uid: $(id -u)"
-        # echo "gid: $(id -g)"
-        # cat /etc/passwd | grep docker || echo "docker user not found"
-        # cat /etc/group | grep docker || echo "docker group not found"
-        # echo "/etc/passwd"
-        # cat /etc/passwd 
-        # echo "/etc/group"
-        # cat /etc/group
-        [ "$debug" = true ] && echo "EE_Distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
-        # chown -R $(whoami):docker $PWD
+      - name: Prepare build directory
+        id: prepare-build-dir
+        if: ${{ 0 == 1 }}
+        run: |
+          debug=false
+          [ "$debug" = true ] && echo "[pwd]: $PWD"
+          [ "$debug" = true ] && ls -al $PWD
+          [ "$debug" = true ] && echo "github.workspace: ${{ github.workspace }}"
+          [ "$debug" = true ] && ls -al ${{ github.workspace }}
+          [ "$debug" = true ] && export
+          [ "$debug" = true ] && echo "output_get_pwd: ${{ steps.get-env-vars.outputs.output_get_pwd }}"
+          [ "$debug" = true ] && ls -al ${{ steps.get-env-vars.outputs.output_get_pwd }}
+          [ "$debug" = true ] && echo "output_get_distro_tag: ${{ steps.get-env-vars.outputs.output_get_distro_tag }}"
+          [ "$debug" = true ] && echo "output_set_builder_version: ${{ steps.get-env-vars.outputs.output_set_builder_version }}"
+          [ "$debug" = true ] && echo "whoami: $(whoami)"
+          # echo "uid: $(id -u)"
+          # echo "gid: $(id -g)"
+          # cat /etc/passwd | grep docker || echo "docker user not found"
+          # cat /etc/group | grep docker || echo "docker group not found"
+          # echo "/etc/passwd"
+          # cat /etc/passwd 
+          # echo "/etc/group"
+          # cat /etc/group
+          [ "$debug" = true ] && echo "EE_Distro_tag: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}"
+          # chown -R $(whoami):docker $PWD
 
-        # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
-        # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
-        #     # cleanup
-        #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
-        # fi
+          # docker login --username ${{ vars.DOCKERHUB_USERNAME }} --password ${{ secrets.DOCKERHUB_TOKEN }}
+          # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.DistroCodeName }})" ]; then
+          #     # cleanup
+          #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}"
+          # fi
 
-    # https://stackoverflow.com/a/57877438
-    # - uses: actions/upload-artifact@v7
-    #   with:
-    #     name: artifact-${{ env.BUILDER_VERSION }}
-    #     path: ${{ steps.get-env-vars.outputs.output_get_pwd }}
+      # https://stackoverflow.com/a/57877438
+      # - uses: actions/upload-artifact@v7
+      #   with:
+      #     name: artifact-${{ env.BUILDER_VERSION }}
+      #     path: ${{ steps.get-env-vars.outputs.output_get_pwd }}
 
   build:
     name: Build
@@ -283,51 +283,51 @@ jobs:
         working-directory: /build
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        ref: ${{ github.event.repository.default_branch }}
-        path: ${{ github.workspace }}
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: ${{ github.workspace }}
 
-    - name: Build ${{ env.EE_Distro }} image
-      id: build-image
-      # if: ${{ 0 == 1 }}
-      run: |
-        debug=false
-        [ "$debug" = true ] && echo "[pwd]: $PWD"
-        [ "$debug" = true ] && ls -al $PWD
-        [ "$debug" = true ] && export
-        # [ "$debug" = true ] && echo "output_get_pwd: ${{ needs.pre-build.outputs.output_get_pwd }}"
-        # [ "$debug" = true ] && ls -al ${{ needs.pre-build.outputs.output_get_pwd }}
-        [ "$debug" = true ] && echo "output_get_distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}"
-        [ "$debug" = true ] && echo "output_set_builder_version: ${{ needs.pre-build.outputs.output_set_builder_version }}"
-        debug=true
-        [ "$debug" = true ] && echo "output_get_cpu_info: ${{ needs.pre-build.outputs.output_get_cpu_info }}"
-        [ "$debug" = true ] && echo "NB_CORES: ${NB_CORES}"
-        # run the build
-        make -j$((NB_CORES+1)) -l${NB_CORES} image
-        # make image # ${{ needs.pre-build.outputs.output_get_cpu_info }}
+      - name: Build ${{ env.EE_Distro }} image
+        id: build-image
+        # if: ${{ 0 == 1 }}
+        run: |
+          debug=false
+          [ "$debug" = true ] && echo "[pwd]: $PWD"
+          [ "$debug" = true ] && ls -al $PWD
+          [ "$debug" = true ] && export
+          # [ "$debug" = true ] && echo "output_get_pwd: ${{ needs.pre-build.outputs.output_get_pwd }}"
+          # [ "$debug" = true ] && ls -al ${{ needs.pre-build.outputs.output_get_pwd }}
+          [ "$debug" = true ] && echo "output_get_distro_tag: ${{ needs.pre-build.outputs.output_get_distro_tag }}"
+          [ "$debug" = true ] && echo "output_set_builder_version: ${{ needs.pre-build.outputs.output_set_builder_version }}"
+          debug=true
+          [ "$debug" = true ] && echo "output_get_cpu_info: ${{ needs.pre-build.outputs.output_get_cpu_info }}"
+          [ "$debug" = true ] && echo "NB_CORES: ${NB_CORES}"
+          # run the build
+          make -j$((NB_CORES+1)) -l${NB_CORES} image
+          # make image # ${{ needs.pre-build.outputs.output_get_cpu_info }}
 
-    # https://stackoverflow.com/a/57877438
-    - uses: actions/upload-artifact@v7
-      if: always() && (steps.build-image.outcome == 'failure')
-      with:
-        name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
-        path: /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
-        overwrite: true
-        include-hidden-files: true
+      # https://stackoverflow.com/a/57877438
+      - uses: actions/upload-artifact@v7
+        if: always() && (steps.build-image.outcome == 'failure')
+        with:
+          name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
+          path: /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
+          overwrite: true
+          include-hidden-files: true
 
-    - uses: actions/upload-artifact@v7
-      if: always()
-      with:
-        name: artifact_cache_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
-        path: |
-          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
-          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache/
-          /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps/
-          /sources/
-        overwrite: true
-        include-hidden-files: true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: artifact_cache_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
+          path: |
+            /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
+            /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache/
+            /build/build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps/
+            /sources/
+          overwrite: true
+          include-hidden-files: true
 
   post-build:
     name: Post-build
@@ -336,42 +336,42 @@ jobs:
       - runner 
       - build
     steps:
-    - name: Copy built ${{ env.EE_Distro }} image to archive
-      id: archive-image
-      run: |
-        debug=true
-        [ "$debug" = true ] && echo "[pwd]: $PWD"
-        if [ -d $PWD/target ]; then
-          lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
-          [ "$debug" = true ] && echo "[lines]: $lines"
-          if [ $lines -ne 0 ]; then
-            pathfilename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
-            [ "$debug" = true ] && echo "[EE_image_pathfilename]: $pathfilename"
-            echo "EE_image_pathfilename=$pathfilename" | sudo tee -a $GITHUB_OUTPUT
-            filename="${pathfilename##*/}"
-            [ "$debug" = true ] && echo "[EE_image_filename]: $filename"
-            echo "EE_image_filename=$filename" | sudo tee -a $GITHUB_OUTPUT
-            if [ ! -d /root/target_archive ]; then
-              mkdir --parents "/root/target_archive"
-            fi
-            if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older
-              echo "Copied built image to /root/target_archive"
+      - name: Copy built ${{ env.EE_Distro }} image to archive
+        id: archive-image
+        run: |
+          debug=true
+          [ "$debug" = true ] && echo "[pwd]: $PWD"
+          if [ -d $PWD/target ]; then
+            lines=$(find $PWD/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+            [ "$debug" = true ] && echo "[lines]: $lines"
+            if [ $lines -ne 0 ]; then
+              pathfilename=$(ls -t $PWD/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
+              [ "$debug" = true ] && echo "[EE_image_pathfilename]: $pathfilename"
+              echo "EE_image_pathfilename=$pathfilename" | sudo tee -a $GITHUB_OUTPUT
+              filename="${pathfilename##*/}"
+              [ "$debug" = true ] && echo "[EE_image_filename]: $filename"
+              echo "EE_image_filename=$filename" | sudo tee -a $GITHUB_OUTPUT
+              if [ ! -d /root/target_archive ]; then
+                mkdir --parents "/root/target_archive"
+              fi
+              if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older
+                echo "Copied built image to /root/target_archive"
+              else
+                echo "No newer built image to copy to /root/target_archive"
+              fi
             else
-              echo "No newer built image to copy to /root/target_archive"
+              echo "No built image found in target directory, skipping copy."
             fi
           else
-            echo "No built image found in target directory, skipping copy."
+            echo "No target directory found, skipping copy of built image."
           fi
-        else
-          echo "No target directory found, skipping copy of built image."
-        fi
 
-    - name: Upload built ${{ env.EE_Distro }} image
-      id: upload-image
-      if: ${{ steps.archive-image.outputs.EE_image_pathfilename != '' }}
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      uses: actions/upload-artifact@v7
-      with:
-        name: "${{ steps.archive-image.outputs.EE_image_filename }}"
-        path: "${{ steps.archive-image.outputs.EE_image_pathfilename }}"
+      - name: Upload built ${{ env.EE_Distro }} image
+        id: upload-image
+        if: ${{ steps.archive-image.outputs.EE_image_pathfilename != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: "${{ steps.archive-image.outputs.EE_image_filename }}"
+          path: "${{ steps.archive-image.outputs.EE_image_pathfilename }}"
