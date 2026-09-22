@@ -50,8 +50,12 @@ jobs:
       inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
       'ubuntu-latest' }}
     steps:
-      - name: Checkout yaml files
+      - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          sparse-checkout-cone-mode: true
+          clean: true
+          fetch-depth: 1
 
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
@@ -103,10 +107,10 @@ jobs:
           echo "REGISTRY-USER=${{ env.REGISTRY_USER }}"
           echo "REGISTRY-PWD=${{ env.REGISTRY_PWD }}"
 
-          echo "---------------------"
-          echo "${{ env.REGISTRY }}" | sed 's/./& /g'
-          echo "${{ env.REGISTRY_USER }}" | sed 's/./& /g'
-          echo "${{ env.REGISTRY_PWD }}" | sed 's/./& /g'
+          # echo "---------------------"
+          # echo "${{ env.REGISTRY }}" | sed 's/./& /g'
+          # echo "${{ env.REGISTRY_USER }}" | sed 's/./& /g'
+          # echo "${{ env.REGISTRY_PWD }}" | sed 's/./& /g'
         shell: bash
 
       - name: Log in to registry

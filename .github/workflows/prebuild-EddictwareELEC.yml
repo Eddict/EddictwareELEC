@@ -55,7 +55,7 @@ jobs:
   yamllint:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     steps:
-      - name: Checkout yaml files
+      - name: Checkout repository
         uses: actions/checkout@v7
 
       - name: Run yamllint composite action
