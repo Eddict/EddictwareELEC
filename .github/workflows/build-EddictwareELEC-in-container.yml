@@ -173,8 +173,8 @@ jobs:
 
       - &check-repo-folder # Define a reusable anchor for this step
         name: Check repo folder after checkout
+        # if: env.DEBUG == 'true'
         # id: check-repo-folder # cannot reuse the same ID for multiple steps when using the anchor
-        if: inputs.runner == 'self-hosted' || inputs.runner == 'aws'
         run: |
           echo "PWD: $PWD"
           echo "Listing contents of PWD:"
@@ -291,6 +291,7 @@ jobs:
 
       - name: Host diagnostics
         id: host-diagnostics
+        if: env.DEBUG == 'true'
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -313,6 +314,7 @@ jobs:
 
       - name: In-container diagnostics
         id: in-container-diagnostics
+        if: env.DEBUG == 'true'
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -367,7 +369,7 @@ jobs:
           '
 
       - name: Upload CI diagnostics
-        if: ${{ always() && !cancelled() }}
+        if: always() && !cancelled() && env.DEBUG == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ci-diagnostics-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -566,6 +568,7 @@ jobs:
 
       - name: In-container diagnostics (post-prebuild)
         id: in-container-diagnostics-post
+        if: env.DEBUG == 'true'
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -602,7 +605,7 @@ jobs:
 
       - name: Upload CI diagnostics (post-prebuild)
         id: upload-ci-diagnostics-post
-        if: ${{ always() && !cancelled() }}
+        if: always() && !cancelled() && env.DEBUG == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ci-diagnostics-post-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -776,6 +779,7 @@ jobs:
 
       - name: github-workspace
         id: ls-ghws
+        if: env.DEBUG == 'true'
         run: |
           [ "${{ env.DEBUG }}" = "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
           [ "${{ env.DEBUG }}" = "true" ] && ls -al ${{ github.workspace }} || true
@@ -791,7 +795,7 @@ jobs:
       # - built image artifact (final product)
       # Keep uploads `if: always()` so fallback artifacts are refreshed.
       - uses: actions/upload-artifact@v7
-        if: ${{ always() && !cancelled() && (steps.build-image.outcome == 'failure') }}
+        if: always() && !cancelled() && steps.build-image.outcome == 'failure'
         with:
           name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
           # use workspace-relative path so the host runner (not the container) can find the logs
@@ -803,7 +807,7 @@ jobs:
           include-hidden-files: true
 
       - name: Upload ccache artifact
-        if: ${{ success() && !cancelled() }}
+        if: success() && !cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -815,7 +819,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload stamps artifact
-        if: ${{ success() && !cancelled() }}
+        if: success() && !cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -823,7 +827,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload apt-cache artifact
-        if: ${{ success() && !cancelled() }}
+        if: success() && !cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -860,7 +864,7 @@ jobs:
           fi
 
       - name: Upload built ${{ env.EE_Distro }} image
-        if: ${{ steps.image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
+        if: steps.image-path.outputs.EE_image_pathfilename != '' && !cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: "${{ steps.image-path.outputs.EE_image_filename }}"
