@@ -81,12 +81,6 @@ jobs:
     steps:
       - name: Checkout yaml files
         uses: actions/checkout@v7
-        with:
-          sparse-checkout: |
-            /.github/**/*.yml
-            /.github/**/*.yaml
-          sparse-checkout-cone-mode: false
-          # filter: "blob:none"
 
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
@@ -183,16 +177,6 @@ jobs:
           registry: ${{ env.EE_Registry }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.ref_name }}
-          sparse-checkout: null
-          sparse-checkout-cone-mode: true
-          filter: null
-          clean: true
-          fetch-depth: 1
 
       - name: Check for existing build cache (self-hosted only)
         id: check-build-cache
