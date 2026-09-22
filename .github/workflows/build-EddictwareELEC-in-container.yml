@@ -115,13 +115,14 @@ jobs:
       # docker_gid: ${{ steps.determine-ids.outputs.DOCKER_GID }}
       img_uid: ${{ steps.determine-ids.outputs.IMG_UID }}
       img_gid: ${{ steps.determine-ids.outputs.IMG_GID }}
+      build_dir: ${{ steps.determine-build-dir.outputs.BUILD_DIR }}
 
     steps:
       - name: Get Date
         id: get-date
         run: |
           # echo "[date]: $(/bin/date -u "+%Y%m%d")"
-          echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+          echo "date=$(/bin/date -u "+%Y%m%d")" | tee -a $GITHUB_OUTPUT
 
       - name: Compose image tag
         id: compose-image-tag
@@ -129,14 +130,9 @@ jobs:
           dTag="${{ env.EE_Registry }}/${{ github.repository_owner }}/${{ env.EE_Distro }}:${{ env.DistroCodeName }}"
           # Use ,, to convert all characters to lowercase
           echo "EE_Distro_tag=${dTag,,}"
-          echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
+          echo "EE_Distro_tag=${dTag,,}" | tee -a $GITHUB_OUTPUT
 
-          # value=$(printf '%s' "$EE_Distro_tag" | sed 's/%25/%/g; s/%0D/\r/g; s/%0A/\n/g')
-          # echo "value=$value"
-          # echo "Trick to echo EE_Distro_tag:"
-          # echo "$value" | sed 's/./& /g' | awk '{print substr($0,1,100);exit}'
-
-      - name: Determine Runner and User IDs
+      - name: Determine UIDs and GIDs
         id: determine-ids
         run: |
           RUNNER_TYPE="${{ inputs.runner || 'self-hosted' }}"
@@ -155,11 +151,17 @@ jobs:
           fi
 
           # Output clean, reliable variables to the next steps
-          echo "RUNNER_TYPE=$RUNNER_TYPE" | sudo tee -a $GITHUB_OUTPUT
-          echo "HOST_UID=$HOST_UID" | sudo tee -a $GITHUB_OUTPUT
-          echo "HOST_GID=$HOST_GID" | sudo tee -a $GITHUB_OUTPUT
-          echo "IMG_UID=$IMG_UID" | sudo tee -a $GITHUB_OUTPUT
-          echo "IMG_GID=$IMG_GID" | sudo tee -a $GITHUB_OUTPUT
+          echo "RUNNER_TYPE=$RUNNER_TYPE" | tee -a $GITHUB_OUTPUT
+          echo "HOST_UID=$HOST_UID" | tee -a $GITHUB_OUTPUT
+          echo "HOST_GID=$HOST_GID" | tee -a $GITHUB_OUTPUT
+          echo "IMG_UID=$IMG_UID" | tee -a $GITHUB_OUTPUT
+          echo "IMG_GID=$IMG_GID" | tee -a $GITHUB_OUTPUT
+
+      - name: Determine BUILD_DIR
+        id: determine-build-dir
+        run: |
+          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+          echo "BUILD_DIR=$BUILD_DIR" | tee -a $GITHUB_OUTPUT
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
@@ -169,7 +171,9 @@ jobs:
       HOST_GID: ${{ needs.init.outputs.host_gid }}
       IMG_UID: ${{ needs.init.outputs.img_uid }}
       IMG_GID: ${{ needs.init.outputs.img_gid }}
+      RUNNER_TYPE: ${{ needs.init.outputs.runner_type }}
       CHMOD_SYNTAX: u=rwx,g=rwxs,o=rx # add the Group Sticky Bit (g+s) to enforce group write permissions
+      BUILD_DIR: ${{ needs.init.outputs.build_dir }}
     steps:
       - name: Log in to registry
         uses: docker/login-action@v4
@@ -264,17 +268,16 @@ jobs:
             ls -al "$PWD" && echo "----------------------------------------"
           fi
 
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          mkdir -p .ccache "$BUILD_DIR/.stamps" .apt-cache/archives
-          touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local"
+          mkdir -p .ccache "${{ env.BUILD_DIR }}/.stamps" .apt-cache/archives
+          touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
 
-          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "$BUILD_DIR" .apt-cache || true
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "$BUILD_DIR" .apt-cache || true
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "${{ env.BUILD_DIR }}" .apt-cache || true
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "${{ env.BUILD_DIR }}" .apt-cache || true
 
-          sudo chmod a=rw "$BUILD_DIR/.cache_package_global" || true
-          sudo chmod a=rw "$BUILD_DIR/.cache_package_local" || true
+          sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
+          sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
 
-          if [ "${{ needs.init.outputs.runner_type }}" != "github" ]; then
+          if [ "${{ env.RUNNER_TYPE }}" != "github" ]; then
             echo "Self-hosted runner detected: Aligning full workspace ownership"
             sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${GITHUB_WORKSPACE}" || true
           fi
@@ -370,7 +373,7 @@ jobs:
         id: prepare-container-params
         run: |
           # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
-          if [ "${RUNNER_TYPE}" != "github" ]; then
+          if [ "${{ env.RUNNER_TYPE }}" != "github" ]; then
             CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}"
             MEMORY_ARG="--memory=${CONTAINER_MEMORY}"
           else
@@ -489,6 +492,7 @@ jobs:
           registry_owner="${{ github.repository_owner }}"
           registry_owner="${registry_owner,,}"
           PREBUILT_IMAGE="${{ env.EE_Registry }}/${registry_owner}/eddictwareelec-prebuilt:${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
+          echo "PREBUILT_IMAGE=$PREBUILT_IMAGE" | tee -a $GITHUB_ENV
           if [ "${{ env.DEBUG }}" = "true" ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
           echo "DOCKER_DEBUG=${DOCKER_DEBUG}"
           echo "Looking for prebuilt image: $PREBUILT_IMAGE"
@@ -509,8 +513,8 @@ jobs:
               exit 0
             fi
           fi
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          TARGET_TOOLCHAIN="${{ github.workspace }}/$BUILD_DIR/toolchain"
+          TARGET_TOOLCHAIN="${{ github.workspace }}/${{ env.BUILD_DIR }}/toolchain"
+          echo "TARGET_TOOLCHAIN=$TARGET_TOOLCHAIN" | tee -a $GITHUB_ENV
           if [ -d "$TARGET_TOOLCHAIN" ]; then
             echo "Toolchain already present at $TARGET_TOOLCHAIN; skipping copy"
             exit 0
@@ -540,8 +544,6 @@ jobs:
       # Fallback for missing toolchain after all artifact/copy attempts
       - name: Add fallback for missing toolchain (post-artifact)
         run: |
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          TARGET_TOOLCHAIN="${{ github.workspace }}/$BUILD_DIR/toolchain"
           if [ ! -d "$TARGET_TOOLCHAIN" ]; then
             echo "Toolchain directory missing. Attempting to recreate."
             mkdir -p "$TARGET_TOOLCHAIN"
@@ -632,7 +634,6 @@ jobs:
           fi
           # (image UID/GID chown moved below after BUILD_DIR is set)
           # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
           # decide mount strategy based on runner input: always use named docker volumes for runtime
           # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
           VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.DistroCodeName }}-${{ env.EE_Arch }}"
@@ -739,7 +740,7 @@ jobs:
             -e ARCH=${{ env.EE_Arch }} \
             -e BUILDER_NAME=Eddict \
             -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-            -e RUNNER_TYPE=${{ needs.init.outputs.runner_type }} \
+            -e RUNNER_TYPE=${{ env.RUNNER_TYPE }} \
             "${{ needs.init.outputs.output_ee_distro_tag }}" bash -lc \
             "umask 0002 && . /build/build_recommend.sh && git config --global --add safe.directory /build || true; make -j${RECOMMENDED_J} -l${NB_CORES} image"
           docker_exit_code=$?
@@ -849,14 +850,13 @@ jobs:
 
       - name: Ensure required directories exist with correct permissions
         run: |
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          mkdir -p .ccache "$BUILD_DIR" .apt-cache/archives "$BUILD_DIR/.stamps"
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
-          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "$BUILD_DIR" .apt-cache "$BUILD_DIR/.stamps"
+          mkdir -p .ccache "${{ env.BUILD_DIR }}" .apt-cache/archives "${{ env.BUILD_DIR }}/.stamps"
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "${{ env.BUILD_DIR }}" .apt-cache "${{ env.BUILD_DIR }}/.stamps"
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "${{ env.BUILD_DIR }}" .apt-cache "${{ env.BUILD_DIR }}/.stamps"
 
       - name: Verify artifact availability
         run: |
-          if [ ! -d "$BUILD_DIR/.stamps" ]; then
+          if [ ! -d "${{ env.BUILD_DIR }}/.stamps" ]; then
             echo "Warning: Stamps artifact is missing. Build may fail."
           fi
           if [ ! -d .ccache ]; then
@@ -865,8 +865,6 @@ jobs:
 
       - name: Add fallback for missing toolchain
         run: |
-          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          TARGET_TOOLCHAIN="${{ github.workspace }}/$BUILD_DIR/toolchain"
           if [ ! -d "$TARGET_TOOLCHAIN" ]; then
             echo "Toolchain directory missing. Attempting to recreate."
             mkdir -p "$TARGET_TOOLCHAIN"
@@ -880,25 +878,24 @@ jobs:
               "
           fi
 
-      - name: Add detailed logging for make command
-        run: |
-          set -x
-          . /build/build_recommend.sh
-          make -j${RECOMMENDED_J} -l${NB_CORES} image || {
-            echo "Make command failed. Capturing logs...";
-            find /build -name '*.log' -exec cp {} /build/ci-diagnostics/ \; || true;
-            exit 1;
-          }
+      # - name: Add detailed logging for make command
+      #   run: |
+      #     set -x
+      #     . /build/build_recommend.sh
+      #     make -j${RECOMMENDED_J} -l${NB_CORES} image || {
+      #       echo "Make command failed. Capturing logs...";
+      #       find /build -name '*.log' -exec cp {} /build/ci-diagnostics/ \; || true;
+      #       exit 1;
+      #     }
 
       - name: Consolidate ownership and permissions
         env:
-          BUILD_DIR: "build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
-          CACHE_DIRS: ".ccache $BUILD_DIR .apt-cache $BUILD_DIR/.stamps"
+          CACHE_DIRS: ".ccache ${{ env.BUILD_DIR }} .apt-cache ${{ env.BUILD_DIR }}/.stamps"
         run: |
           # Determine UID/GID dynamically
-          IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
-          IMG_UID=$(docker run --rm --entrypoint id "$IMAGE" -u 2>/dev/null || echo "1001")
-          IMG_GID=$(docker run --rm --entrypoint id "$IMAGE" -g 2>/dev/null || echo "$IMG_UID")
+          # IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
+          # IMG_UID=$(docker run --rm --entrypoint id "$IMAGE" -u 2>/dev/null || echo "1001")
+          # IMG_GID=$(docker run --rm --entrypoint id "$IMAGE" -g 2>/dev/null || echo "$IMG_UID")
 
           echo "Using UID:GID = ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
 
@@ -909,8 +906,8 @@ jobs:
           done
 
           # Ensure specific files exist
-          touch "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
-          sudo chmod -R a=rw "$BUILD_DIR/.cache_package_global" "$BUILD_DIR/.cache_package_local" || true
+          touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
+          sudo chmod -R a=rw "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
 
           # Handle workspace ownership for self-hosted runners
           if [ "${{ inputs.runner || 'self-hosted' }}" != "github" ]; then
