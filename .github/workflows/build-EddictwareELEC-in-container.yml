@@ -677,6 +677,12 @@ jobs:
             USER_ARG="--user ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
             GROUP_ARG="--group-add ${{ env.HOST_GID }}"
           fi
+          echo "USER_ARG: $USER_ARG"
+          echo "GROUP_ARG: $GROUP_ARG"
+          echo "HOST_UID: $HOST_UID"
+          echo "HOST_GID: $HOST_GID"
+          echo "IMG_UID: $IMG_UID"
+          echo "IMG_GID: $IMG_GID"
 
           # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
           # to avoid 'dubious ownership' errors caused by bind-mounted repos.
