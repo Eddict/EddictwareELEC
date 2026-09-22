@@ -100,6 +100,9 @@ jobs:
       #     driver: docker-container
       #     buildkitd-flags: ${{ inputs.debug && '--debug' || '' }}
 
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
       - name: Build and push prebuilt image
         uses: docker/build-push-action@v7
         with:
