@@ -102,6 +102,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          clean: true
 
       - name: Build and push prebuilt image
         uses: docker/build-push-action@v7
