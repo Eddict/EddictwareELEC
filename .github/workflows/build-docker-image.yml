@@ -37,8 +37,10 @@ run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.runner || 'github'
 
 env:
   REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
-  REGISTRY_USER: ${{ inputs.runner == 'github' && github.actor || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
-  REGISTRY_PWD: ${{ inputs.runner == 'github' && secrets.GITHUB_TOKEN || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
+  # REGISTRY_USER: ${{ inputs.runner == 'github' && github.actor || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
+  # REGISTRY_PWD: ${{ inputs.runner == 'github' && secrets.GITHUB_TOKEN || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
+  REGISTRY_USER: ${{ inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_USER || github.repository_owner }}
+  REGISTRY_PWD: ${{ inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.GITHUB_TOKEN }}
   RUNNER_TOOL_CACHE: /toolcache
 
 jobs:
