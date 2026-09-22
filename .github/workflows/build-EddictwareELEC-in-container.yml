@@ -259,7 +259,7 @@ jobs:
 
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "$BUILD_DIR" .apt-cache || true
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "$BUILD_DIR" .apt-cache || true
-          
+
           sudo chmod a=rw "$BUILD_DIR/.cache_package_global" || true
           sudo chmod a=rw "$BUILD_DIR/.cache_package_local" || true
 
@@ -297,10 +297,10 @@ jobs:
           set -euo pipefail
           IMAGE="${{ needs.init.outputs.output_ee_distro_tag }}"
           echo "Running in-container diagnostics inside image: $IMAGE"
-          
+
           # Pull image best-effort
           docker image pull "$IMAGE" || true
-          
+
           # Run container with matched image user and supplementary host group
           docker run --rm \
             --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
@@ -310,7 +310,7 @@ jobs:
             "$IMAGE" bash -lc '
             # Force group-write permissions for any diagnostic file created here
             umask 0002
-            
+
             set -euo pipefail
             DIAG_DIR=/build/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container.log"
