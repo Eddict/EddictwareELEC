@@ -723,6 +723,14 @@ jobs:
             # create an empty diagnostic file for symmetry so later steps can reference it
             : > "${DIAG_FILE}" || true
           fi
+
+          echo "--------------Makefile---------------------"
+          git status --porcelain --ignored
+          ls -la Makefile scripts/image
+          cat Makefile | sed -n '1,15p'
+          echo "--------------Makefile---------------------"
+
+
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
           . "${{ github.workspace }}/container_params.sh" && docker run --rm $MEMORY_ARG \
             --name "build${{ env.EE_Distro }}.${{ env.DistroCodeName }}" \
