@@ -546,6 +546,8 @@ jobs:
             echo "Toolchain directory missing. Attempting to recreate."
             mkdir -p "$TARGET_TOOLCHAIN"
             docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
             -v "${{ github.workspace }}:/build" \
             "$PREBUILT_IMAGE" bash -lc "
             umask 0002
@@ -562,6 +564,8 @@ jobs:
           echo "Running post-prebuild in-container diagnostics inside image: $IMAGE"
           docker image pull "$IMAGE" || true
           docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
             -v "${{ github.workspace }}:/build" \
             -w /build "$IMAGE" bash -lc '
             umask 0002
