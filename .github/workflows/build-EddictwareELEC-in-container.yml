@@ -171,6 +171,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - &check-repo-folder # Define a reusable anchor for this step
+        name: Check repo folder after checkout
+        # id: check-repo-folder # cannot reuse the same ID for multiple steps when using the anchor
+        if: inputs.runner == 'self-hosted' || inputs.runner == 'aws'
+        run: |
+          echo "PWD: $PWD"
+          echo "Listing contents of PWD:"
+          ls -la $PWD
+          echo "Listing contents of repository folder:"
+          ls -la $GITHUB_WORKSPACE
+          echo "Checking repository folder: $GITHUB_WORKSPACE"
+          # Check if the repository folder exists and is not empty
+          if [ ! -d "$GITHUB_WORKSPACE" ] || [ "$(ls -A $GITHUB_WORKSPACE 2>/dev/null | wc -l)" -eq 0 ]; then
+            echo "Repository folder is missing or empty: $GITHUB_WORKSPACE"
+            exit 1
+          fi
+
       - name: Log in to registry
         uses: docker/login-action@v4
         with:
@@ -595,6 +612,9 @@ jobs:
             build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/**/config.log
             ci-diagnostics/prebuild.log
           if-no-files-found: warn
+
+      # Repeat the check-repo-folder step to ensure the repository folder is still valid before building the image
+      - *check-repo-folder
 
       - name: Build ${{ env.EE_Distro }} image
         id: build-image
