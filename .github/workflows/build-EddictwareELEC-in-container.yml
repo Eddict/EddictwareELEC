@@ -86,7 +86,7 @@ jobs:
             /.github/**/*.yml
             /.github/**/*.yaml
           sparse-checkout-cone-mode: false
-          filter: "blob:none"
+          # filter: "blob:none"
 
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
@@ -188,9 +188,11 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
+          sparse-checkout: null
           sparse-checkout-cone-mode: true
+          filter: null
           clean: true
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Check for existing build cache (self-hosted only)
         id: check-build-cache

@@ -87,9 +87,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
+          ref: ${{ github.ref_name }}
+          sparse-checkout: null
           sparse-checkout-cone-mode: true
+          filter: null
           clean: true
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Set up QEMU (for cross-platform build)
         uses: docker/setup-qemu-action@v4
