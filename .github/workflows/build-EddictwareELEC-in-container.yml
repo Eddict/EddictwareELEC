@@ -78,7 +78,6 @@ jobs:
 
   yamllint:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
-    needs: debug
     steps:
       - name: Checkout yaml files
         uses: actions/checkout@v7
