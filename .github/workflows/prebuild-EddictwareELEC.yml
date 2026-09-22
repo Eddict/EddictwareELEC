@@ -86,6 +86,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          sparse-checkout-cone-mode: true
+          clean: true
+          fetch-depth: 0
 
       - name: Set up QEMU (for cross-platform build)
         uses: docker/setup-qemu-action@v4
