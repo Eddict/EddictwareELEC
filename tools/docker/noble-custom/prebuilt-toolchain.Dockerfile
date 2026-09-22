@@ -18,10 +18,12 @@ ARG DEVICE=RPi4
 ARG ARCH=aarch64
 ARG DIAG_OUTPUT=false
 
+ARG BUILD_DIR=/opt/tmp/prebuild
+
 RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
-    mkdir -p /tmp/prebuild; \
-    export BUILD_DIR=/tmp/prebuild; \
+    mkdir -p "$BUILD_DIR"; \
+    export BUILD_DIR="$BUILD_DIR"; \
     # Run host-toolchain builds in parallel
     ( \
         # run a minimal host-toolchain bootstrap; change package list as appropriate
@@ -35,23 +37,23 @@ RUN set -eux; \
         /src/scripts/build gettext:host > /dev/null 2>&1 & \
         /src/scripts/build xxHash:host > /dev/null 2>&1 & \
         /src/scripts/build cmake:host > /dev/null 2>&1 & \
-        /src/scripts/build toolchain:host > /tmp/prebuild/toolchain-host.log 2>&1 & \
+        /src/scripts/build toolchain:host > $BUILD_DIR/toolchain-host.log 2>&1 & \
         /src/scripts/build linux:host > /dev/null 2>&1 & \
         /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 & \
         /src/scripts/build mesa:host > /dev/null 2>&1 & \
         /src/scripts/build zstd:host > /dev/null 2>&1 & \
         wait \
     ); \
-    # Diagnostic: show contents of /tmp/prebuild and /tmp/prebuild/toolchain after build
-    echo "--- DIAGNOSTIC: /tmp/prebuild ---"; \
-    ls -l /tmp/prebuild || true; \
-    echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain ---"; \
-    ls -l /tmp/prebuild/toolchain || true; \
-    echo "--- DIAGNOSTIC: /tmp/prebuild/toolchain-host.log ---"; \
-    cat /tmp/prebuild/toolchain-host.log || true; \
+    # Diagnostic: show contents of $BUILD_DIR and $BUILD_DIR/toolchain after build
+    echo "--- DIAGNOSTIC: $BUILD_DIR ---"; \
+    ls -l "$BUILD_DIR" || true; \
+    echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain ---"; \
+    ls -l "$BUILD_DIR/toolchain" || true; \
+    echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain-host.log ---"; \
+    cat "$BUILD_DIR/toolchain-host.log" || true; \
     # Copy the first found toolchain dir as /opt/prebuilt-toolchain/toolchain (flat, predictable path)
     sudo mkdir -p /opt/prebuilt-toolchain; \
-    tcdir=$(find /tmp/prebuild -type d -name 'toolchain' | head -n1); \
+    tcdir=$(find "$BUILD_DIR" -type d -name 'toolchain' | head -n1); \
     if [ -n "$tcdir" ]; then \
       sudo cp -a "$tcdir" /opt/prebuilt-toolchain/toolchain; \
     fi; \
