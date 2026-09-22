@@ -108,7 +108,7 @@ jobs:
       - name: Build and push prebuilt image
         uses: docker/build-push-action@v7
         with:
-          context: .
+          # context: .
           file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
