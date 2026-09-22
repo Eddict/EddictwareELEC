@@ -321,7 +321,6 @@ jobs:
             "$IMAGE" bash -lc '
             # Force group-write permissions for any diagnostic file created here
             umask 0002
-
             set -euo pipefail
             DIAG_DIR=/build/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container.log"
@@ -330,8 +329,8 @@ jobs:
             echo "--- id ---" >> "$DIAG_LOG" 2>&1 || true
             id >> "$DIAG_LOG" 2>&1 || true
             echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld /build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
-            TOOLCHAIN_DIR=$(ls -d /build.*-13.0-devel/toolchain 2>/dev/null || true)
+            ls -ld /build/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
+            TOOLCHAIN_DIR=$(ls -d /build/build.*-13.0-devel/toolchain 2>/dev/null || true)
             if [ -n "$TOOLCHAIN_DIR" ]; then
               echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1 || true
               echo "--- bin listing ---" >> "$DIAG_LOG" 2>&1 || true
@@ -404,7 +403,7 @@ jobs:
           echo "=== /build ownership (top-level) ==="
           ls -ld /build || true
           echo "=== cache files ownership/perm ==="
-          stat -c '%U:%G %a %n' /build/.ccache /build.*-13.0-devel/.cache_package_global /build.*-13.0-devel/.cache_package_local /build.*-13.0-devel/.ccache 2>/dev/null || true
+          stat -c '%U:%G %a %n' /build/.ccache /build/build.*-13.0-devel/.cache_package_global /build/build.*-13.0-devel/.cache_package_local /build/build.*-13.0-devel/.ccache 2>/dev/null || true
           echo "=== THREAD_CONTROL / THREADCOUNT env ==="
           env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT' || true
           echo "=== running pkgbuild / pkgbuilder processes ==="
@@ -576,8 +575,8 @@ jobs:
             echo "--- /build listing ---" >> "$DIAG_LOG" 2>&1 || true
             ls -ld /build || true >> "$DIAG_LOG" 2>&1 || true
             echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld /build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
-            TOOLCHAIN_DIR=$(ls -d /build.*-13.0-devel/toolchain 2>/dev/null || true)
+            ls -ld /build/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
+            TOOLCHAIN_DIR=$(ls -d /build/build.*-13.0-devel/toolchain 2>/dev/null || true)
             if [ -n "$TOOLCHAIN_DIR" ]; then
               echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1 || true
               ls -l "$TOOLCHAIN_DIR/bin" >> "$DIAG_LOG" 2>&1 || true
