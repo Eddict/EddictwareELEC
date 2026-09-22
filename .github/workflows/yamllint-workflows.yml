@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths: &yaml_files |
-      '**/*.yml'
-      '**/*.yaml'
+      '/**/*.yml'
+      '/**/*.yaml'
 
 run-name: ${{ format('{0} ({1})', github.workflow, 'github') }}
 
@@ -22,13 +22,13 @@ jobs:
           fetch-depth: 1
           #sparse-checkout: *yaml_files
           sparse-checkout: &yaml_files_str |
-            '**/*.yml'
-            '**/*.yaml'
+            '/**/*.yml'
+            '/**/*.yaml'
 
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
         with:
           yamllint_files_or_dirs: *yaml_files_str
-
+        
       - name: Clean .git folder
         run: rm -rf .git 2>/dev/null || true
