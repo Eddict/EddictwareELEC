@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest #ubuntu-latest #self-hosted 
     name: A test job to build in a ${{ inputs.runner }} container
     env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
