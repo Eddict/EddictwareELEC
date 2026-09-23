@@ -32,7 +32,7 @@ runs:
         if [[ -n "$REQUESTED_CONFIG" ]]; then
           cfg="$REQUESTED_CONFIG"
         else
-          cfg='{extends: default, rules: {level: error, document-start: disable, line-length: disable, truthy: disable, comments: {min-spaces-from-content: 1}}}'
+          cfg='{extends: default, rules: {document-start: disable, line-length: disable, truthy: disable, comments: {min-spaces-from-content: 1}}}'
         fi
         echo "config_data=$cfg" >> "$GITHUB_OUTPUT"
 
@@ -60,3 +60,4 @@ runs:
         config_data: ${{ steps.lint-config.outputs.config_data }}
         config_file: ${{ inputs.yamllint_config_file }}
         file_or_dir: ${{ steps.lint-target.outputs.file_or_dir }}
+        no_warnings: true
