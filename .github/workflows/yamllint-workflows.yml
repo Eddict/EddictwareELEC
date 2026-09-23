@@ -10,7 +10,7 @@ run-name: ${{ format('{0} ({1})', github.workflow, 'github') }}
 
 jobs:
   yamllint:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
