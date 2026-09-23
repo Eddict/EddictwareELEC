@@ -161,7 +161,7 @@ jobs:
             GROUP_NAME=$(getent group "$HOST_GID" | cut -d: -f1)
             [ -z "$GROUP_NAME" ] && echo "Failed to resolve host GID $HOST_GID"
 
-            USER_NAME=$(docker run --rm --entrypoint getent "$EE_DISTRO_TAG" passwd "$IMG_UID" | cut -d: -f1)
+            USER_NAME=$(docker run --rm --entrypoint getent "$EE_Distro_tag" passwd "$IMG_UID" | cut -d: -f1)
             [ -z "$USER_NAME" ] && echo "Failed to resolve container UID $IMG_UID"
 
             if [ -n "$GROUP_NAME" ] && [ -n "$USER_NAME" ]; then
