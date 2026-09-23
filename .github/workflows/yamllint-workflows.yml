@@ -21,6 +21,12 @@ jobs:
           fetch-depth: 1
           sparse-checkout: '.github'
 
+      - name: Output PWD contents
+        run: |
+          echo "$PWD"
+          ls -la
+          ls -la .github
+
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
         with:
