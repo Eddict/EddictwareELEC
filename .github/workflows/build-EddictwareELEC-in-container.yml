@@ -180,6 +180,10 @@ jobs:
         # if: env.DEBUG == 'true'
         # id: check-repo-folder # cannot reuse the same ID for multiple steps when using the anchor
         run: |
+          echo "/etc/passwd"
+          cat /etc/passwd
+          echo "/etc/group"
+          cat /etc/group
           echo "PWD: $PWD"
           echo "Listing contents of PWD:"
           ls -la $PWD
