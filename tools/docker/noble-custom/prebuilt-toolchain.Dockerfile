@@ -22,7 +22,10 @@ ARG BUILD_DIR=/opt/tmp/prebuild
 
 RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
-    mkdir -p "$BUILD_DIR"; \
+    whoami; \
+    id; \
+    sudo mkdir -p "$BUILD_DIR"; \
+    sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
     # pre-fetch the source packages
     /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
