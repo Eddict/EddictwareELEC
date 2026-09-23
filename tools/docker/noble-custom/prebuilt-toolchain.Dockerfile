@@ -24,7 +24,13 @@ RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     mkdir -p "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
-    # Run host-toolchain builds in parallel
+    # pre-fetch the source packages
+    /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
+    # Build make:host first, sequentially, since toolchain:host depends on it
+    # and building it concurrently with other host packages races on shared
+    # source/build state.
+    /src/scripts/build make:host > "$BUILD_DIR/make-host.log" 2>&1; \
+    # Run remaining host-toolchain builds in parallel
     ( \
         # run a minimal host-toolchain bootstrap; change package list as appropriate
         # normal
@@ -37,7 +43,7 @@ RUN set -eux; \
         /src/scripts/build gettext:host > /dev/null 2>&1 & \
         /src/scripts/build xxHash:host > /dev/null 2>&1 & \
         /src/scripts/build cmake:host > /dev/null 2>&1 & \
-        /src/scripts/build toolchain:host > $BUILD_DIR/toolchain-host.log 2>&1 & \
+        /src/scripts/build toolchain:host > "$BUILD_DIR/toolchain-host.log" 2>&1 & \
         /src/scripts/build linux:host > /dev/null 2>&1 & \
         /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 & \
         /src/scripts/build mesa:host > /dev/null 2>&1 & \
@@ -49,6 +55,10 @@ RUN set -eux; \
     ls -l "$BUILD_DIR" || true; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain ---"; \
     ls -l "$BUILD_DIR/toolchain" || true; \
+    echo "--- DIAGNOSTIC: $BUILD_DIR/download-tool.log ---"; \
+    cat "$BUILD_DIR/download-tool.log" || true; \
+    echo "--- DIAGNOSTIC: $BUILD_DIR/make-host.log ---"; \
+    cat "$BUILD_DIR/make-host.log" || true; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain-host.log ---"; \
     cat "$BUILD_DIR/toolchain-host.log" || true; \
     # Copy the first found toolchain dir as /opt/prebuilt-toolchain/toolchain (flat, predictable path)
