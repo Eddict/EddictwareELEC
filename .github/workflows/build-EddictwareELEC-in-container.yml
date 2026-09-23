@@ -154,20 +154,20 @@ jobs:
           echo "IMG_UID=$IMG_UID" | tee -a $GITHUB_OUTPUT
           echo "IMG_GID=$IMG_GID" | tee -a $GITHUB_OUTPUT
 
+          # Handle Permission Alignment
           if [ "$IMG_UID" -ne "$HOST_UID" ]; then
+            echo "UID mismatch detected ($IMG_UID vs $HOST_UID). Synchronizing..."
+            
             GROUP_NAME=$(getent group "$HOST_GID" | cut -d: -f1)
-            echo "GROUP_NAME: $GROUP_NAME"
-            # Resolve the CONTAINER username from inside the image context
-            USER_NAME=$(docker run --rm --entrypoint getent "$EE_DISTRO_TAG" passwd "$IMG_UID" 2>/dev/null | cut -d: -f1)
-            echo "USER_NAME: $USER_NAME"
-            # Check if both exist before adding
+            [ -z "$GROUP_NAME" ] && echo "Failed to resolve host GID $HOST_GID"
+
+            USER_NAME=$(docker run --rm --entrypoint getent "$EE_DISTRO_TAG" passwd "$IMG_UID" | cut -d: -f1)
+            [ -z "$USER_NAME" ] && echo "Failed to resolve container UID $IMG_UID"
+
             if [ -n "$GROUP_NAME" ] && [ -n "$USER_NAME" ]; then
-                # NOTE: This modifies the HOST environment runner. 
-                # If you meant to modify the CONTAINER instead, this step should be baked into a Dockerfile/Entrypoint!
-                sudo usermod -aG "$GROUP_NAME" "$USER_NAME" 2>/dev/null || echo "Notice: Cannot modify host user from runner context."
-                echo "Successfully aligned permission references for $USER_NAME and $GROUP_NAME"
-            else
-                echo "Warning: Could not fully resolve names. Host Group: '$GROUP_NAME', Container User: '$USER_NAME'"
+                sudo usermod -aG "$GROUP_NAME" "$USER_NAME" && \
+                  echo "Added $USER_NAME to $GROUP_NAME" || \
+                  echo "usermod failed (Is '$USER_NAME' missing from host passwd?)"
             fi
           fi
 
