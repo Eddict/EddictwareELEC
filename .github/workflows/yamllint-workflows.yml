@@ -30,7 +30,7 @@ jobs:
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
         with:
-          yamllint_files_or_dirs: './.github/**'
+          yamllint_files_or_dirs: './.github/**/*.yml ./.github/**/*.yaml'
         
       - name: Clean .git folder
         run: rm -rf .git 2>/dev/null || true
