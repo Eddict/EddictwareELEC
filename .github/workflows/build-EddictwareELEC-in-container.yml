@@ -156,8 +156,10 @@ jobs:
 
           if [ "$IMG_UID" -ne "$HOST_UID" ]; then
             GROUP_NAME=$(getent group "$HOST_GID" | cut -d: -f1)
+            echo "GROUP_NAME: $GROUP_NAME"
             # Resolve the CONTAINER username from inside the image context
             USER_NAME=$(docker run --rm --entrypoint getent "$EE_DISTRO_TAG" passwd "$IMG_UID" 2>/dev/null | cut -d: -f1)
+            echo "USER_NAME: $USER_NAME"
             # Check if both exist before adding
             if [ -n "$GROUP_NAME" ] && [ -n "$USER_NAME" ]; then
                 # NOTE: This modifies the HOST environment runner. 
