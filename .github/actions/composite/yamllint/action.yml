@@ -48,8 +48,9 @@ runs:
           target="$REQUESTED_TARGETS"
         else
           # E.g. owner/repo/.github/workflows/ci.yml@refs/heads/main
-          target="${WORKFLOW_REF#"$REPOSITORY"/}"
-          target="${target%@*}"
+          # target="${WORKFLOW_REF#"$REPOSITORY"/}"
+          # target="${target%@*}"
+          target=""
         fi
         printf 'file_or_dir=%s\n' "$target" >> "$GITHUB_OUTPUT"
 
