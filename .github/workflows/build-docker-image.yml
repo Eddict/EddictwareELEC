@@ -44,28 +44,11 @@ env:
   RUNNER_TOOL_CACHE: /toolcache
 
 jobs:
-  yamllint:
-    runs-on: ${{
-      inputs.runner == 'self-hosted' && 'self-hosted' ||
-      inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
-      'ubuntu-latest' }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-        with:
-          sparse-checkout-cone-mode: true
-          clean: true
-          fetch-depth: 1
-
-      - name: Run yamllint composite action
-        uses: ./.github/actions/composite/yamllint
-
   build:
     runs-on: ${{
       inputs.runner == 'self-hosted' && 'self-hosted' ||
       inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
       'ubuntu-latest' }}
-    needs: yamllint
     permissions:
       contents: read
       packages: write

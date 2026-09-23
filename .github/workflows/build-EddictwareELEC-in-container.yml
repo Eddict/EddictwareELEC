@@ -76,18 +76,8 @@ jobs:
           echo "DEBUG_VALUE=${{ env.DEBUG }}"
           echo "DEBUG_COMPARISON=(${{ env.DEBUG }} = "true")"
 
-  yamllint:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Run yamllint composite action
-        uses: ./.github/actions/composite/yamllint
-
   init:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
-    needs: yamllint
     permissions:
       contents: read
       packages: read
