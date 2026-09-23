@@ -134,13 +134,17 @@ jobs:
 
           # If the image check fails, fall back to the actual runtime host user/group
           if ! IMG_UID=$(docker run --rm --pull=always --entrypoint id "$EE_Distro_tag" -u 2>/dev/null); then
-            echo "::warning::Failed to fetch image UID from $EE_Distro_tag. Falling back to Host UID ($HOST_UID)."
-            IMG_UID=$HOST_UID
+            if ! IMG_UID=$(id -u docker 2>/dev/null); then
+              echo "::warning::Failed to fetch image UID from $EE_Distro_tag. Falling back to Host UID ($HOST_UID)."
+              IMG_UID=$HOST_UID
+            fi
           fi
 
           if ! IMG_GID=$(docker run --rm --pull=always --entrypoint id "$EE_Distro_tag" -g 2>/dev/null); then
-            echo "::warning::Failed to fetch image GID from $EE_Distro_tag. Falling back to Host GID ($HOST_GID)."
-            IMG_GID=$HOST_GID
+            if ! IMG_GID=$(id -g docker 2>/dev/null); then
+              echo "::warning::Failed to fetch image GID from $EE_Distro_tag. Falling back to Host GID ($HOST_GID)."
+              IMG_GID=$HOST_GID
+            fi
           fi
 
           # Output clean, reliable variables to the next steps
