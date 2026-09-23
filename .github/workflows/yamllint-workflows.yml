@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths: &yaml_files
-      - '.github/**/*.yml'
-      - '.github/**/*.yaml'
+      - '.github/**'
 
 run-name: ${{ format('{0} ({1})', github.workflow, 'github') }}
 
@@ -17,18 +16,15 @@ jobs:
         uses: actions/checkout@v7
         with:
           # Disable cone mode to allow non-directory wildcards
-          sparse-checkout-cone-mode: false
-          clean: false
+          sparse-checkout-cone-mode: true
+          clean: true
           fetch-depth: 1
-          #sparse-checkout: *yaml_files
-          sparse-checkout: &yaml_files_str |
-            '.github/**/*.yml'
-            '.github/**/*.yaml'
+          sparse-checkout: '.github'
 
       - name: Run yamllint composite action
         uses: ./.github/actions/composite/yamllint
         with:
-          yamllint_files_or_dirs: *yaml_files_str
+          yamllint_files_or_dirs: '/.github/**'
         
       - name: Clean .git folder
         run: rm -rf .git 2>/dev/null || true
