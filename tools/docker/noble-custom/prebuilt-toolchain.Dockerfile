@@ -24,8 +24,8 @@ RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     whoami; \
     id; \
-    sudo mkdir -p "$BUILD_DIR"; \
-    sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
+    mkdir -p "$BUILD_DIR"; \
+    # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
     # pre-fetch the source packages
     /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
@@ -65,10 +65,10 @@ RUN set -eux; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain-host.log ---"; \
     cat "$BUILD_DIR/toolchain-host.log" || true; \
     # Copy the first found toolchain dir as /opt/prebuilt-toolchain/toolchain (flat, predictable path)
-    sudo mkdir -p /opt/prebuilt-toolchain; \
+    mkdir -p /opt/prebuilt-toolchain; \
     tcdir=$(find "$BUILD_DIR" -type d -name 'toolchain' | head -n1); \
     if [ -n "$tcdir" ]; then \
-      sudo cp -a "$tcdir" /opt/prebuilt-toolchain/toolchain; \
+      cp -a "$tcdir" /opt/prebuilt-toolchain/toolchain; \
     fi; \
     # Diagnostic: confirm /opt/prebuilt-toolchain presence and permissions
     echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; \
