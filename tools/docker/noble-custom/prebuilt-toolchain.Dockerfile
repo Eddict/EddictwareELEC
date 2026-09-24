@@ -1,7 +1,7 @@
-# ARG REPO_OWNER=eddict
-# ARG OS=noble
-# ARG BASE_IMAGE=ghcr.io/${REPO_OWNER}/eddictwareelec:${OS}
-ARG BASE_IMAGE=ghcr.io/eddict/eddictwareelec:noble-custom
+ARG REPO_OWNER=eddict
+ARG OS=noble
+ARG BASE_IMAGE=ghcr.io/${REPO_OWNER}/eddictwareelec:${OS}
+# ARG BASE_IMAGE=ghcr.io/eddict/eddictwareelec:noble-custom
 FROM ${BASE_IMAGE} AS builder
 
 # Copy repo into the image so the project's build scripts can run
@@ -138,3 +138,5 @@ LABEL org.opencontainers.image.title="EddictwareELEC prebuilt toolchain" \
       org.opencontainers.image.description="Prebuilt host-toolchain trees for EddictwareELEC builds (placed in /opt/prebuilt-toolchain)."
 
 # Default entrypoint is inherited from base image; this image's job is to provide /opt/prebuilt-toolchain
+
+USER docker
