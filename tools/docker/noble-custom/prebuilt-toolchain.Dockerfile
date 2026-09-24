@@ -54,6 +54,7 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
     # /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
     # export PKG_MAKE_OPTS_HOST="-j$(nproc) -l$(nproc)"; \
     export PKG_MAKE_OPTS_HOST="-j$(nproc)"; \
+    echo "PKG_MAKE_OPTS_HOST=$PKG_MAKE_OPTS_HOST"; \
     # Build make:host first, since toolchain:host depends on it
     /src/scripts/build make:host       2>&1 | tee "$BUILD_DIR/make-host.log"; \
     # small utility packages frequently needed by later builds
