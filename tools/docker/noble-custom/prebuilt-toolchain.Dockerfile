@@ -53,25 +53,44 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
     # /src/scripts/build make:host 2>&1 | tee "$BUILD_DIR/make-host.log"; \
     # /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
     # export PKG_MAKE_OPTS_HOST="-j$(nproc) -l$(nproc)"; \
-    export PKG_MAKE_OPTS_HOST="-j$(nproc)"; \
+    export PKG_MAKE_OPTS_HOST="--silent --jobs=$(nproc)"; \
     echo "PKG_MAKE_OPTS_HOST=$PKG_MAKE_OPTS_HOST"; \
-    # Build make:host first, since toolchain:host depends on it
-    /src/scripts/build make:host       2>&1 | tee "$BUILD_DIR/make-host.log"; \
-    # small utility packages frequently needed by later builds
-    /src/scripts/build pkg-config:host 2>&1 | tee "$BUILD_DIR/pkg-config-host.log"; \
-    /src/scripts/build gettext:host    2>&1 | tee "$BUILD_DIR/gettext-host.log"; \
-    /src/scripts/build xxHash:host     2>&1 | tee "$BUILD_DIR/xxHash-host.log"; \
-    # many subsequent packages may use cmake
-    /src/scripts/build cmake:host      2>&1 | tee "$BUILD_DIR/cmake-host.log"; \
-    # relatively lightweight
-    /src/scripts/build zstd:host       2>&1 | tee "$BUILD_DIR/zstd-host.log"; \
-    /src/scripts/build rpi-eeprom:host 2>&1 | tee "$BUILD_DIR/rpi-eeprom-host.log"; \
-    # before major consumers
-    /src/scripts/build toolchain:host  2>&1 | tee "$BUILD_DIR/toolchain-host.log"; \
-    # heavy
-    /src/scripts/build linux:host      2>&1 | tee "$BUILD_DIR/linux-host.log"; \
-    # usually one of the heaviest builds and often benefits from a fully warmed toolchain and dependency stack
-    /src/scripts/build mesa:host       2>&1 | tee "$BUILD_DIR/mesa-host.log"; \
+    # export NINJA_OPTS="--quiet"; \
+    # echo "NINJA_OPTS=$NINJA_OPTS"; \
+    # # Build make:host first, since toolchain:host depends on it
+    # /src/scripts/build make:host       2>&1 | tee "$BUILD_DIR/make-host.log"; \
+    # # small utility packages frequently needed by later builds
+    # /src/scripts/build pkg-config:host 2>&1 | tee "$BUILD_DIR/pkg-config-host.log"; \
+    # /src/scripts/build gettext:host    2>&1 | tee "$BUILD_DIR/gettext-host.log"; \
+    # /src/scripts/build xxHash:host     2>&1 | tee "$BUILD_DIR/xxHash-host.log"; \
+    # # many subsequent packages may use cmake
+    # /src/scripts/build cmake:host      2>&1 | tee "$BUILD_DIR/cmake-host.log"; \
+    # # relatively lightweight
+    # /src/scripts/build zstd:host       2>&1 | tee "$BUILD_DIR/zstd-host.log"; \
+    # /src/scripts/build rpi-eeprom:host 2>&1 | tee "$BUILD_DIR/rpi-eeprom-host.log"; \
+    # # before major consumers
+    # /src/scripts/build toolchain:host  2>&1 | tee "$BUILD_DIR/toolchain-host.log"; \
+    # # heavy
+    # /src/scripts/build linux:host      2>&1 | tee "$BUILD_DIR/linux-host.log"; \
+    # # usually one of the heaviest builds and often benefits from a fully warmed toolchain and dependency stack
+    # /src/scripts/build mesa:host       2>&1 | tee "$BUILD_DIR/mesa-host.log"; \
+
+    for pkg in \
+        make:host \
+        pkg-config:host gettext:host xxHash:host \
+        cmake:host \
+        zstd:host rpi-eeprom:host \
+        toolchain:host \
+        linux:host \
+        mesa:host; \
+    do \
+        log="$BUILD_DIR/${pkg//:/-}.log"; \
+        if ! /src/scripts/build "$pkg" >"$log" 2>&1; then \
+            echo "Build failed: $pkg"; \
+            tail -n 50 "$log"; \
+            exit 1; \
+        fi; \
+    done
 
     # Run remaining host-toolchain builds in parallel
     # ( \
