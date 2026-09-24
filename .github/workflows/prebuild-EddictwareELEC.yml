@@ -89,7 +89,7 @@ jobs:
         id: compose-image-tag
         run: |
           # IMAGE_TAG="${{ env.EE_Distro }}-${{ env.IMAGE_OS }}-${{ env.EE_Arch }}"
-          IMAGE_TAG="${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_OS }}-${{ env.EE_Arch }}""
+          IMAGE_TAG="${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_OS }}-${{ env.EE_Arch }}"
           echo "IMAGE_TAG=${IMAGE_TAG,,}" | sudo tee -a $GITHUB_ENV
 #ghcr.io/eddict/eddictwareelec:noble-custom
 #ghcr.io/eddict/eddictwareelec-prebuilt:noble-custom-aarch64
