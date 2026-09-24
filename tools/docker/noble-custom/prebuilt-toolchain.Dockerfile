@@ -17,14 +17,16 @@ ARG PROJECT=RPi
 ARG DEVICE=RPi4
 ARG ARCH=aarch64
 ARG DIAG_OUTPUT=false
-
 ARG BUILD_DIR=/opt/tmp/prebuild
+ARG PREBUILD_TC_DIR=/opt/prebuilt-toolchain
 
+USER root
+RUN mkdir -p $BUILD_DIR $PREBUILD_TC_DIR && \
+    chown -R docker:docker $BUILD_DIR $PREBUILD_TC_DIR
+
+USER docker
 RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
-    whoami; \
-    id; \
-    mkdir -p "$BUILD_DIR"; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
     # pre-fetch the source packages
@@ -65,16 +67,15 @@ RUN set -eux; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain-host.log ---"; \
     cat "$BUILD_DIR/toolchain-host.log" || true; \
     # Copy the first found toolchain dir as /opt/prebuilt-toolchain/toolchain (flat, predictable path)
-    mkdir -p /opt/prebuilt-toolchain; \
     tcdir=$(find "$BUILD_DIR" -type d -name 'toolchain' | head -n1); \
     if [ -n "$tcdir" ]; then \
-      cp -a "$tcdir" /opt/prebuilt-toolchain/toolchain; \
+      cp -a "$tcdir" "$PREBUILD_TC_DIR/toolchain"; \
     fi; \
     # Diagnostic: confirm /opt/prebuilt-toolchain presence and permissions
-    echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"; \
-    ls -l /opt/prebuilt-toolchain || true; \
-    find /opt/prebuilt-toolchain -type f | xargs ls -l || true; \
-    stat /opt/prebuilt-toolchain || true
+    echo "--- DIAGNOSTIC: $PREBUILD_TC_DIR ---"; \
+    ls -l "$PREBUILD_TC_DIR" || true; \
+    find "$PREBUILD_TC_DIR" -type f | xargs ls -l || true; \
+    stat "$PREBUILD_TC_DIR" || true
 
 # # Build host-toolchain packages into a temporary build dir inside the image.
 # # Adjust the package list if you need more/less prebuilt packages.
@@ -133,10 +134,8 @@ RUN set -eux; \
 #     fi;
 
 FROM ${BASE_IMAGE}
-COPY --from=builder /opt/prebuilt-toolchain /opt/prebuilt-toolchain
+COPY --from=builder $PREBUILD_TC_DIR $PREBUILD_TC_DIR
 LABEL org.opencontainers.image.title="EddictwareELEC prebuilt toolchain" \
       org.opencontainers.image.description="Prebuilt host-toolchain trees for EddictwareELEC builds (placed in /opt/prebuilt-toolchain)."
 
 # Default entrypoint is inherited from base image; this image's job is to provide /opt/prebuilt-toolchain
-
-USER docker
