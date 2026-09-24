@@ -138,6 +138,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Upload logs as artifact
+        if: success() && !cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: prebuilt-toolchain-${{ env.IMAGE_TAG }}
+          path: /opt/**/*.log
+          if-no-files-found: warn
+
       # Ensure ownership alignment for the build directory
       - name: Fix permissions for build directory
         run: |
