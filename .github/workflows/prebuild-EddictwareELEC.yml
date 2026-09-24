@@ -62,6 +62,7 @@ jobs:
       IMAGE_OS: ${{ inputs.os }}
       IMAGE_DEBUG: ${{ inputs.debug }}
       IMAGE_TAG: ""
+      VALID_ARTIFACT_NAME: ""
       EE_REGISTRY: ghcr.io
       EE_REGISTRY_OWNER:
       EE_Distro: EddictwareELEC
@@ -83,7 +84,10 @@ jobs:
         id: correct-repo-owner-tag
         run: |
           registry_owner="${{ github.repository_owner }}"
+          echo "EE_REGISTRY_OWNER (before): ${{ env.EE_REGISTRY_OWNER }}"
           echo "EE_REGISTRY_OWNER=${registry_owner,,}" | sudo tee -a $GITHUB_ENV
+          echo "EE_REGISTRY_OWNER (after): ${{ env.EE_REGISTRY_OWNER }}"
+          exit 1
 
       - name: Compose image tag
         id: compose-image-tag
@@ -91,8 +95,11 @@ jobs:
           # IMAGE_TAG="${{ env.EE_Distro }}-${{ env.IMAGE_OS }}-${{ env.EE_Arch }}"
           IMAGE_TAG="${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_OS }}-${{ env.EE_Arch }}"
           echo "IMAGE_TAG=${IMAGE_TAG,,}" | sudo tee -a $GITHUB_ENV
-#ghcr.io/eddict/eddictwareelec:noble-custom
-#ghcr.io/eddict/eddictwareelec-prebuilt:noble-custom-aarch64
+          # ghcr.io/eddict/eddictwareelec:noble-custom
+          # ghcr.io/eddict/eddictwareelec-prebuilt:noble-custom-aarch64
+          # Sanitize image tag for valid artifact name
+          VALID_ARTIFACT_NAME="$(printf '%s' "$IMAGE_TAG" | tr '":<>|*?\/' '-')"
+          echo "VALID_ARTIFACT_NAME=$VALID_ARTIFACT_NAME" | sudo tee -a $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -142,7 +149,7 @@ jobs:
         if: success() && !cancelled()
         uses: actions/upload-artifact@v7
         with:
-          name: prebuilt-toolchain-${{ env.IMAGE_TAG }}
+          name: prebuilt-toolchain-${{ env.VALID_ARTIFACT_NAME }}
           path: /opt/**/*.log
           if-no-files-found: warn
 
