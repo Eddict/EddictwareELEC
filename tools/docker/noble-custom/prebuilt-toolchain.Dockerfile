@@ -19,6 +19,8 @@ ARG ARCH=aarch64
 ARG DIAG_OUTPUT=false
 ARG BUILD_DIR=/opt/tmp/prebuild
 ARG PREBUILD_TC_DIR=/opt/prebuilt-toolchain
+ENV BUILD_DIR=${BUILD_DIR}
+ENV PREBUILD_TC_DIR=${PREBUILD_TC_DIR}
 
 USER root
 RUN mkdir -p $BUILD_DIR $PREBUILD_TC_DIR && \
