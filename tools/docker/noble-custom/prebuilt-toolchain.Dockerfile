@@ -22,6 +22,9 @@ ARG PREBUILD_TC_DIR=/opt/prebuilt-toolchain
 ENV BUILD_DIR=${BUILD_DIR}
 ENV PREBUILD_TC_DIR=${PREBUILD_TC_DIR}
 
+# Set the default shell for all subsequent RUN commands to Bash
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+
 USER root
 RUN mkdir -p $BUILD_DIR $PREBUILD_TC_DIR && \
     chown -R docker:docker $BUILD_DIR $PREBUILD_TC_DIR && \
@@ -29,9 +32,7 @@ RUN mkdir -p $BUILD_DIR $PREBUILD_TC_DIR && \
 
 USER docker
 
-RUN set -eux; \
-    set -o pipefail; \
-    export DISTRO="$DISTRO" PROJECT="$PROJECT" DEVICE="$DEVICE" ARCH="$ARCH"; \
+RUN export DISTRO="$DISTRO" PROJECT="$PROJECT" DEVICE="$DEVICE" ARCH="$ARCH"; \
     echo "Downloading sources for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     export BUILD_DIR="$BUILD_DIR"; \
     # pre-fetch the source packages
@@ -40,9 +41,7 @@ RUN set -eux; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/download-tool.log ---"; \
     cat "$BUILD_DIR/download-tool.log" || true;
 
-RUN set -eux; \
-    set -o pipefail; \
-    echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
+RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
     # Build make:host first, sequentially, since toolchain:host depends on it
