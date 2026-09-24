@@ -41,7 +41,8 @@ RUN set -eux; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
     # pre-fetch the source packages
-    /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
+    # /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
+    /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
     # Build make:host first, sequentially, since toolchain:host depends on it
     # and building it concurrently with other host packages races on shared
     # source/build state.
@@ -143,6 +144,8 @@ RUN set -eux; \
 #     fi;
 
 FROM ${BASE_IMAGE}
+ARG BUILD_DIR=/opt/tmp/prebuild
+ARG PREBUILD_TC_DIR=/opt/prebuilt-toolchain
 COPY --from=builder $PREBUILD_TC_DIR $PREBUILD_TC_DIR
 LABEL org.opencontainers.image.title="EddictwareELEC prebuilt toolchain" \
       org.opencontainers.image.description="Prebuilt host-toolchain trees for EddictwareELEC builds (placed in /opt/prebuilt-toolchain)."
