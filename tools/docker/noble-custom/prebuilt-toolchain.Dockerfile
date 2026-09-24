@@ -27,6 +27,15 @@ RUN mkdir -p $BUILD_DIR $PREBUILD_TC_DIR && \
     chown -R docker:docker $BUILD_DIR $PREBUILD_TC_DIR
 
 USER docker
+
+RUN set -eux; \
+    echo "Downloading sources for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
+    export BUILD_DIR="$BUILD_DIR"; \
+    # pre-fetch the source packages
+    /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
+    echo "--- DIAGNOSTIC: $BUILD_DIR/download-tool.log ---"; \
+    cat "$BUILD_DIR/download-tool.log" || true;
+
 RUN set -eux; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
@@ -62,8 +71,6 @@ RUN set -eux; \
     ls -l "$BUILD_DIR" || true; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain ---"; \
     ls -l "$BUILD_DIR/toolchain" || true; \
-    echo "--- DIAGNOSTIC: $BUILD_DIR/download-tool.log ---"; \
-    cat "$BUILD_DIR/download-tool.log" || true; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/make-host.log ---"; \
     cat "$BUILD_DIR/make-host.log" || true; \
     echo "--- DIAGNOSTIC: $BUILD_DIR/toolchain-host.log ---"; \
