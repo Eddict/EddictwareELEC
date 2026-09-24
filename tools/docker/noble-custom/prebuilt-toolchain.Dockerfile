@@ -90,7 +90,7 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
             tail -n 50 "$log"; \
             exit 1; \
         fi; \
-    done
+    done; \
 
     # Run remaining host-toolchain builds in parallel
     # ( \
