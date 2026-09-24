@@ -34,14 +34,14 @@ RUN mkdir -p $SRC_DIR $BUILD_DIR $PREBUILD_TC_DIR && \
 
 USER docker
 
-RUN export DISTRO="$DISTRO" PROJECT="$PROJECT" DEVICE="$DEVICE" ARCH="$ARCH"; \
-    echo "Downloading sources for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
-    export BUILD_DIR="$BUILD_DIR"; \
-    # pre-fetch the source packages
-    # /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
-    /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
-    echo "--- DIAGNOSTIC: $BUILD_DIR/download-tool.log ---"; \
-    cat "$BUILD_DIR/download-tool.log" || true;
+# RUN export DISTRO="$DISTRO" PROJECT="$PROJECT" DEVICE="$DEVICE" ARCH="$ARCH"; \
+#     echo "Downloading sources for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
+#     export BUILD_DIR="$BUILD_DIR"; \
+#     # pre-fetch the source packages
+#     # /src/tools/download-tool > "$BUILD_DIR/download-tool.log" 2>&1; \
+#     /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
+#     echo "--- DIAGNOSTIC: $BUILD_DIR/download-tool.log ---"; \
+#     cat "$BUILD_DIR/download-tool.log" || true;
 
 RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
