@@ -24,7 +24,8 @@ ENV PREBUILD_TC_DIR=${PREBUILD_TC_DIR}
 
 USER root
 RUN mkdir -p $BUILD_DIR $PREBUILD_TC_DIR && \
-    chown -R docker:docker $BUILD_DIR $PREBUILD_TC_DIR
+    chown -R docker:docker $BUILD_DIR $PREBUILD_TC_DIR && \
+    ls -al /src/tools/download-tool
 
 USER docker
 
