@@ -50,7 +50,8 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
     # and building it concurrently with other host packages races on shared
     # source/build state.
     # /src/scripts/build make:host > "$BUILD_DIR/make-host.log" 2>&1; \
-    /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
+    /src/scripts/build make:host 2>&1 | tee "$BUILD_DIR/make-host.log"; \
+    # /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
     # Run remaining host-toolchain builds in parallel
     ( \
         # run a minimal host-toolchain bootstrap; change package list as appropriate
