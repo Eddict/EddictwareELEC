@@ -49,7 +49,8 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
     # Build make:host first, sequentially, since toolchain:host depends on it
     # and building it concurrently with other host packages races on shared
     # source/build state.
-    /src/scripts/build make:host > "$BUILD_DIR/make-host.log" 2>&1; \
+    # /src/scripts/build make:host > "$BUILD_DIR/make-host.log" 2>&1; \
+    /src/tools/download-tool 2>&1 | tee "$BUILD_DIR/download-tool.log"; \
     # Run remaining host-toolchain builds in parallel
     ( \
         # run a minimal host-toolchain bootstrap; change package list as appropriate
@@ -59,15 +60,15 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
         # /src/scripts/build pkg-config:host > /dev/null 2>&1 || true; \
         # keep logs for debugging
         # /src/scripts/build pkg-config:host > /tmp/prebuild/pkg-config-host.log 2>&1 || true; \
-        /src/scripts/build pkg-config:host > /dev/null 2>&1 & \
-        /src/scripts/build gettext:host > /dev/null 2>&1 & \
-        /src/scripts/build xxHash:host > /dev/null 2>&1 & \
-        /src/scripts/build cmake:host > /dev/null 2>&1 & \
-        /src/scripts/build toolchain:host > "$BUILD_DIR/toolchain-host.log" 2>&1 & \
-        /src/scripts/build linux:host > /dev/null 2>&1 & \
-        /src/scripts/build rpi-eeprom:host > /dev/null 2>&1 & \
-        /src/scripts/build mesa:host > /dev/null 2>&1 & \
-        /src/scripts/build zstd:host > /dev/null 2>&1 & \
+        /src/scripts/build pkg-config:host 2>&1 | tee "$BUILD_DIR/pkg-config-host.log" & \
+        /src/scripts/build gettext:host 2>&1 | tee "$BUILD_DIR/gettext-host.log" & \
+        /src/scripts/build xxHash:host 2>&1 | tee "$BUILD_DIR/xxHash-host.log" & \
+        /src/scripts/build cmake:host 2>&1 | tee "$BUILD_DIR/cmake-host.log" & \
+        /src/scripts/build toolchain:host 2>&1 | tee "$BUILD_DIR/toolchain-host.log" & \
+        /src/scripts/build linux:host 2>&1 | tee "$BUILD_DIR/linux-host.log" & \
+        /src/scripts/build rpi-eeprom:host 2>&1 | tee "$BUILD_DIR/rpi-eeprom-host.log" & \
+        /src/scripts/build mesa:host 2>&1 | tee "$BUILD_DIR/mesa-host.log" & \
+        /src/scripts/build zstd:host 2>&1 | tee "$BUILD_DIR/zstd-host.log" & \
         wait \
     ); \
     # Diagnostic: show contents of $BUILD_DIR and $BUILD_DIR/toolchain after build
