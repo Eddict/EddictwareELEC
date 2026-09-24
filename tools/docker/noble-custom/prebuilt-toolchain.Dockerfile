@@ -17,8 +17,10 @@ ARG PROJECT=RPi
 ARG DEVICE=RPi4
 ARG ARCH=aarch64
 ARG DIAG_OUTPUT=false
+ARG SRC_DIR=/src
 ARG BUILD_DIR=/opt/tmp/prebuild
 ARG PREBUILD_TC_DIR=/opt/prebuilt-toolchain
+ENV SRC_DIR=${SRC_DIR}
 ENV BUILD_DIR=${BUILD_DIR}
 ENV PREBUILD_TC_DIR=${PREBUILD_TC_DIR}
 
@@ -26,8 +28,8 @@ ENV PREBUILD_TC_DIR=${PREBUILD_TC_DIR}
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
 USER root
-RUN mkdir -p $BUILD_DIR $PREBUILD_TC_DIR && \
-    chown -R docker:docker $BUILD_DIR $PREBUILD_TC_DIR && \
+RUN mkdir -p $SRC_DIR $BUILD_DIR $PREBUILD_TC_DIR && \
+    chown -R docker:docker $SRC_DIR $BUILD_DIR $PREBUILD_TC_DIR && \
     ls -al /src/tools/download-tool
 
 USER docker
