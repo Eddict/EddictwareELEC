@@ -37,6 +37,7 @@ RUN set -eux; \
     cat "$BUILD_DIR/download-tool.log" || true;
 
 RUN set -eux; \
+    set -o pipefail; \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
