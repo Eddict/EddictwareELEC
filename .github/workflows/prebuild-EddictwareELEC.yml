@@ -80,20 +80,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Correct Repository Owner casing in Image Tag
-        id: correct-repo-owner-tag
-        run: |
-          registry_owner="${{ github.repository_owner }}"
-          echo "EE_REGISTRY_OWNER (before): ${{ env.EE_REGISTRY_OWNER }}"
-          echo "EE_REGISTRY_OWNER=${registry_owner,,}" | sudo tee -a $GITHUB_ENV
-          echo "EE_REGISTRY_OWNER (after): ${{ env.EE_REGISTRY_OWNER }}"
-          exit 1
-
       - name: Compose image tag
         id: compose-image-tag
         run: |
+          registry_owner="${{ github.repository_owner }}"
+          registry_owner="${registry_owner,,}"
+          echo "EE_REGISTRY_OWNER=$registry_owner" | sudo tee -a $GITHUB_ENV
           # IMAGE_TAG="${{ env.EE_Distro }}-${{ env.IMAGE_OS }}-${{ env.EE_Arch }}"
-          IMAGE_TAG="${{ env.EE_REGISTRY }}/${{ env.EE_REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_OS }}-${{ env.EE_Arch }}"
+          IMAGE_TAG="${{ env.EE_REGISTRY }}/$registry_owner/${{ env.IMAGE_NAME }}:${{ env.IMAGE_OS }}-${{ env.EE_Arch }}"
           echo "IMAGE_TAG=${IMAGE_TAG,,}" | sudo tee -a $GITHUB_ENV
           # ghcr.io/eddict/eddictwareelec:noble-custom
           # ghcr.io/eddict/eddictwareelec-prebuilt:noble-custom-aarch64
