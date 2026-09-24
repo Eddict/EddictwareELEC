@@ -136,7 +136,7 @@ jobs:
             ARCH=${{ env.EE_Arch }}
             DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min #mode=max
 
       - name: Upload logs as artifact
         if: success() && !cancelled()
