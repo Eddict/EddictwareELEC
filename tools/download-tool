@@ -38,12 +38,27 @@ else
 fi
 
 i=0
-find packages/ -name package.mk | while read -r pkgfile; do
+# find packages/ -name package.mk | while read -r pkgfile; do
+#   if [ -z "${ALL_PACKAGES:-}" ] && echo "$pkgfile" | grep -q '/addons/'; then
+#     continue
+#   fi
+#   i=$((i+1))
+#   pkg=$(basename "$(dirname "$pkgfile")")
+#   printf '[%d/%d] Downloading %s\n' "$i" "$total" "$pkg"
+#   ./scripts/get "$pkg"
+# done
+# FIX: Use < <(find ...) instead of a pipe
+while read -r pkgfile; do
   if [ -z "${ALL_PACKAGES:-}" ] && echo "$pkgfile" | grep -q '/addons/'; then
     continue
   fi
   i=$((i+1))
   pkg=$(basename "$(dirname "$pkgfile")")
   printf '[%d/%d] Downloading %s\n' "$i" "$total" "$pkg"
-  ./scripts/get "$pkg"
-done
+  
+  # FIX: Explicitly exit if the download script fails
+  if ! ./scripts/get "$pkg"; then
+    echo "ERROR: Failed to download $pkg" >&2
+    exit 1
+  fi
+done < <(find packages/ -name package.mk)
