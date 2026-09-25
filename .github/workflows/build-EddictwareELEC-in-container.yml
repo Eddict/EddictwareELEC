@@ -174,7 +174,7 @@ jobs:
       - name: Determine BUILD_DIR
         id: determine-build-dir
         run: |
-          BUILD_DIR="build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
+          BUILD_DIR="build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel"
           echo "BUILD_DIR=$BUILD_DIR" | tee -a $GITHUB_OUTPUT
 
   build:
@@ -235,7 +235,7 @@ jobs:
         run: |
           # Check if all required cache dirs/files exist and are non-empty
           missing=0
-          for d in .ccache build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global sources; do
+          for d in .ccache ${{ env.BUILD_DIR }}/.ccache ${{ env.BUILD_DIR }}/.stamps ${{ env.BUILD_DIR }}/.cache_package_global sources; do
             if [ ! -e "$d" ] || [ "$(ls -A $d 2>/dev/null | wc -l)" -eq 0 ]; then
               echo "Cache missing or empty: $d"
               missing=1
@@ -254,9 +254,9 @@ jobs:
         with:
           path: |
             .ccache
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
+            ${{ env.BUILD_DIR }}/.ccache
+            ${{ env.BUILD_DIR }}/.stamps
+            ${{ env.BUILD_DIR }}/.cache_package_global
             sources
           key: ${{ runner.os }}-eddict-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
           restore-keys: |
@@ -289,7 +289,7 @@ jobs:
         continue-on-error: true
         with:
           name: stamps-${{ env.OS_Codename }}-${{ env.EE_Arch }}
-          path: build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+          path: ${{ env.BUILD_DIR }}/.stamps
 
       - name: Download persisted apt cache (artifacts) as fallback
         id: download-apt-artifact
@@ -406,7 +406,7 @@ jobs:
           name: ci-diagnostics-${{ env.OS_Codename }}-${{ env.EE_Arch }}
           path: |
             ci-diagnostics
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/**/config.log
+            ${{ env.BUILD_DIR }}/**/config.log
           if-no-files-found: warn
 
       - name: Prepare container parameters
@@ -579,7 +579,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: toolchain-${{ env.OS_Codename }}-${{ env.EE_Arch }}
-          path: build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/toolchain
+          path: ${{ env.BUILD_DIR }}/toolchain
           if-no-files-found: warn
       # Fallback for missing toolchain after all artifact/copy attempts
       - name: Add fallback for missing toolchain (post-artifact)
@@ -643,7 +643,7 @@ jobs:
           path: |
             ci-diagnostics
             ci-diagnostics/in-container-post.log
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/**/config.log
+            ${{ env.BUILD_DIR }}/**/config.log
             ci-diagnostics/prebuild.log
           if-no-files-found: warn
 
@@ -771,7 +771,7 @@ jobs:
             -w /build \
             ${USER_ARG} \
             ${GROUP_ARG} \
-            -e CCACHE_DIR=/build/build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache \
+            -e CCACHE_DIR=/build/${{ env.BUILD_DIR }}/.ccache \
             -e DISABLE_COLORS=no \
             -e MTCOLORS=auto \
             ${DOCKER_ENV_FLAGS} \
@@ -809,8 +809,8 @@ jobs:
           name: artifact_logs_${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
           # use workspace-relative path so the host runner (not the container) can find the logs
           path: |
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.threads/logs/*.log
-              build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/diagnostic_pre_chown.txt
+            ${{ env.BUILD_DIR }}/.threads/logs/*.log
+              ${{ env.BUILD_DIR }}/diagnostic_pre_chown.txt
               ${{ runner.temp }}/diagnostic_pre_chown.txt
           overwrite: true
           include-hidden-files: true
@@ -822,8 +822,8 @@ jobs:
           name: ccache-${{ env.OS_Codename }}-${{ env.EE_Arch }}
           path: |
             .ccache
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.ccache
-            build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.cache_package_global
+            ${{ env.BUILD_DIR }}/.ccache
+            ${{ env.BUILD_DIR }}/.cache_package_global
             sources
           if-no-files-found: warn
 
@@ -832,7 +832,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: stamps-${{ env.OS_Codename }}-${{ env.EE_Arch }}
-          path: build.${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
+          path: ${{ env.BUILD_DIR }}/.stamps
           if-no-files-found: warn
 
       - name: Upload apt-cache artifact
