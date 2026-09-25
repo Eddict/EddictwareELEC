@@ -163,99 +163,47 @@ jobs:
             cleanup: false
             ', env.IMAGE_NAME) }}
 
-      # - name: Build and push prebuilt image
-      #   if: ${{ inputs.runner != 'blacksmith' }}
-      #   uses: docker/build-push-action@v7
-      #   with:
-      #     # context: .
-      #     file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
-      #     platforms: linux/amd64
-      #     # platforms: linux/amd64,linux/arm64
-      #     push: true
-      #     tags: ${{ env.IMAGE_TAG }}
-      #     labels: ${{ steps.meta.outputs.labels }}
-      #     build-args: |
-      #       REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
-      #       OS=${{ env.IMAGE_OS }}
-      #       DISTRO=${{ env.EE_Distro }}
-      #       PROJECT=${{ env.EE_Project }}
-      #       DEVICE=${{ env.EE_Device }}
-      #       ARCH=${{ env.EE_Arch }}
-      #       DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=min #mode=max
-
-      # - name: Build and push prebuilt image for blacksmith
-      #   if: ${{ inputs.runner == 'blacksmith' }}
-      #   uses: useblacksmith/build-push-action@v2
-      #   with:
-      #     # context: .
-      #     file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
-      #     platforms: linux/amd64
-      #     # platforms: linux/amd64,linux/arm64
-      #     push: true
-      #     tags: ${{ env.IMAGE_TAG }}
-      #     labels: ${{ steps.meta.outputs.labels }}
-      #     build-args: |
-      #       REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
-      #       OS=${{ env.IMAGE_OS }}
-      #       DISTRO=${{ env.EE_Distro }}
-      #       PROJECT=${{ env.EE_Project }}
-      #       DEVICE=${{ env.EE_Device }}
-      #       ARCH=${{ env.EE_Arch }}
-      #       DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-
-      # - name: Build and push prebuilt image (Dynamic)
-      #   uses: jenseng/dynamic-uses@v1
-      #   with:
-      #     uses: >-
-      #       ${{ inputs.runner == 'blacksmith' 
-      #       && 'useblacksmith/build-push-action@v2' 
-      #       || 'docker/build-push-action@v7' }}
-      #     with: |
-      #       file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
-      #       platforms: linux/amd64
-      #       push: true
-      #       tags: ${{ env.IMAGE_TAG }}
-      #       labels: ${{ steps.meta.outputs.labels }}
-      #       build-args: |
-      #         REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
-      #         OS=${{ env.IMAGE_OS }}
-      #         DISTRO=${{ env.EE_Distro }}
-      #         PROJECT=${{ env.EE_Project }}
-      #         DEVICE=${{ env.EE_Device }}
-      #         ARCH=${{ env.EE_Arch }}
-      #         DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-      #       ${{ inputs.runner != 'blacksmith' && '
-      #       cache-from: type=gha
-      #       cache-to: type=gha,mode=min
-      #       ' || '' }}
-
-      - name: Build and push prebuilt image (Dynamic)
-        uses: jenseng/dynamic-uses@v1
+      - name: Build and push prebuilt image
+        if: ${{ inputs.runner != 'blacksmith' }}
+        uses: docker/build-push-action@v7
         with:
-          uses: >-
-            ${{ inputs.runner == 'blacksmith' 
-            && 'useblacksmith/build-push-action@v2' 
-            || 'docker/build-push-action@v7' }}
-          with: |
-            file: tools/docker/{0}/prebuilt-toolchain.Dockerfile
-            platforms: linux/amd64
-            push: true
-            tags: ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}
-            labels: ${{ env.DOCKER_METADATA_OUTPUT_LABELS }}
-            build-args: |
-              REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
-              OS=${{ env.IMAGE_OS }}
-              DISTRO=${{ env.EE_Distro }}
-              PROJECT=${{ env.EE_Project }}
-              DEVICE=${{ env.EE_Device }}
-              ARCH=${{ env.EE_Arch }}
-              DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-            ${{ inputs.runner != 'blacksmith' && '
-            cache-from: type=gha
-            cache-to: type=gha,mode=min
-            ' || '' }}
+          # context: .
+          file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
+          platforms: linux/amd64
+          # platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_TAG }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
+            OS=${{ env.IMAGE_OS }}
+            DISTRO=${{ env.EE_Distro }}
+            PROJECT=${{ env.EE_Project }}
+            DEVICE=${{ env.EE_Device }}
+            ARCH=${{ env.EE_Arch }}
+            DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=min #mode=max
+
+      - name: Build and push prebuilt image for blacksmith
+        if: ${{ inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/build-push-action@v2
+        with:
+          # context: .
+          file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
+          platforms: linux/amd64
+          # platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_TAG }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
+            OS=${{ env.IMAGE_OS }}
+            DISTRO=${{ env.EE_Distro }}
+            PROJECT=${{ env.EE_Project }}
+            DEVICE=${{ env.EE_Device }}
+            ARCH=${{ env.EE_Arch }}
+            DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
 
       - name: Upload logs as artifact
         if: success() && !cancelled()
