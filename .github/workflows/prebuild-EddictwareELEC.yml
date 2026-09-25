@@ -205,6 +205,32 @@ jobs:
       #       ARCH=${{ env.EE_Arch }}
       #       DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
 
+      # - name: Build and push prebuilt image (Dynamic)
+      #   uses: jenseng/dynamic-uses@v1
+      #   with:
+      #     uses: >-
+      #       ${{ inputs.runner == 'blacksmith' 
+      #       && 'useblacksmith/build-push-action@v2' 
+      #       || 'docker/build-push-action@v7' }}
+      #     with: |
+      #       file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
+      #       platforms: linux/amd64
+      #       push: true
+      #       tags: ${{ env.IMAGE_TAG }}
+      #       labels: ${{ steps.meta.outputs.labels }}
+      #       build-args: |
+      #         REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
+      #         OS=${{ env.IMAGE_OS }}
+      #         DISTRO=${{ env.EE_Distro }}
+      #         PROJECT=${{ env.EE_Project }}
+      #         DEVICE=${{ env.EE_Device }}
+      #         ARCH=${{ env.EE_Arch }}
+      #         DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
+      #       ${{ inputs.runner != 'blacksmith' && '
+      #       cache-from: type=gha
+      #       cache-to: type=gha,mode=min
+      #       ' || '' }}
+
       - name: Build and push prebuilt image (Dynamic)
         uses: jenseng/dynamic-uses@v1
         with:
@@ -212,24 +238,35 @@ jobs:
             ${{ inputs.runner == 'blacksmith' 
             && 'useblacksmith/build-push-action@v2' 
             || 'docker/build-push-action@v7' }}
-          with: |
-            file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
+          with: >-
+            ${{ format('
+            file: tools/docker/{0}/prebuilt-toolchain.Dockerfile
             platforms: linux/amd64
             push: true
-            tags: ${{ env.IMAGE_TAG }}
-            labels: ${{ steps.meta.outputs.labels }}
+            tags: {1}
+            labels: {2}
             build-args: |
-              REPO_OWNER=${{ env.EE_REGISTRY_OWNER }}
-              OS=${{ env.IMAGE_OS }}
-              DISTRO=${{ env.EE_Distro }}
-              PROJECT=${{ env.EE_Project }}
-              DEVICE=${{ env.EE_Device }}
-              ARCH=${{ env.EE_Arch }}
-              DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-            ${{ inputs.runner != 'blacksmith' && '
-            cache-from: type=gha
-            cache-to: type=gha,mode=min
-            ' || '' }}
+              REPO_OWNER={3}
+              OS={0}
+              DISTRO={4}
+              PROJECT={5}
+              DEVICE={6}
+              ARCH={7}
+              DIAG_OUTPUT={8}
+            {9}
+            ', 
+            env.IMAGE_OS, 
+            env.IMAGE_TAG, 
+            toJSON(fromJSON(steps.meta.outputs.json).labels),
+            env.EE_REGISTRY_OWNER,
+            env.EE_Distro,
+            env.EE_Project,
+            env.EE_Device,
+            env.EE_Arch,
+            env.IMAGE_DEBUG,
+            inputs.runner != 'blacksmith' && 'cache-from: type=gha\ncache-to: type=gha,mode=min' || ''
+            ) }}
+
 
       - name: Upload logs as artifact
         if: success() && !cancelled()
