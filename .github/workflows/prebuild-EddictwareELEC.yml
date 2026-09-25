@@ -136,6 +136,7 @@ jobs:
         if: ${{ inputs.runner == 'blacksmith' }}
         uses: useblacksmith/setup-docker-builder@v2
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           cache-key: ${{ env.IMAGE_TAG }}
           platforms: linux/amd64
 
