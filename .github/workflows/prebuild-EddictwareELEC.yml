@@ -54,7 +54,7 @@ defaults:
 
 jobs:
   build:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || (inputs.runner == 'blacksmith' && 'blacksmith-4vcpu-ubuntu-2404' || 'self-hosted') }}
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || (inputs.runner == 'blacksmith' && 'blacksmith-8vcpu-ubuntu-2404' || 'self-hosted') }}
     permissions:
       contents: read
       packages: write
