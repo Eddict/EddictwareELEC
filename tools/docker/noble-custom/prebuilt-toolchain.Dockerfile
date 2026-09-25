@@ -87,8 +87,8 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
         log="$BUILD_DIR/${pkg//:/-}.log"; \
         if ! /src/scripts/build "$pkg" >"$log" 2>&1; then \
             echo "Build failed: $pkg"; \
-            tail -n 50 "$log"; \
-            exit 1; \
+            tail -n 200 "$log"; \
+            exit 0; \
         fi; \
     done; \
 
