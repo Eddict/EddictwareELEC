@@ -113,7 +113,8 @@ jobs:
           dTag="${{ env.EE_Registry }}/${{ github.repository_owner }}/${{ env.EE_Distro }}:${{ env.OS_Codename }}"
           # Use ,, to convert all characters to lowercase
           echo "EE_DistroTag=${dTag,,}"
-          echo "EE_DistroTag=${dTag,,}" | tee -a $GITHUB_ENV
+          echo "EE_DistroTag=${dTag,,}" | tee -a $GITHUB_ENV # for later steps in this job
+          echo "EE_DistroTag=${dTag,,}" | tee -a $GITHUB_OUTPUT # for the job output / other jobs
 
       - name: Log in to registry
         uses: docker/login-action@v4
@@ -190,6 +191,7 @@ jobs:
       RUNNER_TYPE: ${{ needs.init.outputs.runner_type }}
       CHMOD_SYNTAX: u=rwx,g=rwxs,o=rx # add the Group Sticky Bit (g+s) to enforce group write permissions
       BUILD_DIR: ${{ needs.init.outputs.build_dir }}
+      EE_DistroTag: ${{ needs.init.outputs.ee_distrotag }}
     steps:
       - name: Checkout repository
         if: ${{ inputs.runner != 'blacksmith' }}
