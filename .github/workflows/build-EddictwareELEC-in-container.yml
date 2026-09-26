@@ -784,7 +784,7 @@ jobs:
             -e BUILDER_NAME=Eddict \
             -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
             -e RUNNER_TYPE=${{ env.RUNNER_TYPE }} \
-            "${{ env.EE_Distro }}" bash -lc \
+            "${{ env.EE_DistroTag }}" bash -lc \
             "umask 0002 && . /build/build_recommend.sh && git config --global --add safe.directory /build || true; make -j${RECOMMENDED_J} -l${NB_CORES} image"
           docker_exit_code=$?
 
