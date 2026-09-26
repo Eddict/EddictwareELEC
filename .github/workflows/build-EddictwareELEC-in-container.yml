@@ -652,7 +652,7 @@ jobs:
       # Repeat the check-repo-folder step to ensure the repository folder is still valid before building the image
       - *check-repo-folder
 
-      - name: Build ${{ env.EE_DistroTag }} image
+      - name: Build ${{ env.EE_Distro }} image
         id: build-image
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -675,7 +675,7 @@ jobs:
           # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
           # decide mount strategy based on runner input: always use named docker volumes for runtime
           # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
-          VOLUME_PREFIX="${{ env.EE_DistroTag }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}"
+          VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}"
           [ "${{ env.DEBUG }}" = "true" ] && echo "[VOLUME_PREFIX]: $VOLUME_PREFIX" || true
           VOL_CCACHE="${VOLUME_PREFIX}-ccache"
           VOL_STAMPS="${VOLUME_PREFIX}-stamps"
@@ -712,10 +712,10 @@ jobs:
 
           # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
           # to avoid 'dubious ownership' errors caused by bind-mounted repos.
-          # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_DistroTag }}.${{ env.OS_Codename }})" ]; then
-          # if [ "$(docker ps -aq -f name=build${{ env.EE_DistroTag }}.${{ env.OS_Codename }})" ]; then
+          # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.OS_Codename }})" ]; then
+          # if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.OS_Codename }})" ]; then
           #     # cleanup
-          #     docker rm --force --volumes "build${{ env.EE_DistroTag }}.${{ env.OS_Codename }}"
+          #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.OS_Codename }}"
           # fi
 
           # run the container (use debug env values when workflow input `debug` is 'true')
@@ -768,7 +768,7 @@ jobs:
 
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
           . "${{ github.workspace }}/container_params.sh" && docker run --rm $MEMORY_ARG \
-            --name "build${{ env.EE_DistroTag }}.${{ env.OS_Codename }}" \
+            --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}" \
             -v ${{ github.workspace }}:/build \
             -w /build \
             ${USER_ARG} \
@@ -777,14 +777,14 @@ jobs:
             -e DISABLE_COLORS=no \
             -e MTCOLORS=auto \
             ${DOCKER_ENV_FLAGS} \
-            -e DISTRO=${{ env.EE_DistroTag }} \
+            -e DISTRO=${{ env.EE_Distro }} \
             -e PROJECT=${{ env.EE_Project }} \
             -e DEVICE=${{ env.EE_Device }} \
             -e ARCH=${{ env.EE_Arch }} \
             -e BUILDER_NAME=Eddict \
             -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
             -e RUNNER_TYPE=${{ env.RUNNER_TYPE }} \
-            "${{ env.EE_DistroTag }}" bash -lc \
+            "${{ env.EE_Distro }}" bash -lc \
             "umask 0002 && . /build/build_recommend.sh && git config --global --add safe.directory /build || true; make -j${RECOMMENDED_J} -l${NB_CORES} image"
           docker_exit_code=$?
 
@@ -808,7 +808,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: ${{ always() && !cancelled() && steps.build-image.outcome == 'failure' }}
         with:
-          name: artifact_logs_${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
+          name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
           # use workspace-relative path so the host runner (not the container) can find the logs
           path: |
             ${{ env.BUILD_DIR }}/.threads/logs/*.log
@@ -845,15 +845,15 @@ jobs:
           path: .apt-cache/archives
           if-no-files-found: warn
 
-      - name: Copy built ${{ env.EE_DistroTag }} image to archive
+      - name: Copy built ${{ env.EE_Distro }} image to archive
         id: image-path
         run: |
           [ "${{ env.DEBUG }}" = "true" ] && echo "[pwd]: ${{ github.workspace }}" || true
           if [ -d ${{ github.workspace }}/target ]; then
-            lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
+            lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
             [ "${{ env.DEBUG }}" = "true" ] && echo "[lines]: $lines" || true
             if [ $lines -ne 0 ]; then
-              pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
+              pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
               [ "${{ env.DEBUG }}" = "true" ] && echo "[EE_image_pathfilename]: $pathfilename"
               echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT || true
               filename="${pathfilename##*/}"
@@ -874,7 +874,7 @@ jobs:
             echo "No target directory found, skipping copy of built image."
           fi
 
-      - name: Upload built ${{ env.EE_DistroTag }} image
+      - name: Upload built ${{ env.EE_Distro }} image
         if: ${{ steps.image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
