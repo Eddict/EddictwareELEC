@@ -58,7 +58,7 @@ jobs:
     with:
       runner: ${{ inputs.runner }}
       debug: ${{ inputs.debug }}
-      # blacksmith-label: blacksmith-8vcpu-ubuntu-2404
+      blacksmith-label: blacksmith-8vcpu-ubuntu-2404
 
   build:
     needs: resolve-runner
