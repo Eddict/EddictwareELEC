@@ -29,12 +29,17 @@ on:
           - sid
           - actions-runner
         default: noble
+      cache:
+        description: 'Enable cache build'
+        required: true
+        type: boolean
+        default: true
   # deployment:
   push:
     paths: &include_paths
       - 'tools/docker/noble/Dockerfile'
 
-run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.runner, inputs.environment) }}
+run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, inputs.runner, inputs.environment, inputs.cache && 'cache' || 'no-cache') }}
 
 env:
   REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
@@ -118,8 +123,8 @@ jobs:
         with:
           name: builder-eddictwareelec # ${{ github.repository }}
           version: latest
-          keep-state: true
-          cleanup: false
+          keep-state: ${{ inputs.runner == 'self-hosted' && true || false }}
+          cache-binary: ${{ inputs.cache == 'true' && true || false }}
           # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
           # buildkitd-config-inline: |
           #   debug = false
@@ -154,7 +159,7 @@ jobs:
           # tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # target: custom
-          no-cache: false
+          no-cache: ${{ inputs.cache == 'false' && true || false }}
           # cache-from: type=registry,ref=${{ env.IMAGE_TAG }}:buildcache
           # cache-to: type=registry,ref=${{ env.IMAGE_TAG }}:buildcache,mode=max
           # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
@@ -163,8 +168,8 @@ jobs:
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           # cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
           # cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
-          cache-from: type=gha
-          cache-to: type=gha,mode=min #mode=max
+          cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
+          cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
           build-args: |
             USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
   #          --progress=plain
@@ -176,11 +181,14 @@ jobs:
         with:
           file: "./tools/docker/${{ env.ENVIRONMENT_CHOICE }}/Dockerfile"
           push: true
+          estargz: true
           tags: ${{ env.IMAGE_TAG }}
           labels: ${{ steps.meta.outputs.labels }}
-          no-cache: false
           build-args: |
             USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
+          no-cache: ${{ inputs.cache == 'false' && true || false }}
+          cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
+          cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
 
       # - # Temp fix to prevent cache size keeps growing
       #   # https://docs.docker.com/build/ci/github-actions/cache/#local-cache
