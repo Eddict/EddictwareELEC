@@ -3,6 +3,8 @@ ARG OS=jammy
 ARG BASE_IMAGE=ghcr.io/${REPO_OWNER}/eddictwareelec:${OS}
 FROM ${BASE_IMAGE} AS jammy-extended
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 USER root
 
 # install gh cli
