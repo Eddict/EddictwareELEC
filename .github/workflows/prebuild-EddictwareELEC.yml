@@ -40,13 +40,18 @@ on:
           - arm
           - x86_64
         default: aarch64
+      cache:
+        description: 'Enable cache for the Docker image build'
+        required: true
+        type: boolean
+        default: true
       debug:
         description: 'Enable debug build'
         required: true
         type: boolean
         default: false
 
-run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner, inputs.os, inputs.arch, inputs.debug && '/debug' || '') }}
+run-name: ${{ format('{0} ({1}/{2}/{3}{4}{5})', github.workflow, inputs.runner, inputs.os, inputs.arch, inputs.cache && '/cache' || '/no-cache', inputs.debug && '/debug' || '') }}
 
 defaults:
   run:
@@ -130,10 +135,10 @@ jobs:
         with:
           name: ${{ env.IMAGE_NAME }}
           version: latest
-          keep-state: true
-          cleanup: false
+          keep-state: ${{ inputs.runner == 'self-hosted' && true || false }}
+          cache-binary: ${{ inputs.cache == 'true' && true || false }}
       - name: Set up Docker Buildx for blacksmith
-        if: ${{ inputs.runner == 'blacksmith' }}
+        if: ${{ inputs.runner == 'blacksmith' && inputs.cache == 'true' }}
         uses: useblacksmith/setup-docker-builder@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -145,6 +150,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           # context: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
@@ -159,15 +165,18 @@ jobs:
             DEVICE=${{ env.EE_Device }}
             ARCH=${{ env.EE_Arch }}
             DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=min #mode=max
+          no-cache: ${{ inputs.cache == 'false' && true || false }}
+          cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
+          cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
       - name: Build and push prebuilt image for blacksmith
         if: ${{ inputs.runner == 'blacksmith' }}
         uses: useblacksmith/build-push-action@v2
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
           push: true
+          estargz: true
           tags: ${{ env.IMAGE_TAG }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -178,6 +187,9 @@ jobs:
             DEVICE=${{ env.EE_Device }}
             ARCH=${{ env.EE_Arch }}
             DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
+          no-cache: ${{ inputs.cache == 'false' && true || false }}
+          cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
+          cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
 
       - name: Upload logs as artifact
         if: ${{ always() && !cancelled() }}
