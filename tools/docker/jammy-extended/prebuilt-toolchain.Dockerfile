@@ -3,11 +3,6 @@ ARG OS=jammy-extended
 ARG BASE_IMAGE=ghcr.io/${REPO_OWNER}/eddictwareelec:${OS}
 FROM ${BASE_IMAGE} AS builder
 
-# Copy repo into the image so the project's build scripts can run
-COPY . /src
-#RUN sudo chown -R docker:docker /src
-WORKDIR /src
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Add build arguments for EE variables

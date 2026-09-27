@@ -18,4 +18,8 @@ RUN (type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
 	&& sudo apt update \
 	&& sudo apt install gh -y
 
+# Copy repo into the image so the project's build scripts can run
+COPY --chown=docker:docker . /src
+WORKDIR /src
+
 USER docker
