@@ -41,7 +41,7 @@ on:
           - x86_64
         default: aarch64
       cache:
-        description: 'Enable cache for the Docker image build'
+        description: 'Enable cache build'
         required: true
         type: boolean
         default: true
