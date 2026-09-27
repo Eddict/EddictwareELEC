@@ -15,8 +15,9 @@ on:
         type: choice
         options:
           - self-hosted
-          - aws
           - github
+          - blacksmith
+          - aws
           - arc-runner-set
         default: self-hosted
       os:
