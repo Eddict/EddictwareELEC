@@ -48,6 +48,8 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
     # export PKG_MAKE_OPTS_HOST="-j$(nproc) -l$(nproc)"; \
     export PKG_MAKE_OPTS_HOST="--silent --jobs=$(nproc)"; \
     echo "PKG_MAKE_OPTS_HOST=$PKG_MAKE_OPTS_HOST"; \
+    export PKG_CONFIGURE_OPTS_HOST="--disable-dependency-tracking"; \
+    echo "PKG_CONFIGURE_OPTS_HOST=$PKG_CONFIGURE_OPTS_HOST"; \
     for pkg in \
         make:host \
         pkg-config:host gettext:host xxHash:host \
@@ -61,7 +63,7 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
         if ! /src/scripts/build "$pkg" >"$log" 2>&1; then \
             echo "Build failed: $pkg"; \
             tail -n 200 "$log"; \
-            exit 0; \
+            exit 1; \
         fi; \
     done; \
     # Diagnostic: show contents of $BUILD_DIR and $BUILD_DIR/toolchain after build
