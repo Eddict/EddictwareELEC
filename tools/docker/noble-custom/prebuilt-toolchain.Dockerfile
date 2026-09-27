@@ -33,6 +33,20 @@ RUN mkdir -p $SRC_DIR $BUILD_DIR $PREBUILD_TC_DIR && \
 
 USER docker
 
+# quick diagnostic
+ARG DOCKER_UID=1000
+ARG DOCKER_GID=1000
+RUN --mount=type=cache,id=prebuild-logs,target=$BUILD_DIR,sharing=locked \
+    echo "diag#1"; \
+    id; \
+    echo "DOCKER_UID=$DOCKER_UID, DOCKER_GID=$DOCKER_GID, BUILD_DIR=$BUILD_DIR"; \
+    ls -al "$BUILD_DIR";
+RUN --mount=type=cache,id=prebuild-logs,target=$BUILD_DIR,sharing=locked,uid=$DOCKER_UID,gid=$DOCKER_GID \
+    echo "diag#2"; \
+    id; \
+    echo "DOCKER_UID=$DOCKER_UID, DOCKER_GID=$DOCKER_GID, BUILD_DIR=$BUILD_DIR"; \
+    ls -al "$BUILD_DIR"; exit 1;
+
 # RUN export DISTRO="$DISTRO" PROJECT="$PROJECT" DEVICE="$DEVICE" ARCH="$ARCH"; \
 #     echo "Downloading sources for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
 #     export BUILD_DIR="$BUILD_DIR"; \
