@@ -43,7 +43,9 @@ USER docker
 #     cat "$BUILD_DIR/download-tool.log" || true;
 
 # Cache mounts live outside the layer, so their contents survive even if the RUN exits non-zero
-RUN --mount=type=cache,id=prebuild-logs,target=/opt/tmp/prebuild,sharing=locked \
+ARG DOCKER_UID=1000
+ARG DOCKER_GID=1000
+RUN --mount=type=cache,id=prebuild-logs,target=$BUILD_DIR,sharing=locked,uid=$DOCKER_UID,gid=$DOCKER_GID \
     echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
@@ -90,7 +92,9 @@ RUN --mount=type=cache,id=prebuild-logs,target=/opt/tmp/prebuild,sharing=locked 
 # --- tiny stage whose only job is exposing the log cache as real files ---
 # use the same cache ID as the builder stage to persist logs
 FROM busybox
-RUN --mount=type=cache,id=prebuild-logs,target=/cache,sharing=locked \
+ARG DOCKER_UID=1000
+ARG DOCKER_GID=1000
+RUN --mount=type=cache,id=prebuild-logs,target=/cache,sharing=locked,uid=$DOCKER_UID,gid=$DOCKER_GID \
     mkdir -p /logs && cp -a /cache/. /logs/
 
 # --- final image ---
