@@ -144,7 +144,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache-key: ${{ env.IMAGE_TAG }}
-          platforms: linux/amd64
 
       - name: Build and push prebuilt image
         id: build
@@ -152,12 +151,12 @@ jobs:
         continue-on-error: true
         uses: docker/build-push-action@v7
         with:
-          # context: .
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          context: .
           file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
           push: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           tags: ${{ env.IMAGE_TAG }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -177,11 +176,12 @@ jobs:
         continue-on-error: true
         uses: useblacksmith/build-push-action@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          context: .
           file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
           push: true
           estargz: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           tags: ${{ env.IMAGE_TAG }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -201,9 +201,10 @@ jobs:
         if: ${{ inputs.runner != 'blacksmith' && steps.build.outcome == 'failure' }}
         uses: docker/build-push-action@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          context: .
           file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           target: export-logs
           outputs: type=local,dest=./build-logs
       - name: Extract logs on failure for blacksmith
@@ -211,9 +212,10 @@ jobs:
         if: ${{ inputs.runner == 'blacksmith' && steps.build.outcome == 'failure' }}
         uses: useblacksmith/build-push-action@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          context: .
           file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           target: export-logs
           outputs: type=local,dest=./build-logs
 
