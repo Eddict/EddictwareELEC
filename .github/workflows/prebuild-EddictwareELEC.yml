@@ -138,7 +138,7 @@ jobs:
           keep-state: ${{ inputs.runner == 'self-hosted' && true || false }}
           cache-binary: ${{ inputs.cache == 'true' && true || false }}
       - name: Set up Docker Buildx for blacksmith
-        if: ${{ inputs.runner == 'blacksmith' && inputs.cache == 'true' }}
+        if: ${{ inputs.runner == 'blacksmith' }} 
         uses: useblacksmith/setup-docker-builder@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -146,7 +146,9 @@ jobs:
           platforms: linux/amd64
 
       - name: Build and push prebuilt image
+        id: build
         if: ${{ inputs.runner != 'blacksmith' }}
+        continue-on-error: true
         uses: docker/build-push-action@v7
         with:
           # context: .
@@ -169,7 +171,9 @@ jobs:
           cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
           cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
       - name: Build and push prebuilt image for blacksmith
+        id: build-blacksmith
         if: ${{ inputs.runner == 'blacksmith' }}
+        continue-on-error: true
         uses: useblacksmith/build-push-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -191,13 +195,40 @@ jobs:
           cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
           cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
 
-      - name: Upload logs as artifact
-        if: ${{ always() && !cancelled() }}
+      - name: Extract logs on failure
+        id: extract-logs
+        if: ${{ inputs.runner != 'blacksmith' && steps.build.outcome == 'failure' }}
+        uses: docker/build-push-action@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
+          platforms: linux/amd64
+          target: export-logs
+          outputs: type=local,dest=./build-logs
+      - name: Extract logs on failure for blacksmith
+        id: extract-logs-blacksmith
+        if: ${{ inputs.runner == 'blacksmith' && steps.build.outcome == 'failure' }}
+        uses: useblacksmith/build-push-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: tools/docker/${{ env.IMAGE_OS }}/prebuilt-toolchain.Dockerfile
+          platforms: linux/amd64
+          target: export-logs
+          outputs: type=local,dest=./build-logs
+
+      - name: Upload logs artifact
+        id: upload-logs
+        if: ${{ steps.build.outcome == 'failure' || steps.build-blacksmith.outcome == 'failure' }}
         uses: actions/upload-artifact@v7
         with:
-          name: prebuilt-toolchain-${{ env.VALID_ARTIFACT_NAME }}
-          path: /opt/**/*.log
+          name: prebuilt-toolchain-logs-${{ env.VALID_ARTIFACT_NAME }}
+          path: ./build-logs
           if-no-files-found: warn
+
+      - name: Fail the job if build failed
+        id: fail-job
+        if: ${{ steps.build.outcome == 'failure' || steps.build-blacksmith.outcome == 'failure' }}
+        run: exit 1
 
       # Ensure ownership alignment for the build directory
       - name: Fix permissions for build directory

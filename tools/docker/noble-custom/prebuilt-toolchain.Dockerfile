@@ -42,7 +42,9 @@ USER docker
 #     echo "--- DIAGNOSTIC: $BUILD_DIR/download-tool.log ---"; \
 #     cat "$BUILD_DIR/download-tool.log" || true;
 
-RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
+# Cache mounts live outside the layer, so their contents survive even if the RUN exits non-zero
+RUN --mount=type=cache,id=prebuild-logs,target=/opt/tmp/prebuild,sharing=locked \
+    echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch: $ARCH"; \
     # sudo chmod u=rwx,g=rwxs,o=rx "$BUILD_DIR"; \
     export BUILD_DIR="$BUILD_DIR"; \
     # export PKG_MAKE_OPTS_HOST="-j$(nproc) -l$(nproc)"; \
@@ -61,8 +63,11 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
     do \
         log="$BUILD_DIR/${pkg//:/-}.log"; \
         if ! /src/scripts/build "$pkg" >"$log" 2>&1; then \
-            echo "Build failed: $pkg"; \
-            tail -n 200 "$log"; \
+            # ::group:: makes it foldable in GitHub Actions logs
+            echo "::group::Build failed: $pkg (full log)"; \
+            # tail -n 200 "$log"; \
+            cat "$log"; \
+            echo "::endgroup::"; \
             exit 1; \
         fi; \
     done; \
@@ -82,6 +87,13 @@ RUN echo "Building for Distro: $DISTRO, Project: $PROJECT, Device: $DEVICE, Arch
     find "$PREBUILD_TC_DIR" -type f | xargs ls -l || true; \
     stat "$PREBUILD_TC_DIR" || true
 
+# --- tiny stage whose only job is exposing the log cache as real files ---
+# use the same cache ID as the builder stage to persist logs
+FROM busybox
+RUN --mount=type=cache,id=prebuild-logs,target=/cache,sharing=locked \
+    mkdir -p /logs && cp -a /cache/. /logs/
+
+# --- final image ---
 FROM ${BASE_IMAGE}
 ARG BUILD_DIR=/opt/tmp/prebuild
 ARG PREBUILD_TC_DIR=/opt/prebuilt-toolchain
