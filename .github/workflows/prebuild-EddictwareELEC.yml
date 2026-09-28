@@ -137,7 +137,7 @@ jobs:
           name: ${{ env.IMAGE_NAME }}
           version: latest
           keep-state: ${{ inputs.runner == 'self-hosted' && true || false }}
-          cache-binary: ${{ inputs.cache && true || false }}
+          cache-binary: ${{ inputs.cache }}
       - name: Set up Docker Buildx for blacksmith
         if: ${{ inputs.runner == 'blacksmith' }} 
         uses: useblacksmith/setup-docker-builder@v2
