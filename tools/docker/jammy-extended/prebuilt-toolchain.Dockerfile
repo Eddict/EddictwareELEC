@@ -37,6 +37,7 @@ RUN --mount=type=cache,id=prebuild-logs,target=$BUILD_DIR,sharing=locked,uid=$DO
     # export PKG_MAKE_OPTS_HOST="-j$(nproc) -l$(nproc)"; \
     export PKG_MAKE_OPTS_HOST="--silent --jobs=$(nproc)"; \
     echo "PKG_MAKE_OPTS_HOST=$PKG_MAKE_OPTS_HOST"; \
+    # export PKG_CONFIGURE_OPTS_HOST probably not work as package.mk overwrites it
     export PKG_CONFIGURE_OPTS_HOST="--disable-dependency-tracking"; \
     echo "PKG_CONFIGURE_OPTS_HOST=$PKG_CONFIGURE_OPTS_HOST"; \
     for pkg in \
@@ -48,8 +49,17 @@ RUN --mount=type=cache,id=prebuild-logs,target=$BUILD_DIR,sharing=locked,uid=$DO
         linux:host \
         mesa:host; \
     do \
+        name="${pkg%%:*}"; \
         log="$BUILD_DIR/${pkg//:/-}.log"; \
+        start=$(date +%s); \
+        if [ "$name" = "gettext" ]; then \
+            pkgmk=$(find /src/packages -type f -path "*/${name}/package.mk" | head -n1); \
+            if [ -n "$pkgmk" ]; then \
+                echo 'PKG_CONFIGURE_OPTS_HOST+=" --disable-dependency-tracking --disable-openmp --disable-libasprintf --disable-acl --without-git --without-cvs"' >> "$pkgmk"; \
+            fi; \
+        fi; \
         if ! /src/scripts/build "$pkg" >"$log" 2>&1; then \
+            echo "$pkg failed after $(( $(date +%s) - start ))s"; \
             # ::group:: makes it foldable in GitHub Actions logs
             echo "::group::Build failed: $pkg (full log)"; \
             # tail -n 200 "$log"; \
@@ -57,6 +67,7 @@ RUN --mount=type=cache,id=prebuild-logs,target=$BUILD_DIR,sharing=locked,uid=$DO
             echo "::endgroup::"; \
             exit 1; \
         fi; \
+        echo "$pkg took $(( $(date +%s) - start ))s"; \
     done; \
     # Diagnostic: show contents of $BUILD_DIR and $BUILD_DIR/toolchain after build
     echo "--- DIAGNOSTIC: $BUILD_DIR ---"; \
@@ -76,7 +87,7 @@ RUN --mount=type=cache,id=prebuild-logs,target=$BUILD_DIR,sharing=locked,uid=$DO
 
 # --- tiny stage whose only job is exposing the log cache as real files ---
 # use the same cache ID as the builder stage to persist logs
-FROM busybox
+FROM busybox AS export-logs
 ARG DOCKER_UID=1000
 ARG DOCKER_GID=1000
 RUN --mount=type=cache,id=prebuild-logs,target=/cache,sharing=locked,uid=$DOCKER_UID,gid=$DOCKER_GID \
