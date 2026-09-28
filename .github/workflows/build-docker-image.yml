@@ -117,6 +117,13 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.ref.name=${{ env.IMAGE_TAG }}
 
+      - name: Checkout repository
+        if: ${{ inputs.runner != 'blacksmith' }}
+        uses: actions/checkout@v7
+      - name: Checkout repository for blacksmith
+        if: ${{ inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/checkout@v1
+
       - name: Set up Docker Buildx
         if: ${{ inputs.runner != 'blacksmith' }}
         uses: docker/setup-buildx-action@v4
@@ -124,7 +131,7 @@ jobs:
           name: builder-eddictwareelec # ${{ github.repository }}
           version: latest
           keep-state: ${{ inputs.runner == 'self-hosted' && true || false }}
-          cache-binary: ${{ inputs.cache && true || false }}
+          cache-binary: ${{ inputs.cache }}
           # https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
           # buildkitd-config-inline: |
           #   debug = false
