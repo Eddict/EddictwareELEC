@@ -57,20 +57,8 @@ jobs:
       runner: ${{ inputs.runner }}
       # blacksmith-label: blacksmith-8vcpu-ubuntu-2404
 
-  debug-inputs:
-    runs-on: ubuntu-latest
-    # runs-on: ${{ needs.resolve-runner.outputs.runner }}
-    steps:
-      - name: Debug inputs
-        run: |
-          echo "Runner: ${{ inputs.runner }}"
-          echo "Environment: ${{ inputs.environment }}"
-          echo "Cache: ${{ inputs.cache }}"
-          echo "No-Cache: ${{ !inputs.cache }}"
-          exit 1
-
   build:
-    needs: debug-inputs # resolve-runner
+    needs: resolve-runner
     runs-on: ${{ needs.resolve-runner.outputs.runner }}
     permissions:
       contents: read
