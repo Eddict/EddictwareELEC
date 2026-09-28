@@ -33,12 +33,25 @@ COPY --chmod=755 <<'EOF' /usr/local/bin/build-pkg
 set -u
 export PKG_MAKE_OPTS_HOST="--silent --jobs=$(nproc)"
 for pkg in "$@"; do
-  log="$LOG_DIR/${pkg//:/-}.log"
-  start=$(date +%s)
-  if ! /src/scripts/build "$pkg" >"$log" 2>&1; then
-    echo "Build failed: $pkg"; tail -n 200 "$log"; exit 1
-  fi
-  echo "$pkg took $(( $(date +%s) - start ))s"
+    name="${pkg%%:*}"
+    log="$LOG_DIR/${pkg//:/-}.log"
+    start=$(date +%s)
+    if [ "$name" = "gettext" ]; then
+        pkgmk=$(find /src/packages -type f -path "*/${name}/package.mk" | head -n1)
+        if [ -n "$pkgmk" ]; then
+            echo 'PKG_CONFIGURE_OPTS_HOST+=" --disable-dependency-tracking --disable-openmp --disable-libasprintf --disable-acl --without-git --without-cvs"' >> "$pkgmk"
+        fi
+    fi
+    if ! /src/scripts/build "$pkg" >"$log" 2>&1; then
+        echo "Build $pkg failed after $(( $(date +%s) - start ))s"
+        # ::group:: makes it foldable in GitHub Actions logs
+        echo "::group::Build failed: $pkg (full log)"
+        # tail -n 200 "$log"
+        cat "$log"
+        echo "::endgroup::"
+        exit 1
+    fi
+    echo "Build $pkg took $(( $(date +%s) - start ))s"
 done
 EOF
 
