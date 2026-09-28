@@ -77,9 +77,10 @@ fi
 # for SOURCE_PACKAGE in $(find "${SOURCES}/" -mindepth 1 -type d); do
 #   PACKAGE_NAME=$(basename "${SOURCE_PACKAGE}")
 
-total=$(find "${SOURCES}/" -mindepth 1 -type d | wc -l)
+mapfile -t DIRS < <(find "${SOURCES}/" -mindepth 1 -type d)
+total=${#DIRS[@]}
 i=0
-find "${SOURCES}/" -mindepth 1 -type d | while IFS= read -r SOURCE_PACKAGE; do
+for SOURCE_PACKAGE in "${DIRS[@]}"; do
   i=$((i+1))
   PACKAGE_NAME=$(basename "$SOURCE_PACKAGE")
   printf '[%d/%d] Checking %s\n' "$i" "$total" "$PACKAGE_NAME"

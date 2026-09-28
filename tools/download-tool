@@ -30,20 +30,19 @@ esac
 #   fi
 #   ./scripts/get $(basename $(dirname $package))
 # done
+
 # compute total (respecting ALL_PACKAGES)
 if [ -z "${ALL_PACKAGES:-}" ]; then
-  total=$(find packages/ -name package.mk | grep -v '/addons/' | wc -l)
+  mapfile -t PKGFILES < <(find packages/ -name package.mk | grep -v addons)
 else
-  total=$(find packages/ -name package.mk | wc -l)
+  mapfile -t PKGFILES < <(find packages/ -name package.mk)
 fi
 
+total=${#PKGFILES[@]}
 i=0
-find packages/ -name package.mk | while read -r pkgfile; do
-  if [ -z "${ALL_PACKAGES:-}" ] && echo "$pkgfile" | grep -q '/addons/'; then
-    continue
-  fi
+for pkgfile in "${PKGFILES[@]}"; do
   i=$((i+1))
   pkg=$(basename "$(dirname "$pkgfile")")
-  printf '[%d/%d] Downloading %s\n' "$i" "$total" "$pkg"
+  printf '[%d/%d] Downloading %s\n' "$i" "$total" "$pkg" >&2
   ./scripts/get "$pkg"
 done
