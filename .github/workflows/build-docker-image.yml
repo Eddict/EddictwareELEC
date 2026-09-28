@@ -120,9 +120,13 @@ jobs:
       - name: Checkout repository
         if: ${{ inputs.runner != 'blacksmith' }}
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
       - name: Checkout repository for blacksmith
         if: ${{ inputs.runner == 'blacksmith' }}
         uses: useblacksmith/checkout@v1
+        with:
+          ref: ${{ github.ref }}
 
       - name: Set up Docker Buildx
         if: ${{ inputs.runner != 'blacksmith' }}
