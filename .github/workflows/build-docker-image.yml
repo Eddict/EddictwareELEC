@@ -129,6 +129,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Set up Docker Buildx
+        id: buildx
         if: ${{ inputs.runner != 'blacksmith' }}
         uses: docker/setup-buildx-action@v4
         with:
@@ -167,6 +168,7 @@ jobs:
         if: ${{ inputs.runner != 'blacksmith' }}
         uses: docker/build-push-action@v7
         with:
+          builder: ${{ steps.buildx.outputs.name }}
           # context: "{{defaultContext}}:mysubdir"
           context: .
           file: "./tools/docker/${{ env.ENVIRONMENT_CHOICE }}/Dockerfile"
