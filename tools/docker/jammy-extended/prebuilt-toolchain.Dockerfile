@@ -36,11 +36,19 @@ for pkg in "$@"; do
     name="${pkg%%:*}"
     log="$LOG_DIR/${pkg//:/-}.log"
     start=$(date +%s)
-    if [ "$name" = "gettext" ]; then
-        pkgmk=$(find /src/packages -type f -path "*/${name}/package.mk" | head -n1)
-        if [ -n "$pkgmk" ]; then
-            echo 'PKG_CONFIGURE_OPTS_HOST+=" --disable-dependency-tracking --disable-openmp --disable-libasprintf --disable-acl --without-git --without-cvs"' >> "$pkgmk"
-        fi
+    pkgmk=$(find /src/packages -type f -path "*/${name}/package.mk" | head -n1)
+    if [ -n "$pkgmk" ]; then
+        case "$name" in
+            gettext)
+                echo 'PKG_CONFIGURE_OPTS_HOST+=" --disable-dependency-tracking --disable-openmp --disable-libasprintf --disable-acl --without-git --without-cvs"' >> "$pkgmk"
+                ;;
+            cmake)
+                sed -i \
+                    -e 's|--no-qt-gui --no-system-libs|--parallel=${CONCURRENCY_MAKE_LEVEL:-$(nproc)} --no-qt-gui --no-system-libs|' \
+                    -e 's|-DBUILD_CursesDialog=0|-DBUILD_CursesDialog=0 -DBUILD_TESTING=OFF|' \
+                    "$pkgmk"
+                ;;
+        esac
     fi
     if ! /src/scripts/build "$pkg" >"$log" 2>&1; then
         echo "Build $pkg failed after $(( $(date +%s) - start ))s"
