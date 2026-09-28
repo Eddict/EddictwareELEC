@@ -137,7 +137,7 @@ jobs:
           name: ${{ env.IMAGE_NAME }}
           version: latest
           keep-state: ${{ inputs.runner == 'self-hosted' && true || false }}
-          cache-binary: ${{ inputs.cache == 'true' && true || false }}
+          cache-binary: ${{ inputs.cache && true || false }}
       - name: Set up Docker Buildx for blacksmith
         if: ${{ inputs.runner == 'blacksmith' }} 
         uses: useblacksmith/setup-docker-builder@v2
@@ -167,9 +167,9 @@ jobs:
             DEVICE=${{ env.EE_Device }}
             ARCH=${{ env.EE_Arch }}
             DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-          no-cache: ${{ inputs.cache == 'false' && true || false }}
-          cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
-          cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
+          no-cache: ${{ !inputs.cache }}
+          cache-from: ${{ inputs.cache && 'type=gha' || '' }}
+          cache-to: ${{ inputs.cache && 'type=gha,mode=min' || '' }} #mode=max
       - name: Build and push prebuilt image for blacksmith
         id: build-blacksmith
         if: ${{ inputs.runner == 'blacksmith' }}
@@ -192,9 +192,9 @@ jobs:
             DEVICE=${{ env.EE_Device }}
             ARCH=${{ env.EE_Arch }}
             DIAG_OUTPUT=${{ env.IMAGE_DEBUG }}
-          no-cache: ${{ inputs.cache == 'false' && true || false }}
-          cache-from: ${{ inputs.cache == 'true' && 'type=gha' || '' }}
-          cache-to: ${{ inputs.cache == 'true' && 'type=gha,mode=min' || '' }} #mode=max
+          no-cache: ${{ !inputs.cache }}
+          cache-from: ${{ inputs.cache && 'type=gha' || '' }}
+          cache-to: ${{ inputs.cache && 'type=gha,mode=min' || '' }} #mode=max
 
       - name: Extract logs on failure
         id: extract-logs
