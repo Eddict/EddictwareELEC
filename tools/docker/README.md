@@ -8,7 +8,6 @@
   - resolute  (Ubuntu 26.04)
 - Debian
   - bookworm  (Debian 12)
-  - sid       (Debian 13?)
   - trixie    (Debian 13)
 
 **Build docker image**
