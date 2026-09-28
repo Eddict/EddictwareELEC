@@ -7,7 +7,7 @@ PKG_VERSION="1.0.10"
 PKG_SHA256="04bfe8ef75db7d629a33de767599765cecadc56274a39822d5d081030d577685"
 PKG_LICENSE="LGPL-2.1-or-later"
 PKG_SITE="https://www.gnu.org/software/libmicrohttpd/"
-PKG_URL="${GNU_MIRROR}/libmicrohttpd/${PKG_NAME}-${PKG_VERSION}.tar.gz"
+PKG_URL="https://ftpmirror.gnu.org/libmicrohttpd/${PKG_NAME}-${PKG_VERSION}.tar.gz"
 PKG_DEPENDS_TARGET="toolchain gnutls"
 PKG_LONGDESC="A small C library that is supposed to make it easy to run an HTTP server as part of another application."
 
