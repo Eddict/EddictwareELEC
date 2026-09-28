@@ -122,7 +122,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: ${{ github.ref }}
-      - name: Checkout repository for blacksmith
+      - name: Checkout repository
         if: ${{ inputs.runner == 'blacksmith' }}
         uses: useblacksmith/checkout@v1
         with:
@@ -143,7 +143,7 @@ jobs:
           #   [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}"]
           #     http = false
           # buildkitd-flags: '"--progress ''plain''"'
-      - name: Set up Docker Buildx for blacksmith
+      - name: Set up Docker buildkitd builder
         if: ${{ inputs.runner == 'blacksmith' }}
         uses: useblacksmith/setup-docker-builder@v2
         with:
@@ -162,7 +162,7 @@ jobs:
       #     key: ${{ runner.os }}-${{ env.DistroCodeName }}
       #     # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
 
-      - name: Build and export to (local/private) registry
+      - name: Build on ${{ inputs.runner }} and export to registry
         id: push
         if: ${{ inputs.runner != 'blacksmith' }}
         uses: docker/build-push-action@v7
@@ -193,7 +193,7 @@ jobs:
             USER_UID=${{ steps.get-docker-guid.outputs.docker-guid }}
   #          --progress=plain
   #          DOCKER_BUILDKIT=0
-      - name: Build and export to (local/private) registry
+      - name: Build on ${{ inputs.runner }} and export to registry
         id: push-bs
         if: ${{ inputs.runner == 'blacksmith' }}
         uses: useblacksmith/build-push-action@v2
