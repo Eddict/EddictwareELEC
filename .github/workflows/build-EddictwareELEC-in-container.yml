@@ -642,7 +642,7 @@ jobs:
           fi
 
           echo "--------------Makefile---------------------"
-          git status --porcelain --ignored
+          git -c safe.directory="${GITHUB_WORKSPACE}" status --porcelain --ignored
           ls -la Makefile scripts/image
           cat Makefile | sed -n '1,15p'
           echo "--------------Makefile---------------------"
