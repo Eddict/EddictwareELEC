@@ -392,6 +392,8 @@ jobs:
           else
             MEMORY_ARG=""
           fi
+          echo "=== ${{ github.workspace }} ownership/perm ==="
+          stat -c '%U:%G %a %n' ${{ github.workspace }}
           # Write a small shell fragment into the workspace that can be sourced on the host
           # to provide docker run flags (MEMORY_ARG) and other host-side params if needed.
           OUTFILE="${{ github.workspace }}/container_params.sh"
