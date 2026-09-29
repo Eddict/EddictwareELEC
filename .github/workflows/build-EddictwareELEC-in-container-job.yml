@@ -68,6 +68,8 @@ jobs:
     uses: ./.github/workflows/resolve-runner.yml
     with:
       runner: ${{ inputs.runner }}
+      # debug: ${{ inputs.debug }}
+      blacksmith-label: blacksmith-8vcpu-ubuntu-2404
 
   pre-build:
     name: Pre-build
@@ -355,13 +357,13 @@ jobs:
               filename="${pathfilename##*/}"
               [ "$debug" = true ] && echo "[EE_image_filename]: $filename"
               echo "EE_image_filename=$filename" | sudo tee -a $GITHUB_OUTPUT
-              if [ ! -d /root/target_archive ]; then
-                mkdir --parents "/root/target_archive"
+              if [ ! -d ${{ github.workspace }}/../target_archive ]; then
+                mkdir --parents "${{ github.workspace }}/../target_archive"
               fi
-              if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older
-                echo "Copied built image to /root/target_archive"
+              if [ "$(cp "$pathfilename" "${{ github.workspace }}/../target_archive")" ]; then # --update=older
+                echo "Copied built image to ${{ github.workspace }}/../target_archive"
               else
-                echo "No newer built image to copy to /root/target_archive"
+                echo "No newer built image to copy to ${{ github.workspace }}/../target_archive"
               fi
             else
               echo "No built image found in target directory, skipping copy."

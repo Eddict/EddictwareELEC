@@ -93,7 +93,6 @@ jobs:
     # Expose step outputs as job outputs
     outputs:
       ee_distrotag: ${{ steps.compose-image-tag.outputs.EE_DistroTag }}
-      runner_type: ${{ steps.determine-ids.outputs.RUNNER_TYPE }}
       host_uid: ${{ steps.determine-ids.outputs.HOST_UID }}
       host_gid: ${{ steps.determine-ids.outputs.HOST_GID }}
       # docker_uid: ${{ steps.determine-ids.outputs.DOCKER_UID }}
@@ -131,7 +130,6 @@ jobs:
       - name: Determine UIDs and GIDs
         id: determine-ids
         run: |
-          RUNNER_TYPE="${{ inputs.runner || 'self-hosted' }}"
           HOST_UID=$(id -u)
           HOST_GID=$(id -g)
 
@@ -151,7 +149,6 @@ jobs:
           fi
 
           # Output clean, reliable variables to the next steps
-          echo "RUNNER_TYPE=$RUNNER_TYPE" | tee -a $GITHUB_OUTPUT
           echo "HOST_UID=$HOST_UID" | tee -a $GITHUB_OUTPUT
           echo "HOST_GID=$HOST_GID" | tee -a $GITHUB_OUTPUT
           echo "IMG_UID=$IMG_UID" | tee -a $GITHUB_OUTPUT
@@ -190,7 +187,6 @@ jobs:
       HOST_GID: ${{ needs.init.outputs.host_gid }}
       IMG_UID: ${{ needs.init.outputs.img_uid }}
       IMG_GID: ${{ needs.init.outputs.img_gid }}
-      RUNNER_TYPE: ${{ needs.init.outputs.runner_type }}
       CHMOD_SYNTAX: u=rwx,g=rwxs,o=rx # add the Group Sticky Bit (g+s) to enforce group write permissions
       BUILD_DIR: ${{ needs.init.outputs.build_dir }}
       EE_DistroTag: ${{ needs.init.outputs.ee_distrotag }}
@@ -204,7 +200,7 @@ jobs:
 
       - &check-repo-folder # Define a reusable anchor for this step
         name: Check repo folder after checkout
-        # if: env.DEBUG == 'true'
+        # if: ${{ env.DEBUG == 'true' }}
         # id: check-repo-folder # cannot reuse the same ID for multiple steps when using the anchor
         run: |
           echo "/etc/passwd"
@@ -235,7 +231,7 @@ jobs:
 
       - name: Check for existing build cache (persistent runners)
         id: check-build-cache
-        if: ${{ inputs.runner == 'self-hosted' || inputs.runner == 'aws' }}
+        if: ${{ needs.resolve-runner.outputs.runner == 'self-hosted' }}
         run: |
           # Check if all required cache dirs/files exist and are non-empty
           missing=0
@@ -253,7 +249,7 @@ jobs:
 
       - name: Restore build caches
         id: restore-build-caches
-        if: ${{ (inputs.runner != 'self-hosted' && inputs.runner != 'aws') || steps.check-build-cache.outputs.build_cache_present != 'true' }}
+        if: ${{ needs.resolve-runner.outputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true' }}
         uses: actions/cache@v5
         with:
           path: |
@@ -277,25 +273,22 @@ jobs:
 
       - name: Prepare cache dirs for container
         run: |
-          if [ "${{ env.DEBUG }}" = "true" ]; then
+          if [ "${{ env.DEBUG }}" == "true" ]; then
             ls -al "$PWD" && echo "----------------------------------------"
           fi
 
-          mkdir -p .ccache "${{ env.BUILD_DIR }}/.stamps" .apt-cache/archives
-          touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
+          sudo mkdir -p .ccache "${{ env.BUILD_DIR }}/.stamps" .apt-cache/archives sources target
+          sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
 
-          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "${{ env.BUILD_DIR }}" .apt-cache || true
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "${{ env.BUILD_DIR }}" .apt-cache || true
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache "${{ env.BUILD_DIR }}" .apt-cache sources target
+          sudo chmod -R u+rwX .ccache "${{ env.BUILD_DIR }}" .apt-cache sources target
 
           sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
           sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
 
-          echo "Aligning workspace ownership with container UID:GID ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${GITHUB_WORKSPACE}"
-
       - name: Host diagnostics
         id: host-diagnostics
-        if: ${{ env.DEBUG == 'true' }}
+        if: ${{ inputs.debug }}
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -318,7 +311,7 @@ jobs:
 
       - name: In-container diagnostics
         id: in-container-diagnostics
-        if: ${{ env.DEBUG == 'true' }}
+        if: ${{ inputs.debug }}
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -373,7 +366,7 @@ jobs:
           '
 
       - name: Upload CI diagnostics
-        if: ${{ always() && !cancelled() && env.DEBUG == 'true' }}
+        if: ${{ always() && !cancelled() && inputs.debug }}
         uses: actions/upload-artifact@v7
         with:
           name: ci-diagnostics-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -386,7 +379,7 @@ jobs:
         id: prepare-container-params
         run: |
           # on self-hosted runners request a larger container memory; allow override via CONTAINER_MEMORY
-          if [ "${{ env.RUNNER_TYPE }}" == "self-hosted" ]; then
+          if [ "${{ needs.resolve-runner.outputs.runner }}" == "self-hosted" ]; then
             CONTAINER_MEMORY="${CONTAINER_MEMORY:-12g}"
             MEMORY_ARG="--memory=${CONTAINER_MEMORY}"
           else
@@ -407,7 +400,7 @@ jobs:
           echo "# Generated by prepare-container-params" >> "$OUTFILE"
           echo "MEMORY_ARG='${MEMORY_ARG}'" >> "$OUTFILE"
           sudo chmod +x "$OUTFILE" || true
-          if [ "${{ env.DEBUG }}" = "true" ]; then
+          if [ "${{ env.DEBUG }}" == "true" ]; then
             echo "[container_params.sh written]: $OUTFILE"
           fi
 
@@ -415,7 +408,7 @@ jobs:
         id: create-build-recommend
         run: |
           # create a small script in the workspace to compute a safe -j inside the container
-          if [ "${{ env.DEBUG }}" = "true" ]; then
+          if [ "${{ env.DEBUG }}" == "true" ]; then
             cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
           #!/bin/bash
           set -euo pipefail
@@ -507,7 +500,7 @@ jobs:
 
       - name: In-container diagnostics (base image)
         id: in-container-diagnostics-post
-        if: ${{ env.DEBUG == 'true' }}
+        if: ${{ inputs.debug }}
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -544,7 +537,7 @@ jobs:
 
       - name: Upload CI diagnostics (base image)
         id: upload-ci-diagnostics-post
-        if: ${{ always() && !cancelled() && env.DEBUG == 'true' }}
+        if: ${{ always() && !cancelled() && inputs.debug }}
         uses: actions/upload-artifact@v7
         with:
           name: ci-diagnostics-base-image-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -562,15 +555,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          [ "${{ env.DEBUG }}" = "true" ] && echo "[pwd]: $PWD" || true
-          [ "${{ env.DEBUG }}" = "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
-          [ "${{ env.DEBUG }}" = "true" ] && ls -al $PWD || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: $PWD" || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
+          [ "${{ env.DEBUG }}" == "true" ] && ls -al $PWD || true
           # set some build performance flags
           NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
-          [ "${{ env.DEBUG }}" = "true" ] && echo "[NB_CORES]: $NB_CORES" || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[NB_CORES]: $NB_CORES" || true
 
           # pull the image (authentication is handled by docker/login-action@v4)
-          if [ "${{ env.DEBUG }}" = "true" ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
+          if [ "${{ env.DEBUG }}" == "true" ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
           docker $DOCKER_DEBUG image pull "${{ env.EE_DistroTag }}"
           # Determine image numeric UID/GID for CAN_WRITE test; prefer image UID when available
           if [ -n "${{ env.IMG_UID }}" ]; then
@@ -581,17 +574,15 @@ jobs:
           # Runner workspace will be mounted directly into the container at /build
           echo "Using runner workspace mount -v \\${{ github.workspace }}:/build"
 
-          # test whether the IMG_UID can create files in the mounted workspace; if not, we'll run the build as root
-          CAN_WRITE=$(docker run --rm --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} --group-add ${{ env.HOST_GID }} -v "${{ github.workspace }}:/build" alpine sh -c "touch /build/.perm_test >/dev/null 2>&1 && echo OK || echo FAIL") || CAN_WRITE=FAIL
+          # Verify the non-root image user can write to the build output paths.
+          CAN_WRITE=$(docker run --rm --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} --group-add ${{ env.HOST_GID }} -v "${{ github.workspace }}:/build" alpine sh -c "touch /build/sources/.perm_test /build/target/.perm_test /build/${{ env.BUILD_DIR }}/.perm_test >/dev/null 2>&1 && rm -f /build/sources/.perm_test /build/target/.perm_test /build/${{ env.BUILD_DIR }}/.perm_test && echo OK || echo FAIL") || CAN_WRITE=FAIL
           if [ "${CAN_WRITE}" != "OK" ]; then
-            echo "Volume not writable by ${{ env.IMG_UID }}; will run build container as root"
-            USER_ARG=""
-            GROUP_ARG=""
-          else
-            echo "Volume writable by ${{ env.IMG_UID }}; running build container as that UID"
-            USER_ARG="--user ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
-            GROUP_ARG="--group-add ${{ env.HOST_GID }}"
+            echo "::error::Build output paths are not writable by non-root UID:GID ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
+            exit 1
           fi
+          echo "Build output paths writable by non-root UID:GID ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
+          USER_ARG="--user ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
+          GROUP_ARG="--group-add ${{ env.HOST_GID }}"
           echo "USER_ARG: $USER_ARG"
           echo "GROUP_ARG: $GROUP_ARG"
           echo "HOST_UID: $HOST_UID"
@@ -599,16 +590,8 @@ jobs:
           echo "IMG_UID: $IMG_UID"
           echo "IMG_GID: $IMG_GID"
 
-          # Run the build container. If running on GitHub-hosted runner, tell git to trust /build
-          # to avoid 'dubious ownership' errors caused by bind-mounted repos.
-          # if [ "$(docker ps -aq -f status=exited -f name=build${{ env.EE_Distro }}.${{ env.OS_Codename }})" ]; then
-          # if [ "$(docker ps -aq -f name=build${{ env.EE_Distro }}.${{ env.OS_Codename }})" ]; then
-          #     # cleanup
-          #     docker rm --force --volumes "build${{ env.EE_Distro }}.${{ env.OS_Codename }}"
-          # fi
-
           # run the container (use debug env values when workflow input `debug` is 'true')
-          if [ "${{ env.DEBUG }}" = "true" ]; then
+          if [ "${{ env.DEBUG }}" == "true" ]; then
             ONELOG_VAL=no
             LOGCOMBINE_VAL=never
             MTIMMEDIATE_VAL=yes
@@ -629,7 +612,7 @@ jobs:
           fi
 
           DOCKER_ENV_FLAGS="-e ONELOG=${ONELOG_VAL} -e LOGCOMBINE=${LOGCOMBINE_VAL} -e MTIMMEDIATE=${MTIMMEDIATE_VAL} -e MTDEBUG=${MTDEBUG_VAL} -e MTVERBOSE=${MTVERBOSE_VAL} -e MTPROGRESS=${MTPROGRESS_VAL} -e SHOW_STDOUT=${SHOW_STDOUT_VAL} -e SHOW_STDERR=${SHOW_STDERR_VAL}"
-          [ "${{ env.DEBUG }}" = "true" ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS" || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS" || true
 
           # USER_ARG already set by the CAN_WRITE test above (prefers the container UID when writable).
           # Do not override here; RUNNER_TYPE is used only for MEMORY_ARG and git handling.
@@ -637,7 +620,7 @@ jobs:
           # Ensure the workspace is writable by the container user by initializing ownership inside a short container
           # Diagnostic: capture workspace ownership/permission snapshot before attempting chown
           DIAG_FILE="${RUNNER_TEMP:-/tmp}/diagnostic_pre_chown.txt"
-          if [ "${{ env.DEBUG }}" = "true" ]; then
+          if [ "${{ env.DEBUG }}" == "true" ]; then
             echo "Writing pre-chown diagnostic to ${DIAG_FILE}"
             echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${DIAG_FILE}" || true
             ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
@@ -647,13 +630,6 @@ jobs:
             # create an empty diagnostic file for symmetry so later steps can reference it
             : > "${DIAG_FILE}" || true
           fi
-
-          echo "--------------Makefile---------------------"
-          git -c safe.directory="${GITHUB_WORKSPACE}" status --porcelain --ignored
-          ls -la Makefile scripts/image
-          cat Makefile | sed -n '1,15p'
-          echo "--------------Makefile---------------------"
-
 
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
           . "${{ github.workspace }}/container_params.sh" && docker run --rm $MEMORY_ARG \
@@ -672,7 +648,7 @@ jobs:
             -e ARCH=${{ env.EE_Arch }} \
             -e BUILDER_NAME=Eddict \
             -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
-            -e RUNNER_TYPE=${{ env.RUNNER_TYPE }} \
+            -e RUNNER_TYPE=${{ needs.resolve-runner.outputs.runner }} \
             "${{ env.EE_DistroTag }}" bash -lc \
             '
               umask 0002
@@ -691,10 +667,10 @@ jobs:
 
       - name: github-workspace
         id: ls-ghws
-        if: ${{ env.DEBUG == 'true' }}
+        if: ${{ inputs.debug }}
         run: |
-          [ "${{ env.DEBUG }}" = "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
-          [ "${{ env.DEBUG }}" = "true" ] && ls -al ${{ github.workspace }} || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
+          [ "${{ env.DEBUG }}" == "true" ] && ls -al ${{ github.workspace }} || true
 
       # Upload diagnostics on failure and the built image when available.
       - uses: actions/upload-artifact@v7
@@ -711,25 +687,26 @@ jobs:
 
       - name: Copy built ${{ env.EE_Distro }} image to archive
         id: image-path
+        if: ${{ needs.resolve-runner.outputs.runner == 'self-hosted' }}
         run: |
-          [ "${{ env.DEBUG }}" = "true" ] && echo "[pwd]: ${{ github.workspace }}" || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: ${{ github.workspace }}" || true
           if [ -d ${{ github.workspace }}/target ]; then
             lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
-            [ "${{ env.DEBUG }}" = "true" ] && echo "[lines]: $lines" || true
+            [ "${{ env.DEBUG }}" == "true" ] && echo "[lines]: $lines" || true
             if [ $lines -ne 0 ]; then
               pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
-              [ "${{ env.DEBUG }}" = "true" ] && echo "[EE_image_pathfilename]: $pathfilename"
+              [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_pathfilename]: $pathfilename"
               echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT || true
               filename="${pathfilename##*/}"
-              [ "${{ env.DEBUG }}" = "true" ] && echo "[EE_image_filename]: $filename" || true
+              [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_filename]: $filename" || true
               echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
-              if [ ! -d /root/target_archive ]; then
-                mkdir --parents "/root/target_archive"
+              if [ ! -d ${{ github.workspace }}/../target_archive ]; then
+                mkdir --parents "${{ github.workspace }}/../target_archive"
               fi
-              if [ "$(cp "$pathfilename" "/root/target_archive")" ]; then # --update=older
-                echo "Copied built image to /root/target_archive"
+              if [ "$(cp "$pathfilename" "${{ github.workspace }}/../target_archive")" ]; then # --update=older
+                echo "Copied built image to ${{ github.workspace }}/../target_archive"
               else
-                echo "No newer built image to copy to /root/target_archive"
+                echo "No newer built image to copy to ${{ github.workspace }}/../target_archive"
               fi
             else
               echo "No built image found in target directory, skipping copy."
@@ -778,7 +755,7 @@ jobs:
           sudo chmod -R a=rw "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
 
           # Handle workspace ownership for self-hosted runners
-          if [ "${{ inputs.runner || 'self-hosted' }}" != "github" ]; then
+          if [ "${{ needs.resolve-runner.outputs.runner }}" == "self-hosted" ]; then
             echo "Adjusting workspace ownership to ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
             sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${GITHUB_WORKSPACE}" || true
           fi
