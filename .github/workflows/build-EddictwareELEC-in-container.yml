@@ -295,6 +295,8 @@ jobs:
             sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${GITHUB_WORKSPACE}" || true
           fi
 
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}"
+
       - name: Host diagnostics
         id: host-diagnostics
         if: ${{ env.DEBUG == 'true' }}
