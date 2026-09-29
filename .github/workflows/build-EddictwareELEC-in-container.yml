@@ -392,8 +392,13 @@ jobs:
           else
             MEMORY_ARG=""
           fi
-          echo "=== ${{ github.workspace }} ownership/perm ==="
-          stat -c '%U:%G %a %n' ${{ github.workspace }}
+
+          id
+          OUTFILE="${{ github.workspace }}/container_params.sh"
+          stat -c '%U:%G %u:%g %a %n' "$GITHUB_WORKSPACE" "$OUTFILE" 2>&1 || true
+          test -w "$GITHUB_WORKSPACE" && echo "workspace writable" || echo "workspace not writable"
+          test -w "$OUTFILE" && echo "output file writable" || echo "output file missing or not writable"
+
           # Write a small shell fragment into the workspace that can be sourced on the host
           # to provide docker run flags (MEMORY_ARG) and other host-side params if needed.
           OUTFILE="${{ github.workspace }}/container_params.sh"
