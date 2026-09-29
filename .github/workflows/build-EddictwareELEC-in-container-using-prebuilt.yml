@@ -1,4 +1,4 @@
-name: Build image in container (without prebuilt toolchain)
+name: Build image in container using prebuilt image
 
 on:
   # push:
@@ -232,7 +232,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check for existing build cache (persistent runners)
+      - name: Check for existing build cache (self-hosted only)
         id: check-build-cache
         if: ${{ inputs.runner == 'self-hosted' || inputs.runner == 'aws' }}
         run: |
@@ -252,7 +252,7 @@ jobs:
 
       - name: Restore build caches
         id: restore-build-caches
-        if: ${{ (inputs.runner != 'self-hosted' && inputs.runner != 'aws') || steps.check-build-cache.outputs.build_cache_present != 'true' }}
+        if: ${{ inputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true' }}
         uses: actions/cache@v5
         with:
           path: |
@@ -273,6 +273,35 @@ jobs:
           key: ${{ runner.os }}-apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
           restore-keys: |
             ${{ runner.os }}-apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}-
+
+      - name: Download persisted caches (artifacts) as fallback
+        id: download-ccache-artifact
+        if: ${{ steps.restore-build-caches.outputs.cache-hit != 'true' }}
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: ccache-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          # extract at repository root so multi-path artifacts (e.g. build/.ccache, sources)
+          # are restored to their correct locations
+          path: .
+
+      - name: Download persisted stamps (artifacts) as fallback
+        id: download-stamps-artifact
+        if: ${{ steps.restore-build-caches.outputs.cache-hit != 'true' }}
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: stamps-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          path: ${{ env.BUILD_DIR }}/.stamps
+
+      - name: Download persisted apt cache (artifacts) as fallback
+        id: download-apt-artifact
+        if: ${{ steps.restore-apt-cache.outputs.cache-hit != 'true' }}
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          path: .apt-cache/archives
 
       - name: Prepare cache dirs for container
         run: |
@@ -499,14 +528,86 @@ jobs:
 
           sudo chmod +x "${{ github.workspace }}/build_recommend.sh" || true
 
-      - name: In-container diagnostics (base image)
+      - name: Populate prebuilt toolchain
+        id: populate-toolchain
+        run: |
+          set -euo pipefail
+          registry_owner="${{ github.repository_owner }}"
+          registry_owner="${registry_owner,,}"
+          PREBUILT_IMAGE="${{ env.EE_Registry }}/${registry_owner}/eddictwareelec-prebuilt:${{ env.OS_Codename }}-${{ env.EE_Arch }}"
+          echo "PREBUILT_IMAGE=$PREBUILT_IMAGE" | tee -a $GITHUB_ENV
+          if [ "${{ env.DEBUG }}" = "true" ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
+          echo "DOCKER_DEBUG=${DOCKER_DEBUG}"
+          echo "Looking for prebuilt image: $PREBUILT_IMAGE"
+          # Diagnostic: check /opt/prebuilt-toolchain in prebuilt image
+          docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
+            "$PREBUILT_IMAGE" bash -c '
+            umask 0002
+            echo "--- DIAGNOSTIC: /opt/prebuilt-toolchain ---"
+            ls -l /opt/prebuilt-toolchain || true
+            find /opt/prebuilt-toolchain -type f | xargs ls -l || true
+            stat /opt/prebuilt-toolchain || true'
+          if ! docker ${DOCKER_DEBUG} image inspect "$PREBUILT_IMAGE" >/dev/null 2>&1; then
+            echo "Prebuilt image not present locally, attempting to pull"
+            if ! docker ${DOCKER_DEBUG} pull "$PREBUILT_IMAGE"; then
+              echo "Prebuilt image not available; skipping populate-toolchain"
+              exit 0
+            fi
+          fi
+          TARGET_TOOLCHAIN="${{ github.workspace }}/${{ env.BUILD_DIR }}/toolchain"
+          echo "TARGET_TOOLCHAIN=$TARGET_TOOLCHAIN" | tee -a $GITHUB_ENV
+          if [ -d "$TARGET_TOOLCHAIN" ]; then
+            echo "Toolchain already present at $TARGET_TOOLCHAIN; skipping copy"
+            exit 0
+          fi
+          mkdir -p "$TARGET_TOOLCHAIN"
+          # Ensure permissions before copying
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$TARGET_TOOLCHAIN" || true
+          docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
+            -v "${{ github.workspace }}:/build" \
+            "$PREBUILT_IMAGE" bash -lc "
+            umask 0002
+            set -euo pipefail
+            if [ -d /opt/prebuilt-toolchain ];
+              then cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true
+            fi"
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "$TARGET_TOOLCHAIN" || true
+
+      - name: Upload toolchain artifact (after population)
+        if: ${{ success() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: toolchain-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          path: ${{ env.BUILD_DIR }}/toolchain
+          if-no-files-found: warn
+      # Fallback for missing toolchain after all artifact/copy attempts
+      - name: Add fallback for missing toolchain (post-artifact)
+        run: |
+          if [ ! -d "$TARGET_TOOLCHAIN" ]; then
+            echo "Toolchain directory missing. Attempting to recreate."
+            mkdir -p "$TARGET_TOOLCHAIN"
+            docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
+            -v "${{ github.workspace }}:/build" \
+            "$PREBUILT_IMAGE" bash -lc "
+            umask 0002
+            cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true
+            "
+          fi
+
+      - name: In-container diagnostics (post-prebuild)
         id: in-container-diagnostics-post
         if: ${{ env.DEBUG == 'true' }}
         continue-on-error: true
         run: |
           set -euo pipefail
           IMAGE="${{ env.EE_DistroTag }}"
-          echo "Running in-container diagnostics inside image: $IMAGE"
+          echo "Running post-prebuild in-container diagnostics inside image: $IMAGE"
           docker image pull "$IMAGE" || true
           docker run --rm \
             --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
@@ -516,9 +617,9 @@ jobs:
             umask 0002
             set -euo pipefail
             DIAG_DIR=/build/ci-diagnostics
-            DIAG_LOG="$DIAG_DIR/in-container-base-image.log"
+            DIAG_LOG="$DIAG_DIR/in-container-post.log"
             mkdir -p "$DIAG_DIR"
-            echo "BASE IMAGE CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG" || true
+            echo "POST-PREBUILD CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG" || true
             echo "--- id ---" >> "$DIAG_LOG" 2>&1 || true
             id >> "$DIAG_LOG" 2>&1 || true
             echo "--- /build listing ---" >> "$DIAG_LOG" 2>&1 || true
@@ -536,16 +637,17 @@ jobs:
             find /build -type f -path "*/build/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR/" \; 2>/dev/null || true
           '
 
-      - name: Upload CI diagnostics (base image)
+      - name: Upload CI diagnostics (post-prebuild)
         id: upload-ci-diagnostics-post
         if: ${{ always() && !cancelled() && env.DEBUG == 'true' }}
         uses: actions/upload-artifact@v7
         with:
-          name: ci-diagnostics-base-image-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          name: ci-diagnostics-post-${{ env.OS_Codename }}-${{ env.EE_Arch }}
           path: |
             ci-diagnostics
-            ci-diagnostics/in-container-base-image.log
+            ci-diagnostics/in-container-post.log
             ${{ env.BUILD_DIR }}/**/config.log
+            ci-diagnostics/prebuild.log
           if-no-files-found: warn
 
       # Repeat the check-repo-folder step to ensure the repository folder is still valid before building the image
@@ -571,7 +673,23 @@ jobs:
             echo "Image UID:GID for CAN_WRITE test = ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
           fi
           # (image UID/GID chown moved below after BUILD_DIR is set)
-          # Caches are persisted by actions/cache or the runner workspace.
+          # Diagnostic: run a short container to print UID/GID and test writing to cache dirs
+          # decide mount strategy based on runner input: always use named docker volumes for runtime
+          # make the volume prefix target-specific from EE_Distro (distro + codename + arch)
+          VOLUME_PREFIX="${{ env.EE_Distro }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}"
+          [ "${{ env.DEBUG }}" = "true" ] && echo "[VOLUME_PREFIX]: $VOLUME_PREFIX" || true
+          VOL_CCACHE="${VOLUME_PREFIX}-ccache"
+          VOL_STAMPS="${VOLUME_PREFIX}-stamps"
+          VOL_APT="${VOLUME_PREFIX}-apt"
+          # Docker volume creation and chown initialization removed: caches are persisted via artifacts/actions/cache
+          # (VOL_CCACHE, VOL_STAMPS, VOL_APT variable names kept for compatibility)
+          # we persist caches via GitHub artifacts instead of docker volumes
+          MOUNT_CCACHE=""
+          MOUNT_STAMPS=""
+          MOUNT_APT=""
+          [ "${{ env.DEBUG }}" = "true" ] && echo "[MOUNT_CCACHE]: $MOUNT_CCACHE" || true
+          [ "${{ env.DEBUG }}" = "true" ] && echo "[MOUNT_STAMPS]: $MOUNT_STAMPS" || true
+          [ "${{ env.DEBUG }}" = "true" ] && echo "[MOUNT_APT]: $MOUNT_APT" || true
           # Runner workspace will be mounted directly into the container at /build
           echo "Using runner workspace mount -v \\${{ github.workspace }}:/build"
 
@@ -678,7 +796,16 @@ jobs:
           [ "${{ env.DEBUG }}" = "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
           [ "${{ env.DEBUG }}" = "true" ] && ls -al ${{ github.workspace }} || true
 
-      # Upload diagnostics on failure and the built image when available.
+      # https://stackoverflow.com/a/57877438
+      # Artifacts uploaded below — download steps for cache fallbacks exist earlier.
+      # Symmetry note:
+      # - ccache-...  <=> actions/download-artifact name: ccache-...
+      # - stamps-...  <=> actions/download-artifact name: stamps-...
+      # - apt-...     <=> actions/download-artifact name: apt-...
+      # The following artifacts are intentionally uploaded only (no download step):
+      # - artifact_logs_...  (uploaded on failure for debugging)
+      # - built image artifact (final product)
+      # Keep uploads `if: always()` so fallback artifacts are refreshed.
       - uses: actions/upload-artifact@v7
         if: ${{ always() && !cancelled() && steps.build-image.outcome == 'failure' }}
         with:
@@ -690,6 +817,34 @@ jobs:
               ${{ runner.temp }}/diagnostic_pre_chown.txt
           overwrite: true
           include-hidden-files: true
+
+      - name: Upload ccache artifact
+        if: ${{ success() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ccache-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          path: |
+            .ccache
+            ${{ env.BUILD_DIR }}/.ccache
+            ${{ env.BUILD_DIR }}/.cache_package_global
+            sources
+          if-no-files-found: warn
+
+      - name: Upload stamps artifact
+        if: ${{ success() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: stamps-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          path: ${{ env.BUILD_DIR }}/.stamps
+          if-no-files-found: warn
+
+      - name: Upload apt-cache artifact
+        if: ${{ success() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          path: .apt-cache/archives
+          if-no-files-found: warn
 
       - name: Copy built ${{ env.EE_Distro }} image to archive
         id: image-path
@@ -732,6 +887,30 @@ jobs:
           mkdir -p .ccache "${{ env.BUILD_DIR }}" .apt-cache/archives "${{ env.BUILD_DIR }}/.stamps"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "${{ env.BUILD_DIR }}" .apt-cache "${{ env.BUILD_DIR }}/.stamps"
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "${{ env.BUILD_DIR }}" .apt-cache "${{ env.BUILD_DIR }}/.stamps"
+
+      - name: Verify artifact availability
+        run: |
+          if [ ! -d "${{ env.BUILD_DIR }}/.stamps" ]; then
+            echo "Warning: Stamps artifact is missing. Build may fail."
+          fi
+          if [ ! -d .ccache ]; then
+            echo "Warning: Ccache artifact is missing. Build performance may be degraded."
+          fi
+
+      - name: Add fallback for missing toolchain
+        run: |
+          if [ ! -d "$TARGET_TOOLCHAIN" ]; then
+            echo "Toolchain directory missing. Attempting to recreate."
+            mkdir -p "$TARGET_TOOLCHAIN"
+            docker run --rm \
+              --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+              --group-add ${{ env.HOST_GID }} \
+              -v "${{ github.workspace }}:/build" \
+              "$PREBUILT_IMAGE" bash -lc "
+                umask 0002
+                cp -a /opt/prebuilt-toolchain/* /build/${BUILD_DIR}/ || true
+              "
+          fi
 
       # - name: Add detailed logging for make command
       #   run: |
