@@ -669,7 +669,19 @@ jobs:
             -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
             -e RUNNER_TYPE=${{ env.RUNNER_TYPE }} \
             "${{ env.EE_DistroTag }}" bash -lc \
-            "umask 0002 && . /build/build_recommend.sh && git config --global --add safe.directory /build || true; make -j${RECOMMENDED_J} -l${NB_CORES} image"
+            '
+              umask 0002
+              . /build/build_recommend.sh
+              git config --global --add safe.directory /build || true
+
+              id
+              stat -c "%U:%G %a %n" \
+                "/build/${{ env.BUILD_DIR }}" \
+                "/build/${{ env.BUILD_DIR }}/.cache_package_global" || true
+              exit 1
+
+              make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
+            '
           docker_exit_code=$?
 
       - name: github-workspace
