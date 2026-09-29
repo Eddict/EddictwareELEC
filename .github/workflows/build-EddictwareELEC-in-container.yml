@@ -290,12 +290,8 @@ jobs:
           sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
           sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
 
-          if [ "${{ env.RUNNER_TYPE }}" != "github" ]; then
-            echo "Self-hosted runner detected: Aligning full workspace ownership"
-            sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${GITHUB_WORKSPACE}" || true
-          fi
-
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}"
+          echo "Aligning workspace ownership with container UID:GID ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${GITHUB_WORKSPACE}"
 
       - name: Host diagnostics
         id: host-diagnostics
