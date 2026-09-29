@@ -27,6 +27,7 @@ on:
         options:
           - bookworm
           - jammy
+          - jammy-extended
           - noble
           - noble-custom
           - plucky
