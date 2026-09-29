@@ -680,7 +680,7 @@ jobs:
               stat -c "%U:%G %a %n" \
                 "/build/${{ env.BUILD_DIR }}" \
                 "/build/${{ env.BUILD_DIR }}/.cache_package_global" || true
-              exit 1
+              # exit 1
 
               make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
             '
