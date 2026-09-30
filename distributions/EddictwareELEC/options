@@ -184,8 +184,8 @@
   ADDON_PROJECT="${DEVICE:-$PROJECT}"
 
 # Settings package name - blank if not required
-  DISTRO_PKG_SETTINGS="LibreELEC-settings"
-  DISTRO_PKG_SETTINGS_ID="service.libreelec.settings"
+  DISTRO_PKG_SETTINGS="EddictwareELEC-settings"
+  DISTRO_PKG_SETTINGS_ID="service.eddictwareelec.settings"
 
 
 ### ADDITIONAL PROGRAMS / FUNCTIONS ###
