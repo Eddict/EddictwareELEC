@@ -11,4 +11,7 @@ PKG_DEPENDS_TARGET="toolchain"
 PKG_LONGDESC="UDF reader"
 PKG_BUILD_FLAGS="+pic"
 
+PKG_ALT_SHA256="bb477cbd4cfbfc7787d9d05b71ee5e70430f5cfebf1297497f7e83547958050f"
+PKG_ALT_URL="https://download.videolan.org/pub/videolan/${PKG_NAME}/${PKG_NAME}-${PKG_VERSION}.tar.xz"
+
 PKG_MESON_OPTS_TARGET="-Ddefault_library=both"

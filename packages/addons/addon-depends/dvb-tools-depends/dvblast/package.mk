@@ -12,6 +12,9 @@ PKG_DEPENDS_TARGET="toolchain bitstream libev"
 PKG_LONGDESC="DVBlast is a simple and powerful MPEG-2/TS demux and streaming application"
 PKG_BUILD_FLAGS="-sysroot"
 
+PKG_ALT_SHA256="fab34cca28165d20434d38de0665b8882b8daeb25e461282ec37855aacffc37e"
+PKG_ALT_URL="https://github.com/videolan/${PKG_NAME}/archive/${PKG_VERSION}.tar.gz"
+
 pre_configure_target() {
   export LDFLAGS="${LDFLAGS} -lm"
   export PREFIX="/usr"
