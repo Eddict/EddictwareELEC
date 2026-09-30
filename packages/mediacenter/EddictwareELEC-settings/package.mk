@@ -3,8 +3,8 @@
 # Copyright (C) 2017-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="EddictwareELEC-settings"
-PKG_VERSION="12b47f4ab54fefd755507cf555c33771b8bc7ed3"
-PKG_SHA256="8dd30acd745b1ebda0ebfbe9b893253d33c7750ff52eb243f25f8bd59d3f14be"
+PKG_VERSION="7ebeb92996a4152d08dbf250c25c96ad8f56002a"
+PKG_SHA256="079929c11e2fe696668c9d7c96f4e2c76751b38aa3453c5fe0b399d88adfd01d"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/Eddict/service.eddictwareelec.settings"
 PKG_URL="https://github.com/Eddict/service.eddictwareelec.settings/archive/${PKG_VERSION}.tar.gz"
