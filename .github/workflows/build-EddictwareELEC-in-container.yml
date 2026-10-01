@@ -685,9 +685,8 @@ jobs:
           overwrite: true
           include-hidden-files: true
 
-      - name: Copy built ${{ env.EE_Distro }} image to archive
-        id: image-path
-        if: ${{ needs.resolve-runner.outputs.runner == 'self-hosted' }}
+      - name: Determine built ${{ env.EE_Distro }} image path
+        id: determine-image-path
         run: |
           [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: ${{ github.workspace }}" || true
           if [ -d ${{ github.workspace }}/target ]; then
@@ -700,10 +699,22 @@ jobs:
               filename="${pathfilename##*/}"
               [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_filename]: $filename" || true
               echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
+            else
+              echo "No built image found in target directory."
+            fi
+          else
+            echo "No target directory found."
+          fi
+
+      - name: Copy built ${{ env.EE_Distro }} image to archive
+        id: copy-image-to-archive
+        if: ${{ needs.resolve-runner.outputs.runner == 'self-hosted' }}
+        run: |
+          if [ -d ${{ github.workspace }}/target ]; then
               if [ ! -d ${{ github.workspace }}/../target_archive ]; then
                 mkdir --parents "${{ github.workspace }}/../target_archive"
               fi
-              if [ "$(cp "$pathfilename" "${{ github.workspace }}/../target_archive")" ]; then # --update=older
+              if [ "$(cp "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}" "${{ github.workspace }}/../target_archive")" ]; then # --update=older
                 echo "Copied built image to ${{ github.workspace }}/../target_archive"
               else
                 echo "No newer built image to copy to ${{ github.workspace }}/../target_archive"
@@ -716,11 +727,11 @@ jobs:
           fi
 
       - name: Upload built ${{ env.EE_Distro }} image
-        if: ${{ steps.image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
+        if: ${{ steps.determine-image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: "${{ steps.image-path.outputs.EE_image_filename }}"
-          path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
+          name: "${{ steps.determine-image-path.outputs.EE_image_filename }}"
+          path: "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}"
 
       - name: Ensure required directories exist with correct permissions
         run: |
