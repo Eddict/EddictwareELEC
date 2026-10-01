@@ -44,6 +44,11 @@ on:
           - arm
           - x86_64
         default: aarch64
+      cache:
+        description: 'Enable cache build'
+        required: true
+        type: boolean
+        default: true
       debug:
         description: 'Enable debug build'
         required: true
@@ -200,7 +205,7 @@ jobs:
 
       - &check-repo-folder # Define a reusable anchor for this step
         name: Check repo folder after checkout
-        # if: ${{ env.DEBUG == 'true' }}
+        if: ${{ env.DEBUG == 'true' }}
         # id: check-repo-folder # cannot reuse the same ID for multiple steps when using the anchor
         run: |
           echo "/etc/passwd"
@@ -231,7 +236,7 @@ jobs:
 
       - name: Check for existing build cache (persistent runners)
         id: check-build-cache
-        if: ${{ needs.resolve-runner.outputs.runner == 'self-hosted' }}
+        if: ${{ inputs.cache &&needs.resolve-runner.outputs.runner == 'self-hosted' }}
         run: |
           # Check if all required cache dirs/files exist and are non-empty
           missing=0
@@ -249,7 +254,7 @@ jobs:
 
       - name: Restore build caches
         id: restore-build-caches
-        if: ${{ needs.resolve-runner.outputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true' }}
+        if: ${{ inputs.cache && (needs.resolve-runner.outputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true') }}
         uses: actions/cache@v5
         with:
           path: |
@@ -258,30 +263,34 @@ jobs:
             ${{ env.BUILD_DIR }}/.stamps
             ${{ env.BUILD_DIR }}/.cache_package_global
             sources
-          key: ${{ runner.os }}-eddict-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
+          key: ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
           restore-keys: |
-            ${{ runner.os }}-eddict-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-
-
-      - name: Restore apt cache
-        id: restore-apt-cache
-        uses: actions/cache@v5
+            ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-
+      - name: Restore build caches for blacksmith
+        id: restore-build-caches-blacksmith
+        if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'blacksmith' }}
+        uses: useblacksmith/stickydisk@v1
         with:
-          path: .apt-cache/archives
-          key: ${{ runner.os }}-apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}-
+          path: |
+            .ccache
+            ${{ env.BUILD_DIR }}/.ccache
+            ${{ env.BUILD_DIR }}/.stamps
+            ${{ env.BUILD_DIR }}/.cache_package_global
+            sources
+          key: ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
 
       - name: Prepare cache dirs for container
+        if: ${{ inputs.cache }}
         run: |
           if [ "${{ env.DEBUG }}" == "true" ]; then
             ls -al "$PWD" && echo "----------------------------------------"
           fi
 
-          sudo mkdir -p .ccache "${{ env.BUILD_DIR }}/.stamps" .apt-cache/archives sources target
+          sudo mkdir -p .ccache "${{ env.BUILD_DIR }}/.stamps" sources target
           sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
 
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache "${{ env.BUILD_DIR }}" .apt-cache sources target
-          sudo chmod -R u+rwX .ccache "${{ env.BUILD_DIR }}" .apt-cache sources target
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache "${{ env.BUILD_DIR }}" sources target
+          sudo chmod -R u+rwX .ccache "${{ env.BUILD_DIR }}" sources target
 
           sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
           sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
@@ -581,8 +590,10 @@ jobs:
             exit 1
           fi
           echo "Build output paths writable by non-root UID:GID ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
+
           USER_ARG="--user ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
           GROUP_ARG="--group-add ${{ env.HOST_GID }}"
+          CCACHE_ARG="${{ inputs.cache == 'true' && format('-e CCACHE_DIR=/build/{0}/.ccache', env.BUILD_DIR) || '' }}"
           echo "USER_ARG: $USER_ARG"
           echo "GROUP_ARG: $GROUP_ARG"
           echo "HOST_UID: $HOST_UID"
@@ -638,7 +649,7 @@ jobs:
             -w /build \
             ${USER_ARG} \
             ${GROUP_ARG} \
-            -e CCACHE_DIR=/build/${{ env.BUILD_DIR }}/.ccache \
+            ${CCACHE_ARG} \
             -e DISABLE_COLORS=no \
             -e MTCOLORS=auto \
             ${DOCKER_ENV_FLAGS} \
@@ -646,7 +657,7 @@ jobs:
             -e PROJECT=${{ env.EE_Project }} \
             -e DEVICE=${{ env.EE_Device }} \
             -e ARCH=${{ env.EE_Arch }} \
-            -e BUILDER_NAME=Eddict \
+            -e BUILDER_NAME=${{ github.actor }} \
             -e BUILDER_VERSION="13.0-$(date +%Y%m%d)" \
             -e RUNNER_TYPE=${{ needs.resolve-runner.outputs.runner }} \
             "${{ env.EE_DistroTag }}" bash -lc \
@@ -655,11 +666,13 @@ jobs:
               . /build/build_recommend.sh
               git config --global --add safe.directory /build || true
 
-              id
-              stat -c "%U:%G %a %n" \
-                "/build/${{ env.BUILD_DIR }}" \
-                "/build/${{ env.BUILD_DIR }}/.cache_package_global" || true
-              # exit 1
+              if [ "${{ env.DEBUG }}" == "true" ]; then
+                id
+                stat -c "%U:%G %a %n" \
+                  "/build/${{ env.BUILD_DIR }}" \
+                  "/build/${{ env.BUILD_DIR }}/.cache_package_global" || true
+                # exit 1
+              fi
 
               make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
             '
@@ -667,10 +680,11 @@ jobs:
 
       - name: github-workspace
         id: ls-ghws
+        continue-on-error: true
         if: ${{ inputs.debug }}
         run: |
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
-          [ "${{ env.DEBUG }}" == "true" ] && ls -al ${{ github.workspace }} || true
+          echo "[github.workspace]: ${{ github.workspace }}"
+          ls -al ${{ github.workspace }}
 
       # Upload diagnostics on failure and the built image when available.
       - uses: actions/upload-artifact@v7
@@ -734,24 +748,16 @@ jobs:
           path: "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}"
 
       - name: Ensure required directories exist with correct permissions
+        if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'self-hosted' }}
         run: |
-          mkdir -p .ccache "${{ env.BUILD_DIR }}" .apt-cache/archives "${{ env.BUILD_DIR }}/.stamps"
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "${{ env.BUILD_DIR }}" .apt-cache "${{ env.BUILD_DIR }}/.stamps"
-          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "${{ env.BUILD_DIR }}" .apt-cache "${{ env.BUILD_DIR }}/.stamps"
-
-      # - name: Add detailed logging for make command
-      #   run: |
-      #     set -x
-      #     . /build/build_recommend.sh
-      #     make -j${RECOMMENDED_J} -l${NB_CORES} image || {
-      #       echo "Make command failed. Capturing logs...";
-      #       find /build -name '*.log' -exec cp {} /build/ci-diagnostics/ \; || true;
-      #       exit 1;
-      #     }
+          mkdir -p .ccache "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.stamps"
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.stamps"
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.stamps"
 
       - name: Consolidate ownership and permissions
+        if: ${{ inputs.cache }}
         env:
-          CACHE_DIRS: ".ccache ${{ env.BUILD_DIR }} .apt-cache ${{ env.BUILD_DIR }}/.stamps"
+          CACHE_DIRS: ".ccache ${{ env.BUILD_DIR }} ${{ env.BUILD_DIR }}/.stamps"
         run: |
           echo "Using UID:GID = ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
 
