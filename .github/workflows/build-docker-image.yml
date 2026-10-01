@@ -143,6 +143,11 @@ jobs:
           #   [registry."${{ secrets.REGISTRY_PRIVATE_FQDN }}"]
           #     http = false
           # buildkitd-flags: '"--progress ''plain''"'
+      - name: Delete sticky disk
+        if: ${{ inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/stickydisk-delete@v1
+        with:
+          delete-key: ${{ env.IMAGE_TAG }}
       - name: Set up Docker buildkitd builder
         if: ${{ inputs.runner == 'blacksmith' }}
         uses: useblacksmith/setup-docker-builder@v2
