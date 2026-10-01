@@ -58,6 +58,7 @@ on:
 run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner, inputs.os, inputs.arch, inputs.debug && '/debug' || '') }}
 
 env:
+  CACHE: ${{ inputs.cache }}
   DEBUG: ${{ inputs.debug }}
   OS_Codename: ${{ inputs.os || 'noble' }}
   EE_Distro: EddictwareELEC
@@ -236,7 +237,7 @@ jobs:
 
       - name: Check for existing build cache (persistent runners)
         id: check-build-cache
-        if: ${{ inputs.cache &&needs.resolve-runner.outputs.runner == 'self-hosted' }}
+        if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'self-hosted' }}
         run: |
           # Check if all required cache dirs/files exist and are non-empty
           missing=0
@@ -279,21 +280,25 @@ jobs:
             sources
           key: ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
 
-      - name: Prepare cache dirs for container
-        if: ${{ inputs.cache }}
+      - name: Prepare (cache) dirs for container
         run: |
           if [ "${{ env.DEBUG }}" == "true" ]; then
             ls -al "$PWD" && echo "----------------------------------------"
           fi
 
-          sudo mkdir -p .ccache "${{ env.BUILD_DIR }}/.stamps" sources target
-          sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
+          sudo mkdir -p "${{ env.BUILD_DIR }}/.stamps" sources target
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
+          sudo chmod -R u+rwX "${{ env.BUILD_DIR }}" sources target
 
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache "${{ env.BUILD_DIR }}" sources target
-          sudo chmod -R u+rwX .ccache "${{ env.BUILD_DIR }}" sources target
+          if [ "${{ env.CACHE }}" == "true" ]; then
+            sudo mkdir -p .ccache
+            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache
+            sudo chmod -R u+rwX .ccache
 
-          sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
-          sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
+            sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
+            sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
+            sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
+          fi
 
       - name: Host diagnostics
         id: host-diagnostics
