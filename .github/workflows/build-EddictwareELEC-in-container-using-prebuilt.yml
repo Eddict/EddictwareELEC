@@ -254,7 +254,7 @@ jobs:
       - name: Restore build caches
         id: restore-build-caches
         if: ${{ inputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true' }}
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             .ccache
@@ -268,7 +268,7 @@ jobs:
 
       - name: Restore apt cache
         id: restore-apt-cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .apt-cache/archives
           key: ${{ runner.os }}-apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
