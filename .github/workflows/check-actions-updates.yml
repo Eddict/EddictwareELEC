@@ -4,9 +4,33 @@ on:
   pull_request:
     types: [edited, opened, synchronize, reopened]
   workflow_dispatch:
+    inputs:
+      mode: # Update mode: major, minor, or patch (default: major)
+        description: 'Update mode'
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+        default: major
+      style: # Update style: sha, preserve or semver (default: sha)
+        description: 'Update style'
+        required: true
+        type: choice
+        options:
+          - sha
+          - preserve
+          - semver
+        default: sha
+      min-age: # Minimum age in days for updates (default: 1, use 0 to disable)
+        description: 'Minimum age in days for updates'
+        required: true
+        type: number
+        default: 0
 
 env:
-  package-name: "@eddict/actions-up"
+  package-name: "actions-up"  # "@eddict/actions-up"
 
 jobs:
   check-actions:
@@ -21,7 +45,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -40,7 +64,12 @@ jobs:
           # Run actions-up and capture machine-readable output
           echo "Running actions-up to check for updates..."
           # --style preserve
-          actions-up --style sha --detect-by commit --json > actions-up-report.json
+          actions-up \
+            --style ${{ github.event.inputs.style }} \
+            --mode ${{ github.event.inputs.mode }} \
+            --min-age ${{ github.event.inputs.min-age }} \
+            --dir .github --recursive \
+            --json > actions-up-report.json
 
           UPDATE_COUNT=$(node -pe "JSON.parse(require('node:fs').readFileSync('actions-up-report.json', 'utf8')).summary.totalUpdates")
 
