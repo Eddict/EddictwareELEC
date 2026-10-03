@@ -256,7 +256,7 @@ jobs:
       - name: Restore build caches
         id: restore-build-caches
         if: ${{ inputs.cache && ((needs.resolve-runner.outputs.runner != 'self-hosted' && inputs.runner == 'blacksmith') || steps.check-build-cache.outputs.build_cache_present != 'true') }}
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: |
             .ccache
@@ -264,9 +264,7 @@ jobs:
             ${{ env.BUILD_DIR }}/.stamps
             ${{ env.BUILD_DIR }}/.cache_package_global
             sources
-          key: ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-
+          key: ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache"
       - name: Restore build caches for blacksmith
         id: restore-build-caches-blacksmith
         if: ${{ inputs.cache && inputs.runner == 'blacksmith' }}
@@ -278,7 +276,7 @@ jobs:
             ${{ env.BUILD_DIR }}/.stamps
             ${{ env.BUILD_DIR }}/.cache_package_global
             sources
-          key: ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-${{ hashFiles('packages/**/package.mk') }}
+          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache"
 
       - name: Prepare (cache) dirs for container
         run: |
@@ -682,6 +680,19 @@ jobs:
               make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
             '
           docker_exit_code=$?
+
+      - name: Save build caches
+        id: save-build-caches
+        if: ${{ steps.restore-build-caches.conclusion == 'success' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .ccache
+            ${{ env.BUILD_DIR }}/.ccache
+            ${{ env.BUILD_DIR }}/.stamps
+            ${{ env.BUILD_DIR }}/.cache_package_global
+            sources
+          key: ${{ steps.restore-build-caches.outputs.cache-primary-key }}
 
       - name: github-workspace
         id: ls-ghws
