@@ -55,7 +55,7 @@ on:
         type: boolean
         default: false
 
-run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner, inputs.os, inputs.arch, inputs.debug && '/debug' || '') }}
+run-name: ${{ format('{0} ({1}/{2}/{3}/{4}{5})', github.workflow, inputs.runner, inputs.os, inputs.arch, inputs.cache && 'cache' || 'no-cache', inputs.debug && '/debug' || '') }}
 
 env:
   CACHE: ${{ inputs.cache }}
