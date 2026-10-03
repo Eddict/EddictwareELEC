@@ -255,7 +255,7 @@ jobs:
 
       - name: Restore build caches
         id: restore-build-caches
-        if: ${{ inputs.cache && (needs.resolve-runner.outputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true') }}
+        if: ${{ inputs.cache && (needs.resolve-runner.outputs.runner == 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true') }}
         uses: actions/cache@v6
         with:
           path: |
@@ -269,7 +269,7 @@ jobs:
             ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache-
       - name: Restore build caches for blacksmith
         id: restore-build-caches-blacksmith
-        if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'blacksmith' }}
+        if: ${{ inputs.cache && inputs.runner == 'blacksmith' }}
         uses: useblacksmith/stickydisk@v1
         with:
           path: |
