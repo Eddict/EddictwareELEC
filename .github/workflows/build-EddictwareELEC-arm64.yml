@@ -448,6 +448,7 @@ jobs:
         with:
           name: EddictwareELEC-RPi4-aarch64-image
           path: ./target/*.img.gz
+          archive: false
           if-no-files-found: warn
 
       - id: upload_log

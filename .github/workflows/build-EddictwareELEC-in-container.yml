@@ -751,6 +751,7 @@ jobs:
         with:
           name: "${{ steps.determine-image-path.outputs.EE_image_filename }}"
           path: "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}"
+          archive: false
 
       - name: Ensure required directories exist with correct permissions
         if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'self-hosted' }}

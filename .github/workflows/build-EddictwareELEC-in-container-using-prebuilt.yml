@@ -882,6 +882,7 @@ jobs:
         with:
           name: "${{ steps.image-path.outputs.EE_image_filename }}"
           path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"
+          archive: false
 
       - name: Ensure required directories exist with correct permissions
         run: |

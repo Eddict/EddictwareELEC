@@ -381,3 +381,4 @@ jobs:
         with:
           name: "${{ steps.archive-image.outputs.EE_image_filename }}"
           path: "${{ steps.archive-image.outputs.EE_image_pathfilename }}"
+          archive: false
