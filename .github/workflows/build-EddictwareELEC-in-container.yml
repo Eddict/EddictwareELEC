@@ -217,11 +217,11 @@ jobs:
           echo "Listing contents of PWD:"
           ls -la $PWD
           echo "Listing contents of repository folder:"
-          ls -la $GITHUB_WORKSPACE
-          echo "Checking repository folder: $GITHUB_WORKSPACE"
+          ls -la ${{ github.workspace }}
+          echo "Checking repository folder: ${{ github.workspace }}"
           # Check if the repository folder exists and is not empty
-          if [ ! -d "$GITHUB_WORKSPACE" ] || [ "$(ls -A $GITHUB_WORKSPACE 2>/dev/null | wc -l)" -eq 0 ]; then
-            echo "Repository folder is missing or empty: $GITHUB_WORKSPACE"
+          if [ ! -d "${{ github.workspace }}" ] || [ "$(ls -A ${{ github.workspace }} 2>/dev/null | wc -l)" -eq 0 ]; then
+            echo "Repository folder is missing or empty: ${{ github.workspace }}"
             exit 1
           fi
 
@@ -241,7 +241,7 @@ jobs:
         run: |
           # Check if all required cache dirs/files exist and are non-empty
           missing=0
-          for d in .ccache ${{ env.BUILD_DIR }}/.ccache ${{ env.BUILD_DIR }}/.stamps ${{ env.BUILD_DIR }}/.cache_package_global sources; do
+          for d in ${{ env.BUILD_DIR }}/.ccache ${{ env.BUILD_DIR }}/.stamps ${{ env.BUILD_DIR }}/.cache_package_global sources; do
             if [ ! -e "$d" ] || [ "$(ls -A $d 2>/dev/null | wc -l)" -eq 0 ]; then
               echo "Cache missing or empty: $d"
               missing=1
@@ -258,45 +258,27 @@ jobs:
         if: ${{ inputs.cache && ((needs.resolve-runner.outputs.runner != 'self-hosted' && inputs.runner == 'blacksmith') || steps.check-build-cache.outputs.build_cache_present != 'true') }}
         uses: actions/cache/restore@v6
         with:
-          path: |
-            .ccache
-            ${{ env.BUILD_DIR }}/.ccache
-            ${{ env.BUILD_DIR }}/.stamps
-            ${{ env.BUILD_DIR }}/.cache_package_global
-            sources
-          key: ${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache"
+          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
+          path: ${{ github.workspace }}/../build-cache
       - name: Restore build caches for blacksmith
         id: restore-build-caches-blacksmith
         if: ${{ inputs.cache && inputs.runner == 'blacksmith' }}
         uses: useblacksmith/stickydisk@v1
         with:
-          path: |
-            .ccache
-            ${{ env.BUILD_DIR }}/.ccache
-            ${{ env.BUILD_DIR }}/.stamps
-            ${{ env.BUILD_DIR }}/.cache_package_global
-            sources
-          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-ccache"
+          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
+          path: ${{ github.workspace }}/../build-cache
 
       - name: Prepare (cache) dirs for container
+        if: ${{ inputs.cache }}
         run: |
-          if [ "${{ env.DEBUG }}" == "true" ]; then
-            ls -al "$PWD" && echo "----------------------------------------"
-          fi
+          C="${{ github.workspace }}/../build-cache"
+          mkdir -p "$C"/{.ccache,.stamps,.cache_package,sources}
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$C"/{.ccache,.stamps,.cache_package,sources}
+          sudo chmod -R u+rwX "$C"/{.ccache,.stamps,.cache_package,sources}
 
-          sudo mkdir -p "${{ env.BUILD_DIR }}/.stamps" sources target
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
-          sudo chmod -R u+rwX "${{ env.BUILD_DIR }}" sources target
-
-          if [ "${{ env.CACHE }}" == "true" ]; then
-            sudo mkdir -p .ccache
-            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} .ccache
-            sudo chmod -R u+rwX .ccache
-
-            sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
-            sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
-            sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
-          fi
+          # sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
+          # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
+          # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
 
       - name: Host diagnostics
         id: host-diagnostics
@@ -400,8 +382,8 @@ jobs:
 
           id
           OUTFILE="${{ github.workspace }}/container_params.sh"
-          stat -c '%U:%G %u:%g %a %n' "$GITHUB_WORKSPACE" "$OUTFILE" 2>&1 || true
-          test -w "$GITHUB_WORKSPACE" && echo "workspace writable" || echo "workspace not writable"
+          stat -c '%U:%G %u:%g %a %n' "${{ github.workspace }}" "$OUTFILE" 2>&1 || true
+          test -w "${{ github.workspace }}" && echo "workspace writable" || echo "workspace not writable"
           test -w "$OUTFILE" && echo "output file writable" || echo "output file missing or not writable"
 
           # Write a small shell fragment into the workspace that can be sourced on the host
@@ -431,7 +413,7 @@ jobs:
           echo "=== /build ownership (top-level) ==="
           ls -ld /build || true
           echo "=== cache files ownership/perm ==="
-          stat -c '%U:%G %a %n' /build/.ccache /build/build.*-13.0-devel/.cache_package_global /build/build.*-13.0-devel/.cache_package_local /build/build.*-13.0-devel/.ccache 2>/dev/null || true
+          stat -c '%U:%G %a %n' /build/.ccache /build/build.*-13.0-devel/.cache_package_global /build/build.*-13.0-devel/.cache_package_local 2>/dev/null || true
           echo "=== THREAD_CONTROL / THREADCOUNT env ==="
           env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT' || true
           echo "=== running pkgbuild / pkgbuilder processes ==="
@@ -596,7 +578,28 @@ jobs:
 
           USER_ARG="--user ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
           GROUP_ARG="--group-add ${{ env.HOST_GID }}"
-          CCACHE_ARG="${{ inputs.cache == 'true' && format('-e CCACHE_DIR=/build/{0}/.ccache', env.BUILD_DIR) || '' }}"
+
+          WORKDIR_PATH="/build"
+          WORKDIR_ARG="-w ${WORKDIR_PATH}"
+
+          # CCACHE_ARG="${{ inputs.cache == 'true' && format('-e CCACHE_DIR=/build/{0}/.ccache', env.BUILD_DIR) || '' }}"
+          CCACHE_ARG=()
+          if [ "${{ inputs.cache }}" = "true" ]; then
+            CCACHE_ARG=(-e "CCACHE_DIR=${WORKDIR_PATH}/${{ env.BUILD_DIR }}/.ccache")
+          fi
+
+          C="${{ github.workspace }}/../build-cache"
+          VOLUME_ARG=(
+            -v "${{ github.workspace }}:${WORKDIR_PATH}" \
+            -v "$C/ccache:${WORKDIR_PATH}/${{ env.BUILD_DIR }}/.ccache" \
+            -v "$C/stamps:${WORKDIR_PATH}/${{ env.BUILD_DIR }}/.stamps" \
+            -v "$C/sources:${WORKDIR_PATH}/sources" \
+            -v "$C/files:${WORKDIR_PATH}/cachefiles"
+          )
+          
+          echo "WORKDIR_ARG: ${WORKDIR_ARG}"
+          echo "VOLUME_ARG: ${VOLUME_ARG[@]}"
+          echo "CCACHE_ARG: ${CCACHE_ARG[@]}"
           echo "USER_ARG: $USER_ARG"
           echo "GROUP_ARG: $GROUP_ARG"
           echo "HOST_UID: $HOST_UID"
@@ -637,8 +640,8 @@ jobs:
           if [ "${{ env.DEBUG }}" == "true" ]; then
             echo "Writing pre-chown diagnostic to ${DIAG_FILE}"
             echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${DIAG_FILE}" || true
-            ls -al "${GITHUB_WORKSPACE}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
-            ls -alR "${GITHUB_WORKSPACE}" | sed -n '1,500p' >> "${DIAG_FILE}" || true
+            ls -al "${{ github.workspace }}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
+            ls -alR "${{ github.workspace }}" | sed -n '1,500p' >> "${DIAG_FILE}" || true
             echo "END DIAGNOSTIC" >> "${DIAG_FILE}" || true
           else
             # create an empty diagnostic file for symmetry so later steps can reference it
@@ -648,11 +651,14 @@ jobs:
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
           . "${{ github.workspace }}/container_params.sh" && docker run --rm $MEMORY_ARG \
             --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}" \
-            -v ${{ github.workspace }}:/build \
-            -w /build \
+            # -v ${{ github.workspace }}:${WORKDIR_PATH} \
+            # -w ${WORKDIR_PATH} \
+            # ${CCACHE_ARG} \
+            "${WORKDIR_ARG}" \
+            "${VOLUME_ARG[@]}" \
+            "${CCACHE_ARG[@]}" \
             ${USER_ARG} \
             ${GROUP_ARG} \
-            ${CCACHE_ARG} \
             -e DISABLE_COLORS=no \
             -e MTCOLORS=auto \
             ${DOCKER_ENV_FLAGS} \
@@ -666,14 +672,14 @@ jobs:
             "${{ env.EE_DistroTag }}" bash -lc \
             '
               umask 0002
-              . /build/build_recommend.sh
-              git config --global --add safe.directory /build || true
+              . ${WORKDIR_PATH}/build_recommend.sh
+              git config --global --add safe.directory ${WORKDIR_PATH} || true
 
               if [ "${{ env.DEBUG }}" == "true" ]; then
                 id
                 stat -c "%U:%G %a %n" \
-                  "/build/${{ env.BUILD_DIR }}" \
-                  "/build/${{ env.BUILD_DIR }}/.cache_package_global" || true
+                  "${WORKDIR_PATH}/${{ env.BUILD_DIR }}" \
+                  "${WORKDIR_PATH}/${{ env.BUILD_DIR }}/.cache_package_global" || true
                 # exit 1
               fi
 
@@ -686,13 +692,8 @@ jobs:
         if: ${{ steps.restore-build-caches.conclusion == 'success' }}
         uses: actions/cache/save@v6
         with:
-          path: |
-            .ccache
-            ${{ env.BUILD_DIR }}/.ccache
-            ${{ env.BUILD_DIR }}/.stamps
-            ${{ env.BUILD_DIR }}/.cache_package_global
-            sources
           key: ${{ steps.restore-build-caches.outputs.cache-primary-key }}
+          path: ${{ github.workspace }}/../build-cache
 
       - name: github-workspace
         id: ls-ghws
@@ -767,19 +768,25 @@ jobs:
       - name: Ensure required directories exist with correct permissions
         if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'self-hosted' }}
         run: |
-          mkdir -p .ccache "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.stamps"
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} .ccache "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.stamps"
-          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} .ccache "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.stamps"
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${{ env.BUILD_DIR }}"
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}"
+
+          # C="${{ github.workspace }}/../build-cache"
+          # mkdir -p "$C"/{.ccache,.stamps,.cache_package,sources}
 
       - name: Consolidate ownership and permissions
         if: ${{ inputs.cache }}
         env:
-          CACHE_DIRS: ".ccache ${{ env.BUILD_DIR }} ${{ env.BUILD_DIR }}/.stamps"
+          CACHE_DIRS: "${{ env.BUILD_DIR }}"
         run: |
           echo "Using UID:GID = ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
 
+          # C="${{ github.workspace }}/../build-cache"
+          # mkdir -p "$C"/{.ccache,.stamps,.cache_package,sources}
+
+          C="${{ env.BUILD_DIR }}"
           # Adjust ownership and permissions
-          for dir in $CACHE_DIRS; do
+          for dir in "$C"/{.ccache,.stamps}; do
             sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$dir" || true
             sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$dir" || true
           done
@@ -791,5 +798,5 @@ jobs:
           # Handle workspace ownership for self-hosted runners
           if [ "${{ needs.resolve-runner.outputs.runner }}" == "self-hosted" ]; then
             echo "Adjusting workspace ownership to ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
-            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${GITHUB_WORKSPACE}" || true
+            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}" || true
           fi
