@@ -655,10 +655,7 @@ jobs:
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
           . "${{ github.workspace }}/container_params.sh" && docker run --rm $MEMORY_ARG \
             --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}" \
-            # -v ${{ github.workspace }}:${WORKDIR_PATH} \
-            # -w ${WORKDIR_PATH} \
-            # ${CCACHE_ARG} \
-            "${WORKDIR_ARG}" \
+            ${WORKDIR_ARG} \
             "${VOLUME_ARG[@]}" \
             "${CCACHE_ARG[@]}" \
             ${USER_ARG} \
