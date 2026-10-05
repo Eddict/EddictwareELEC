@@ -71,6 +71,7 @@ env:
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
   EE_Registry: ghcr.io
   IMG_ROOT_BUILD_DIR: "/build"
+  CHMOD_SYNTAX: u=rwx,g=rwxs,o=rx # add the Group Sticky Bit (g+s) to enforce group write permissions
 
 defaults:
   run:
@@ -274,12 +275,12 @@ jobs:
         run: |
           sudo mkdir -p {${{ env.BUILD_DIR }}/.ccache,${{ env.BUILD_DIR }}/.stamps,sources,target}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
-          sudo chmod -R u+rwX "${{ env.BUILD_DIR }}" sources target
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
 
           C="${{ github.workspace }}/../build-cache"
           sudo mkdir -p "$C"/{.ccache,.stamps,.cache_package,sources}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$C"/{.ccache,.stamps,.cache_package,sources}
-          sudo chmod -R u+rwX "$C"/{.ccache,.stamps,.cache_package,sources}
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$C"/{.ccache,.stamps,.cache_package,sources}
 
           # sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
           # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
@@ -820,7 +821,7 @@ jobs:
 
           # Ensure specific files exist
           touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
-          sudo chmod -R a=rw "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
+          sudo chmod ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
 
           # Handle workspace ownership for self-hosted runners
           if [ "${{ needs.resolve-runner.outputs.runner }}" == "self-hosted" ]; then
