@@ -70,6 +70,7 @@ env:
   EE_image_filename: ""
   # EE_Registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} # ${{ secrets.REGISTRY_FQDN }}
   EE_Registry: ghcr.io
+  IMG_ROOT_BUILD_DIR: "/build"
 
 defaults:
   run:
@@ -323,21 +324,21 @@ jobs:
           docker run --rm \
             --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
             --group-add ${{ env.HOST_GID }} \
-            -v "${{ github.workspace }}:/build" \
-            -w /build \
+            -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
+            -w "${{ env.IMG_ROOT_BUILD_DIR }}" \
             "$IMAGE" bash -lc '
             # Force group-write permissions for any diagnostic file created here
             umask 0002
             set -euo pipefail
-            DIAG_DIR=/build/ci-diagnostics
+            DIAG_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container.log"
             mkdir -p "$DIAG_DIR"
             echo "CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG" || true
             echo "--- id ---" >> "$DIAG_LOG" 2>&1 || true
             id >> "$DIAG_LOG" 2>&1 || true
             echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld /build/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
-            TOOLCHAIN_DIR=$(ls -d /build/build.*-13.0-devel/toolchain 2>/dev/null || true)
+            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
+            TOOLCHAIN_DIR=$(ls -d "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain 2>/dev/null || true)
             if [ -n "$TOOLCHAIN_DIR" ]; then
               echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1 || true
               echo "--- bin listing ---" >> "$DIAG_LOG" 2>&1 || true
@@ -360,7 +361,7 @@ jobs:
               ls -l "$TOOLCHAIN_DIR"/lib/gcc/*/*/libgcc_s* >>"$DIAG_LOG" 2>&1 || true
             fi
             # copy any existing glibc config.log from previous runs into diagnostics
-            find /build -type f -path "*/build/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR" \; 2>/dev/null || true
+            find "${{ env.IMG_ROOT_BUILD_DIR }}" -type f -path "*${{ env.IMG_ROOT_BUILD_DIR }}/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR" \; 2>/dev/null || true
           '
 
       - name: Upload CI diagnostics
@@ -414,10 +415,10 @@ jobs:
           env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true
           echo "=== CONTAINER ID/UID/GID ==="
           id || true
-          echo "=== /build ownership (top-level) ==="
-          ls -ld /build || true
+          echo "=== ${{ env.IMG_ROOT_BUILD_DIR }} ownership (top-level) ==="
+          ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}" || true
           echo "=== cache files ownership/perm ==="
-          stat -c '%U:%G %a %n' /build/.ccache /build/build.*-13.0-devel/.cache_package_global /build/build.*-13.0-devel/.cache_package_local 2>/dev/null || true
+          stat -c '%U:%G %a %n' "${{ env.IMG_ROOT_BUILD_DIR }}"/.ccache "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/.cache_package_global "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/.cache_package_local 2>/dev/null || true
           echo "=== THREAD_CONTROL / THREADCOUNT env ==="
           env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT' || true
           echo "=== running pkgbuild / pkgbuilder processes ==="
@@ -508,21 +509,21 @@ jobs:
           docker run --rm \
             --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
             --group-add ${{ env.HOST_GID }} \
-            -v "${{ github.workspace }}:/build" \
-            -w /build "$IMAGE" bash -lc '
+            -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
+            -w "${{ env.IMG_ROOT_BUILD_DIR }}" "$IMAGE" bash -lc '
             umask 0002
             set -euo pipefail
-            DIAG_DIR=/build/ci-diagnostics
+            DIAG_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container-base-image.log"
             mkdir -p "$DIAG_DIR"
             echo "BASE IMAGE CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG" || true
             echo "--- id ---" >> "$DIAG_LOG" 2>&1 || true
             id >> "$DIAG_LOG" 2>&1 || true
-            echo "--- /build listing ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld /build || true >> "$DIAG_LOG" 2>&1 || true
+            echo "--- ${{ env.IMG_ROOT_BUILD_DIR }} listing ---" >> "$DIAG_LOG" 2>&1 || true
+            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}" || true >> "$DIAG_LOG" 2>&1 || true
             echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld /build/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
-            TOOLCHAIN_DIR=$(ls -d /build/build.*-13.0-devel/toolchain 2>/dev/null || true)
+            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
+            TOOLCHAIN_DIR=$(ls -d "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain 2>/dev/null || true)
             if [ -n "$TOOLCHAIN_DIR" ]; then
               echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1 || true
               ls -l "$TOOLCHAIN_DIR/bin" >> "$DIAG_LOG" 2>&1 || true
@@ -530,7 +531,7 @@ jobs:
               echo "No toolchain directory present" >> "$DIAG_LOG" 2>&1 || true
             fi
             # copy any existing glibc config.log into diagnostics
-            find /build -type f -path "*/build/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR/" \; 2>/dev/null || true
+            find "${{ env.IMG_ROOT_BUILD_DIR }}" -type f -path "*${{ env.IMG_ROOT_BUILD_DIR }}/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR/" \; 2>/dev/null || true
           '
 
       - name: Upload CI diagnostics (base image)
@@ -569,11 +570,11 @@ jobs:
           fi
           # (image UID/GID chown moved below after BUILD_DIR is set)
           # Caches are persisted by actions/cache or the runner workspace.
-          # Runner workspace will be mounted directly into the container at /build
-          echo "Using runner workspace mount -v \\${{ github.workspace }}:/build"
+          # Runner workspace will be mounted directly into the container at ${{ env.IMG_ROOT_BUILD_DIR }}
+          echo "Using runner workspace mount -v \\${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}"
 
           # Verify the non-root image user can write to the build output paths.
-          CAN_WRITE=$(docker run --rm --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} --group-add ${{ env.HOST_GID }} -v "${{ github.workspace }}:/build" alpine sh -c "touch /build/sources/.perm_test /build/target/.perm_test /build/${{ env.BUILD_DIR }}/.perm_test >/dev/null 2>&1 && rm -f /build/sources/.perm_test /build/target/.perm_test /build/${{ env.BUILD_DIR }}/.perm_test && echo OK || echo FAIL") || CAN_WRITE=FAIL
+          CAN_WRITE=$(docker run --rm --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} --group-add ${{ env.HOST_GID }} -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" alpine sh -c "touch ${{ env.IMG_ROOT_BUILD_DIR }}/sources/.perm_test ${{ env.IMG_ROOT_BUILD_DIR }}/target/.perm_test ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.perm_test >/dev/null 2>&1 && rm -f ${{ env.IMG_ROOT_BUILD_DIR }}/sources/.perm_test ${{ env.IMG_ROOT_BUILD_DIR }}/target/.perm_test ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.perm_test && echo OK || echo FAIL") || CAN_WRITE=FAIL
           if [ "${CAN_WRITE}" != "OK" ]; then
             echo "::error::Build output paths are not writable by non-root UID:GID ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
             exit 1
@@ -583,10 +584,10 @@ jobs:
           USER_ARG="--user ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
           GROUP_ARG="--group-add ${{ env.HOST_GID }}"
 
-          WORKDIR_PATH="/build"
+          WORKDIR_PATH="${{ env.IMG_ROOT_BUILD_DIR }}"
           WORKDIR_ARG="-w ${WORKDIR_PATH}"
 
-          # CCACHE_ARG="${{ inputs.cache == 'true' && format('-e CCACHE_DIR=/build/{0}/.ccache', env.BUILD_DIR) || '' }}"
+          # CCACHE_ARG="${{ inputs.cache == 'true' && format('-e CCACHE_DIR={0}/{1}/.ccache', env.IMG_ROOT_BUILD_DIR, env.BUILD_DIR) || '' }}"
           CCACHE_ARG=()
           if [ "${{ inputs.cache }}" = "true" ]; then
             CCACHE_ARG=(-e "CCACHE_DIR=${WORKDIR_PATH}/${{ env.BUILD_DIR }}/.ccache")
@@ -601,6 +602,7 @@ jobs:
             -v "$C/files:${WORKDIR_PATH}/cachefiles"
           )
           
+          echo "WORKDIR_PATH: ${WORKDIR_PATH}"
           echo "WORKDIR_ARG: ${WORKDIR_ARG}"
           echo "VOLUME_ARG: ${VOLUME_ARG[@]}"
           echo "CCACHE_ARG: ${CCACHE_ARG[@]}"
