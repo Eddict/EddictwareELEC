@@ -271,8 +271,11 @@ jobs:
           path: ${{ github.workspace }}/../build-cache
 
       - name: Prepare (cache) dirs for container
+        id: prepare-cache-dirs
         if: ${{ inputs.cache }}
         run: |
+          id
+          sudo id
           sudo mkdir -p {${{ env.BUILD_DIR }}/.ccache,${{ env.BUILD_DIR }}/.stamps,sources,target}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
