@@ -411,6 +411,7 @@ jobs:
             cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
           #!/bin/bash
           set -euo pipefail
+          IMG_ROOT_BUILD_DIR="${{ env.IMG_ROOT_BUILD_DIR }}"
           echo "=== MAKE-RELATED ENV ==="
           env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true
           echo "=== CONTAINER ID/UID/GID ==="
@@ -464,6 +465,7 @@ jobs:
             cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
           #!/bin/bash
           set -euo pipefail
+          IMG_ROOT_BUILD_DIR="${{ env.IMG_ROOT_BUILD_DIR }}"
           NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
           PER_JOB_MB=${PER_JOB_MB:-2000}
           RESERVE_MB=${RESERVE_MB:-2048}
