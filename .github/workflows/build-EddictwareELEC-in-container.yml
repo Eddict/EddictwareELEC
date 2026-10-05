@@ -646,7 +646,7 @@ jobs:
             -e NB_CORES="${NB_CORES}"
           )
 
-          if [ 0 == 0 || "${{ env.DEBUG }}" == "true" ]; then
+          if [ "0" == "0" || "${{ env.DEBUG }}" == "true" ]; then
             echo "WORKDIR_ARG: ${WORKDIR_ARG}"
             echo "VOLUME_ARG: ${VOLUME_ARG[@]}"
             echo "CCACHE_ARG: ${CCACHE_ARG[@]}"
