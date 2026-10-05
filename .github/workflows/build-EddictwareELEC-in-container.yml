@@ -650,8 +650,8 @@ jobs:
             "${{ env.EE_DistroTag }}" bash -lc \
             '
               umask 0002
-              . ${WORKDIR_PATH}/build_recommend.sh
-              git config --global --add safe.directory ${WORKDIR_PATH} || true
+              . "${WORKDIR_PATH}/build_recommend.sh"
+              git config --global --add safe.directory "${WORKDIR_PATH}" || true
 
               if [ "${{ env.DEBUG }}" == "true" ]; then
                 id
