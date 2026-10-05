@@ -607,17 +607,6 @@ jobs:
             -v "$C/sources:${WORKDIR_PATH}/sources" \
             -v "$C/files:${WORKDIR_PATH}/cachefiles"
           )
-          
-          echo "WORKDIR_PATH: ${WORKDIR_PATH}"
-          echo "WORKDIR_ARG: ${WORKDIR_ARG}"
-          echo "VOLUME_ARG: ${VOLUME_ARG[@]}"
-          echo "CCACHE_ARG: ${CCACHE_ARG[@]}"
-          echo "USER_ARG: $USER_ARG"
-          echo "GROUP_ARG: $GROUP_ARG"
-          echo "HOST_UID: $HOST_UID"
-          echo "HOST_GID: $HOST_GID"
-          echo "IMG_UID: $IMG_UID"
-          echo "IMG_GID: $IMG_GID"
 
           # run the container (use debug env values when workflow input `debug` is 'true')
           if [ "${{ env.DEBUG }}" == "true" ]; then
@@ -640,8 +629,36 @@ jobs:
             SHOW_STDERR_VAL=no
           fi
 
-          DOCKER_ENV_FLAGS="-e ONELOG=${ONELOG_VAL} -e LOGCOMBINE=${LOGCOMBINE_VAL} -e MTIMMEDIATE=${MTIMMEDIATE_VAL} -e MTDEBUG=${MTDEBUG_VAL} -e MTVERBOSE=${MTVERBOSE_VAL} -e MTPROGRESS=${MTPROGRESS_VAL} -e SHOW_STDOUT=${SHOW_STDOUT_VAL} -e SHOW_STDERR=${SHOW_STDERR_VAL}"
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[DOCKER_ENV_FLAGS]: $DOCKER_ENV_FLAGS" || true
+          DOCKER_ENV_FLAGS=(
+            -e ONELOG=${ONELOG_VAL} \
+            -e LOGCOMBINE=${LOGCOMBINE_VAL} \
+            -e MTIMMEDIATE=${MTIMMEDIATE_VAL} \
+            -e MTDEBUG=${MTDEBUG_VAL} \
+            -e MTVERBOSE=${MTVERBOSE_VAL} \
+            -e MTPROGRESS=${MTPROGRESS_VAL} \
+            -e SHOW_STDOUT=${SHOW_STDOUT_VAL} \
+            -e SHOW_STDERR=${SHOW_STDERR_VAL}
+          )
+
+          BASH_SCRIPT_ENV_VARS=(
+            -e WORKDIR_PATH="${WORKDIR_PATH}" \
+            -e RECOMMENDED_J="${RECOMMENDED_J}" \
+            -e NB_CORES="${NB_CORES}"
+          )
+
+          if [ 0 == 0 || "${{ env.DEBUG }}" == "true" ]; then
+            echo "WORKDIR_ARG: ${WORKDIR_ARG}"
+            echo "VOLUME_ARG: ${VOLUME_ARG[@]}"
+            echo "CCACHE_ARG: ${CCACHE_ARG[@]}"
+            echo "USER_ARG: $USER_ARG"
+            echo "GROUP_ARG: $GROUP_ARG"
+            echo "DOCKER_ENV_FLAGS: ${DOCKER_ENV_FLAGS[@]}"
+            echo "BASH_SCRIPT_ENV_VARS: ${BASH_SCRIPT_ENV_VARS[@]}"
+            echo "HOST_UID: $HOST_UID"
+            echo "HOST_GID: $HOST_GID"
+            echo "IMG_UID: $IMG_UID"
+            echo "IMG_GID: $IMG_GID"
+          fi
 
           # USER_ARG already set by the CAN_WRITE test above (prefers the container UID when writable).
           # Do not override here; RUNNER_TYPE is used only for MEMORY_ARG and git handling.
@@ -668,9 +685,10 @@ jobs:
             "${CCACHE_ARG[@]}" \
             ${USER_ARG} \
             ${GROUP_ARG} \
+            "${DOCKER_ENV_FLAGS[@]}" \
+            "${BASH_SCRIPT_ENV_VARS[@]}" \
             -e DISABLE_COLORS=no \
             -e MTCOLORS=auto \
-            ${DOCKER_ENV_FLAGS} \
             -e DISTRO=${{ env.EE_Distro }} \
             -e PROJECT=${{ env.EE_Project }} \
             -e DEVICE=${{ env.EE_Device }} \
