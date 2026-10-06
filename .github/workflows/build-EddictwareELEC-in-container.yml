@@ -142,17 +142,17 @@ jobs:
           HOST_GID=$(id -g)
 
           # If the image check fails, fall back to the actual runtime host user/group
-          if ! IMG_UID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -u 2>/dev/null); then
+          if ! IMG_UID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -u); then
             echo "::warning::Failed to fetch image UID from ${{ env.EE_DistroTag }}. Check for user docker on the host."
-            if ! IMG_UID=$(id -u docker 2>/dev/null); then
+            if ! IMG_UID=$(id -u docker); then
               echo "::warning::Failed to fetch UID for user docker on the host. Falling back to Host UID ($HOST_UID)."
               IMG_UID=$HOST_UID
             fi
           fi
 
-          if ! IMG_GID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -g 2>/dev/null); then
+          if ! IMG_GID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -g); then
             echo "::warning::Failed to fetch image GID from ${{ env.EE_DistroTag }}. Check for group docker on the host."
-            if ! IMG_GID=$(id -g docker 2>/dev/null); then
+            if ! IMG_GID=$(id -g docker); then
               echo "::warning::Failed to fetch GID for group docker on the host. Falling back to Host GID ($HOST_GID)."
               IMG_GID=$HOST_GID
             fi
@@ -168,18 +168,18 @@ jobs:
           if [ "$IMG_UID" -ne "$HOST_UID" ]; then
             echo "UID mismatch detected ($IMG_UID vs $HOST_UID). Synchronizing..."
             
-            GROUP_NAME=$(getent group "$HOST_GID" | cut -d: -f1)
-            [ -z "$GROUP_NAME" ] && echo "Failed to resolve host GID $HOST_GID"
-            echo "GROUP_NAME=$GROUP_NAME"
+            HOST_GNAME=$(getent group "$HOST_GID" | cut -d: -f1)
+            [ -z "$HOST_GNAME" ] && echo "Failed to resolve host GID $HOST_GID"
+            echo "GROUP_NAME=$HOST_GNAME"
 
-            USER_NAME=$(docker run --rm --entrypoint getent ${{ env.EE_DistroTag }} passwd "$IMG_UID" | cut -d: -f1)
-            [ -z "$USER_NAME" ] && echo "Failed to resolve container UID $IMG_UID"
-            echo "USER_NAME=$USER_NAME"
+            IMG_UNAME=$(docker run --rm --entrypoint getent ${{ env.EE_DistroTag }} passwd "$IMG_UID" | cut -d: -f1)
+            [ -z "$IMG_UNAME" ] && echo "Failed to resolve container UID $IMG_UID"
+            echo "IMG_UNAME=$IMG_UNAME"
 
-            if [ -n "$GROUP_NAME" ] && [ -n "$USER_NAME" ]; then
-                sudo usermod -aG "$GROUP_NAME" "$USER_NAME" && \
-                  echo "Added $USER_NAME to $GROUP_NAME" || \
-                  echo "usermod failed (Is '$USER_NAME' missing from host passwd?)"
+            if [ -n "$HOST_GNAME" ] && [ -n "$IMG_UNAME" ]; then
+                sudo usermod -aG "$HOST_GNAME" "$IMG_UNAME" && \
+                  echo "Added $IMG_UNAME to $HOST_GNAME" || \
+                  echo "usermod failed (Is '$IMG_UNAME' missing from host passwd?)"
             fi
           fi
 
