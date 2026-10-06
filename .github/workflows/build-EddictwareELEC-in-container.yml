@@ -284,7 +284,7 @@ jobs:
           sudo mkdir -p "${{ env.BUILD_DIR }}"
           stat -c '%U:%G %u:%g %a %n' "${{ env.BUILD_DIR }}"
           sudo mkdir -p {${{ env.BUILD_DIR }}/.ccache,${{ env.BUILD_DIR }}/.stamps,sources,target}
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${{ env.BUILD_DIR }}" sources target
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
           stat -c '%U:%G %u:%g %a %n' "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.ccache" "${{ env.BUILD_DIR }}/.stamps" sources target 2>&1 || true
           test -w "${{ env.BUILD_DIR }}" && echo "env.BUILD_DIR writable" || echo "env.BUILD_DIR not writable"
@@ -294,9 +294,10 @@ jobs:
           test -w "target" && echo "env.BUILD_DIR/target writable" || echo "env.BUILD_DIR/target not writable"
 
           LOCAL_BUILD_CACHE="${{ github.workspace }}/../build-cache"
+          sudo mkdir -p "$LOCAL_BUILD_CACHE"
           stat -c '%U:%G %u:%g %a %n' "$LOCAL_BUILD_CACHE"
           sudo mkdir -p "$LOCAL_BUILD_CACHE"/{.ccache,.stamps,.cache_package,sources}
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$LOCAL_BUILD_CACHE"
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "$LOCAL_BUILD_CACHE"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$LOCAL_BUILD_CACHE"
           stat -c '%U:%G %u:%g %a %n' "$LOCAL_BUILD_CACHE" "$LOCAL_BUILD_CACHE/.ccache" "$LOCAL_BUILD_CACHE/.stamps" 2>&1 || true
           test -w "$LOCAL_BUILD_CACHE" && echo "LOCAL_BUILD_CACHE writable" || echo "LOCAL_BUILD_CACHE not writable"
