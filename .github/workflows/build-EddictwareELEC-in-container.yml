@@ -72,6 +72,7 @@ env:
   EE_Registry: ghcr.io
   IMG_ROOT_BUILD_DIR: "/build"
   CHMOD_SYNTAX: u=rwx,g=rwxs,o=rx # add the Group Sticky Bit (g+s) to enforce group write permissions
+  STAT_SYNTAX: "%U(%u):%G(%g) %a %A %n"
 
 defaults:
   run:
@@ -282,11 +283,11 @@ jobs:
           sudo id
           ls -al
           sudo mkdir -p "${{ env.BUILD_DIR }}"
-          stat -c '%U:%G %u:%g %a %n' "${{ env.BUILD_DIR }}"
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}"
           sudo mkdir -p {${{ env.BUILD_DIR }}/.ccache,${{ env.BUILD_DIR }}/.stamps,sources,target}
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${{ env.BUILD_DIR }}" sources target
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
-          stat -c '%U:%G %u:%g %a %n' "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.ccache" "${{ env.BUILD_DIR }}/.stamps" sources target 2>&1 || true
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.ccache" "${{ env.BUILD_DIR }}/.stamps" sources target 2>&1 || true
           test -w "${{ env.BUILD_DIR }}" && echo "env.BUILD_DIR writable" || echo "env.BUILD_DIR not writable"
           test -w "${{ env.BUILD_DIR }}/.ccache" && echo "env.BUILD_DIR/.ccache writable" || echo "env.BUILD_DIR/.ccache not writable"
           test -w "${{ env.BUILD_DIR }}/.stamps" && echo "env.BUILD_DIR/.stamps writable" || echo "env.BUILD_DIR/.stamps not writable"
@@ -295,11 +296,11 @@ jobs:
 
           LOCAL_BUILD_CACHE="${{ github.workspace }}/../build-cache"
           sudo mkdir -p "$LOCAL_BUILD_CACHE"
-          stat -c '%U:%G %u:%g %a %n' "$LOCAL_BUILD_CACHE"
+          stat -c "${{ env.STAT_SYNTAX }}" "$LOCAL_BUILD_CACHE"
           sudo mkdir -p "$LOCAL_BUILD_CACHE"/{.ccache,.stamps,.cache_package,sources}
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "$LOCAL_BUILD_CACHE"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$LOCAL_BUILD_CACHE"
-          stat -c '%U:%G %u:%g %a %n' "$LOCAL_BUILD_CACHE" "$LOCAL_BUILD_CACHE/.ccache" "$LOCAL_BUILD_CACHE/.stamps" 2>&1 || true
+          stat -c "${{ env.STAT_SYNTAX }}" "$LOCAL_BUILD_CACHE" "$LOCAL_BUILD_CACHE/.ccache" "$LOCAL_BUILD_CACHE/.stamps" 2>&1 || true
           test -w "$LOCAL_BUILD_CACHE" && echo "LOCAL_BUILD_CACHE writable" || echo "LOCAL_BUILD_CACHE not writable"
           test -w "$LOCAL_BUILD_CACHE/.ccache" && echo "LOCAL_BUILD_CACHE/.ccache writable" || echo "LOCAL_BUILD_CACHE/.ccache not writable"
           test -w "$LOCAL_BUILD_CACHE/.stamps" && echo "LOCAL_BUILD_CACHE/.stamps writable" || echo "LOCAL_BUILD_CACHE/.stamps not writable"
@@ -411,7 +412,7 @@ jobs:
           id
           OUTFILE="${{ github.workspace }}/container_params.sh"
           touch "$OUTFILE" 2>&1 || true
-          stat -c '%U:%G %u:%g %a %n' "${{ github.workspace }}" "$OUTFILE" 2>&1 || true
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}" "$OUTFILE" 2>&1 || true
           test -w "${{ github.workspace }}" && echo "workspace writable" || echo "workspace not writable"
           test -w "$OUTFILE" && echo "output file writable" || echo "output file missing or not writable"
 
@@ -521,7 +522,7 @@ jobs:
           fi
 
           sudo chmod +x "${{ github.workspace }}/build_recommend.sh"
-          stat -c '%U:%G %u:%g %a %n' "${{ github.workspace }}/build_recommend.sh"
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}/build_recommend.sh"
           cat "${{ github.workspace }}/build_recommend.sh"
 
       - name: In-container diagnostics (base image)
@@ -723,6 +724,7 @@ jobs:
               if (( 0 == 0 )) || [[ "${{ env.DEBUG }}" == "true" ]]; then
                 id
                 stat -c "%U:%G %a %n" \
+                  "${{ env.IMG_ROOT_BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
