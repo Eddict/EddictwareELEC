@@ -287,7 +287,7 @@ jobs:
           sudo mkdir -p {${{ env.BUILD_DIR }}/.ccache,${{ env.BUILD_DIR }}/.stamps,sources,target}
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${{ env.BUILD_DIR }}" sources target
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
-          stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.ccache" "${{ env.BUILD_DIR }}/.stamps" sources target 2>&1 || true
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.ccache" "${{ env.BUILD_DIR }}/.stamps" sources target
           test -w "${{ env.BUILD_DIR }}" && echo "env.BUILD_DIR writable" || echo "env.BUILD_DIR not writable"
           test -w "${{ env.BUILD_DIR }}/.ccache" && echo "env.BUILD_DIR/.ccache writable" || echo "env.BUILD_DIR/.ccache not writable"
           test -w "${{ env.BUILD_DIR }}/.stamps" && echo "env.BUILD_DIR/.stamps writable" || echo "env.BUILD_DIR/.stamps not writable"
@@ -304,6 +304,9 @@ jobs:
           test -w "$LOCAL_BUILD_CACHE" && echo "LOCAL_BUILD_CACHE writable" || echo "LOCAL_BUILD_CACHE not writable"
           test -w "$LOCAL_BUILD_CACHE/.ccache" && echo "LOCAL_BUILD_CACHE/.ccache writable" || echo "LOCAL_BUILD_CACHE/.ccache not writable"
           test -w "$LOCAL_BUILD_CACHE/.stamps" && echo "LOCAL_BUILD_CACHE/.stamps writable" || echo "LOCAL_BUILD_CACHE/.stamps not writable"
+
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}" sources target
 
           # sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
           # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
