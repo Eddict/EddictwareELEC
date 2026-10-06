@@ -306,7 +306,12 @@ jobs:
           test -w "$LOCAL_BUILD_CACHE/.stamps" && echo "LOCAL_BUILD_CACHE/.stamps writable" || echo "LOCAL_BUILD_CACHE/.stamps not writable"
 
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
           stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}" sources target
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}"
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ github.workspace }}"
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
 
           # sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
           # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
