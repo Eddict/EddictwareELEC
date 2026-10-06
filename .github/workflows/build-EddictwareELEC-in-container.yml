@@ -143,15 +143,17 @@ jobs:
 
           # If the image check fails, fall back to the actual runtime host user/group
           if ! IMG_UID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -u 2>/dev/null); then
+            echo "::warning::Failed to fetch image UID from ${{ env.EE_DistroTag }}. Check for user docker on the host."
             if ! IMG_UID=$(id -u docker 2>/dev/null); then
-              echo "::warning::Failed to fetch image UID from ${{ env.EE_DistroTag }}. Falling back to Host UID ($HOST_UID)."
+              echo "::warning::Failed to fetch UID for user docker on the host. Falling back to Host UID ($HOST_UID)."
               IMG_UID=$HOST_UID
             fi
           fi
 
           if ! IMG_GID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -g 2>/dev/null); then
+            echo "::warning::Failed to fetch image GID from ${{ env.EE_DistroTag }}. Check for group docker on the host."
             if ! IMG_GID=$(id -g docker 2>/dev/null); then
-              echo "::warning::Failed to fetch image GID from ${{ env.EE_DistroTag }}. Falling back to Host GID ($HOST_GID)."
+              echo "::warning::Failed to fetch GID for group docker on the host. Falling back to Host GID ($HOST_GID)."
               IMG_GID=$HOST_GID
             fi
           fi
@@ -168,9 +170,11 @@ jobs:
             
             GROUP_NAME=$(getent group "$HOST_GID" | cut -d: -f1)
             [ -z "$GROUP_NAME" ] && echo "Failed to resolve host GID $HOST_GID"
+            echo "GROUP_NAME=$GROUP_NAME"
 
             USER_NAME=$(docker run --rm --entrypoint getent ${{ env.EE_DistroTag }} passwd "$IMG_UID" | cut -d: -f1)
             [ -z "$USER_NAME" ] && echo "Failed to resolve container UID $IMG_UID"
+            echo "USER_NAME=$USER_NAME"
 
             if [ -n "$GROUP_NAME" ] && [ -n "$USER_NAME" ]; then
                 sudo usermod -aG "$GROUP_NAME" "$USER_NAME" && \
@@ -276,17 +280,19 @@ jobs:
         run: |
           id
           sudo id
+          stat -c '%U:%G %u:%g %a %n' "${{ env.BUILD_DIR }}"
           sudo mkdir -p {${{ env.BUILD_DIR }}/.ccache,${{ env.BUILD_DIR }}/.stamps,sources,target}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
           stat -c '%U:%G %u:%g %a %n' "${{ env.BUILD_DIR }}" "${{ env.BUILD_DIR }}/.ccache" "${{ env.BUILD_DIR }}/.stamps" sources target 2>&1 || true
-          test -w "${{ env.BUILD_DIR }}" && echo "BUILD_DIR writable" || echo "BUILD_DIR not writable"
-          test -w "${{ env.BUILD_DIR }}/.ccache" && echo "BUILD_DIR/.ccache writable" || echo "BUILD_DIR/.ccache not writable"
-          test -w "${{ env.BUILD_DIR }}/.stamps" && echo "BUILD_DIR/.stamps writable" || echo "BUILD_DIR/.stamps not writable"
-          test -w "sources" && echo "BUILD_DIR/sources writable" || echo "BUILD_DIR/sources not writable"
-          test -w "target" && echo "BUILD_DIR/target writable" || echo "BUILD_DIR/target not writable"
+          test -w "${{ env.BUILD_DIR }}" && echo "env.BUILD_DIR writable" || echo "env.BUILD_DIR not writable"
+          test -w "${{ env.BUILD_DIR }}/.ccache" && echo "env.BUILD_DIR/.ccache writable" || echo "env.BUILD_DIR/.ccache not writable"
+          test -w "${{ env.BUILD_DIR }}/.stamps" && echo "env.BUILD_DIR/.stamps writable" || echo "env.BUILD_DIR/.stamps not writable"
+          test -w "sources" && echo "env.BUILD_DIR/sources writable" || echo "env.BUILD_DIR/sources not writable"
+          test -w "target" && echo "env.BUILD_DIR/target writable" || echo "env.BUILD_DIR/target not writable"
 
           LOCAL_BUILD_CACHE="${{ github.workspace }}/../build-cache"
+          stat -c '%U:%G %u:%g %a %n' "$LOCAL_BUILD_CACHE"
           sudo mkdir -p "$LOCAL_BUILD_CACHE"/{.ccache,.stamps,.cache_package,sources}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$LOCAL_BUILD_CACHE"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$LOCAL_BUILD_CACHE"
