@@ -444,7 +444,7 @@ jobs:
           echo "=== ${IMG_ROOT_BUILD_DIR} ownership (top-level) ==="
           ls -ld ${IMG_ROOT_BUILD_DIR} || true
           echo "=== cache files ownership/perm ==="
-          stat -c '%U:%G %a %n' "${IMG_ROOT_BUILD_DIR}/.ccache" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_global" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_local" 2>/dev/null || true
+          stat -c "${{ env.STAT_SYNTAX }}" "${IMG_ROOT_BUILD_DIR}/.ccache" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_global" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_local" 2>/dev/null || true
           echo "=== THREAD_CONTROL / THREADCOUNT env ==="
           env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT' || true
           echo "=== running pkgbuild / pkgbuilder processes ==="
@@ -723,7 +723,7 @@ jobs:
 
               if (( 0 == 0 )) || [[ "${{ env.DEBUG }}" == "true" ]]; then
                 id
-                stat -c "%U:%G %a %n" \
+                stat -c "${{ env.STAT_SYNTAX }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" \
