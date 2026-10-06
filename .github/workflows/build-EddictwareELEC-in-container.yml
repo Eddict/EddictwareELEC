@@ -280,6 +280,7 @@ jobs:
         run: |
           id
           sudo id
+          ls -al
           stat -c '%U:%G %u:%g %a %n' "${{ env.BUILD_DIR }}"
           sudo mkdir -p {${{ env.BUILD_DIR }}/.ccache,${{ env.BUILD_DIR }}/.stamps,sources,target}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
