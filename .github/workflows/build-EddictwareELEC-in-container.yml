@@ -768,6 +768,8 @@ jobs:
 
               if (( 0 == 0 )) || [[ "${{ env.DEBUG }}" == "true" ]]; then
                 id
+                pwd
+                ls -al
                 stat -c "${{ env.STAT_SYNTAX }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh" \
