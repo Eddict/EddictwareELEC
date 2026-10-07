@@ -267,14 +267,14 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
-          path: ${{ github.workspace }}/../build-cache
+          path: ${{ env.LOCAL_BUILD_CACHE }}
       - name: Restore build caches for blacksmith
         id: restore-build-caches-blacksmith
         if: ${{ inputs.cache && inputs.runner == 'blacksmith' }}
         uses: useblacksmith/stickydisk@v1
         with:
           key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
-          path: ${{ github.workspace }}/../build-cache
+          path: ${{ env.LOCAL_BUILD_CACHE }}
 
       - name: Prepare (cache) dirs for container
         id: prepare-cache-dirs
@@ -663,16 +663,15 @@ jobs:
           # CCACHE_ARG="${{ inputs.cache == 'true' && format('-e CCACHE_DIR={0}/{1}/.ccache', env.IMG_ROOT_BUILD_DIR, env.BUILD_DIR) || '' }}"
           CCACHE_ARG=()
           if [ "${{ inputs.cache }}" = "true" ]; then
-            CCACHE_ARG=(-e "CCACHE_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache")
+            CCACHE_ARG=(-e "CCACHE_DIR=/${{ env.BUILD_DIR }}/.ccache")
           fi
 
-          LOCAL_BUILD_CACHE="${{ github.workspace }}/../build-cache"
           VOLUME_ARG=(
-            -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
-            -v "$LOCAL_BUILD_CACHE/ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-            -v "$LOCAL_BUILD_CACHE/stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
-            -v "$LOCAL_BUILD_CACHE/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
-            -v "$LOCAL_BUILD_CACHE/files:${{ env.IMG_ROOT_BUILD_DIR }}/cachefiles"
+            -v "${{ github.workspace }}:${{ env.BUILD_DIR }}" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/ccache:/${{ env.BUILD_DIR }}/.ccache" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/stamps:/${{ env.BUILD_DIR }}/.stamps" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/sources:/sources" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/files:/cachefiles"
           )
 
           # run the container (use debug env values when workflow input `debug` is 'true')
@@ -789,7 +788,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           key: ${{ steps.restore-build-caches.outputs.cache-primary-key }}
-          path: ${{ github.workspace }}/../build-cache
+          path: ${{ env.LOCAL_BUILD_CACHE }}
 
       - name: github-workspace
         id: ls-ghws
