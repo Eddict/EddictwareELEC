@@ -663,15 +663,15 @@ jobs:
           # CCACHE_ARG="${{ inputs.cache == 'true' && format('-e CCACHE_DIR={0}/{1}/.ccache', env.IMG_ROOT_BUILD_DIR, env.BUILD_DIR) || '' }}"
           CCACHE_ARG=()
           if [ "${{ inputs.cache }}" = "true" ]; then
-            CCACHE_ARG=(-e "CCACHE_DIR=/${{ env.BUILD_DIR }}/.ccache")
+            CCACHE_ARG=(-e "CCACHE_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache")
           fi
 
           VOLUME_ARG=(
-            -v "${{ github.workspace }}:/${{ env.BUILD_DIR }}" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/ccache:/${{ env.BUILD_DIR }}/.ccache" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/stamps:/${{ env.BUILD_DIR }}/.stamps" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/sources:/sources" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/files:/cachefiles"
+            -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/files:${{ env.IMG_ROOT_BUILD_DIR }}/cachefiles"
           )
 
           # run the container (use debug env values when workflow input `debug` is 'true')
@@ -768,8 +768,6 @@ jobs:
 
               if (( 0 == 0 )) || [[ "${{ env.DEBUG }}" == "true" ]]; then
                 id
-                pwd
-                ls -al
                 stat -c "${{ env.STAT_SYNTAX }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh" \
@@ -868,7 +866,7 @@ jobs:
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "${{ env.BUILD_DIR }}"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}"
 
-          # C="${{ github.workspace }}/../build-cache"
+          # C="${{ env.LOCAL_BUILD_CACHE }}"
           # mkdir -p "$C"/{.ccache,.stamps,.cache_package,sources}
 
       - name: Consolidate ownership and permissions
@@ -878,7 +876,7 @@ jobs:
         run: |
           echo "Using UID:GID = ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
 
-          # C="${{ github.workspace }}/../build-cache"
+          # C="${{ env.LOCAL_BUILD_CACHE }}"
           # mkdir -p "$C"/{.ccache,.stamps,.cache_package,sources}
 
           C="${{ env.BUILD_DIR }}"
