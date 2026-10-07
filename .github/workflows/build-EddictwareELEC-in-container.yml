@@ -774,7 +774,13 @@ jobs:
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" || true
-                # exit 1
+
+                sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
+                sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
+
+                stat -c "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
+                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" || true
+                  # exit 1
               fi
 
               . "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
