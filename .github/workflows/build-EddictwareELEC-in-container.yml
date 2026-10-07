@@ -203,6 +203,7 @@ jobs:
       CHMOD_SYNTAX: u=rwx,g=rwxs,o=rx # add the Group Sticky Bit (g+s) to enforce group write permissions
       BUILD_DIR: ${{ needs.init.outputs.build_dir }}
       EE_DistroTag: ${{ needs.init.outputs.ee_distrotag }}
+      LOCAL_BUILD_CACHE: "${{ github.workspace }}/../build-cache"
     steps:
       - name: Checkout repository
         if: ${{ inputs.runner != 'blacksmith' }}
@@ -285,7 +286,6 @@ jobs:
             "${{ env.BUILD_DIR }}/.stamps"
             sources 
             target
-          LOCAL_BUILD_CACHE: "${{ github.workspace }}/../build-cache"
           BUILD_CACHE_PATHS: >-
             "${{ env.LOCAL_BUILD_CACHE }}"
             "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
