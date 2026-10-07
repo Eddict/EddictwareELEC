@@ -305,14 +305,6 @@ jobs:
           test -w "$LOCAL_BUILD_CACHE/.ccache" && echo "LOCAL_BUILD_CACHE/.ccache writable" || echo "LOCAL_BUILD_CACHE/.ccache not writable"
           test -w "$LOCAL_BUILD_CACHE/.stamps" && echo "LOCAL_BUILD_CACHE/.stamps writable" || echo "LOCAL_BUILD_CACHE/.stamps not writable"
 
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
-          stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}" sources target
-          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
-          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}"
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ github.workspace }}"
-          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
-
           # sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
           # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
           # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
@@ -584,6 +576,16 @@ jobs:
 
       # Repeat the check-repo-folder step to ensure the repository folder is still valid before building the image
       - *check-repo-folder
+
+      - name: Change ownership and permissions of build directories
+        run: |
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ env.BUILD_DIR }}" sources target
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}" sources target
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ env.BUILD_DIR }}" sources target
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
+          sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}"
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ github.workspace }}"
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
 
       - name: Build ${{ env.EE_Distro }} image
         id: build-image
