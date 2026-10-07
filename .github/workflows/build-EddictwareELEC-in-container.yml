@@ -667,7 +667,7 @@ jobs:
           fi
 
           VOLUME_ARG=(
-            -v "${{ github.workspace }}:${{ env.BUILD_DIR }}" \
+            -v "${{ github.workspace }}:/${{ env.BUILD_DIR }}" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/ccache:/${{ env.BUILD_DIR }}/.ccache" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/stamps:/${{ env.BUILD_DIR }}/.stamps" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/sources:/sources" \
