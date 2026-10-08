@@ -309,14 +309,14 @@ jobs:
           sudo mkdir -p ${{ env.BUILD_CACHE_PATHS }}
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_CACHE_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
-          stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_CACHE_PATHS }} 2>&1 || true
+          stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_CACHE_PATHS }} 2>&1
           test -w "${{ env.LOCAL_BUILD_CACHE }}" && echo "LOCAL_BUILD_CACHE writable" || echo "LOCAL_BUILD_CACHE not writable"
           test -w "${{ env.LOCAL_BUILD_CACHE }}/.ccache" && echo "LOCAL_BUILD_CACHE/.ccache writable" || echo "LOCAL_BUILD_CACHE/.ccache not writable"
           test -w "${{ env.LOCAL_BUILD_CACHE }}/.stamps" && echo "LOCAL_BUILD_CACHE/.stamps writable" || echo "LOCAL_BUILD_CACHE/.stamps not writable"
 
           # sudo touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
-          # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global" || true
-          # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local" || true
+          # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_global"
+          # sudo chmod a=rw "${{ env.BUILD_DIR }}/.cache_package_local"
 
       - name: Host diagnostics
         id: host-diagnostics
@@ -327,19 +327,19 @@ jobs:
           DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
           DIAG_LOG="$DIAG_DIR/host.log"
           mkdir -p "$DIAG_DIR"
-          echo "HOST DIAGNOSTIC: $(date -u)" > "$DIAG_LOG" || true
-          uname -a >> "$DIAG_LOG" 2>&1 || true
-          echo "--- docker --version ---" >> "$DIAG_LOG" 2>&1 || true
-          docker --version >> "$DIAG_LOG" 2>&1 || echo "docker: not found" >> "$DIAG_LOG" || true
-          echo "--- g++ ---" >> "$DIAG_LOG" 2>&1 || true
+          echo "HOST DIAGNOSTIC: $(date -u)" > "$DIAG_LOG"
+          uname -a >> "$DIAG_LOG" 2>&1
+          echo "--- docker --version ---" >> "$DIAG_LOG" 2>&1
+          docker --version >> "$DIAG_LOG" 2>&1 || echo "docker: not found" >> "$DIAG_LOG"
+          echo "--- g++ ---" >> "$DIAG_LOG" 2>&1
           if command -v g++ >/dev/null 2>&1; then g++ --version >> "$DIAG_LOG" 2>&1; else echo "g++: not found on host" >> "$DIAG_LOG"; fi
-          echo "--- libgcc_s on host ---" >> "$DIAG_LOG" 2>&1 || true
-          ls -l /usr/lib*/libgcc_s* >> "$DIAG_LOG" 2>&1 || true
-          echo "--- perl/makeinfo presence ---" >> "$DIAG_LOG" 2>&1 || true
+          echo "--- libgcc_s on host ---" >> "$DIAG_LOG" 2>&1
+          ls -l /usr/lib*/libgcc_s* >> "$DIAG_LOG" 2>&1
+          echo "--- perl/makeinfo presence ---" >> "$DIAG_LOG" 2>&1
           command -v perl >> "$DIAG_LOG" 2>&1 || echo "perl: not found" >> "$DIAG_LOG"
           command -v makeinfo >> "$DIAG_LOG" 2>&1 || echo "makeinfo: not found" >> "$DIAG_LOG"
-          echo "--- workspace top files ---" >> "$DIAG_LOG" 2>&1 || true
-          ls -al "$PWD" | sed -n '1,200p' >> "$DIAG_LOG" 2>&1 || true
+          echo "--- workspace top files ---" >> "$DIAG_LOG" 2>&1
+          ls -al "$PWD" | sed -n '1,200p' >> "$DIAG_LOG" 2>&1
 
       - name: In-container diagnostics
         id: in-container-diagnostics
@@ -351,7 +351,7 @@ jobs:
           echo "Running in-container diagnostics inside image: $IMAGE"
 
           # Pull image best-effort
-          docker image pull "$IMAGE" || true
+          docker image pull "$IMAGE"
 
           # Run container with matched image user and supplementary host group
           docker run --rm \
@@ -366,35 +366,35 @@ jobs:
             DIAG_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container.log"
             mkdir -p "$DIAG_DIR"
-            echo "CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG" || true
-            echo "--- id ---" >> "$DIAG_LOG" 2>&1 || true
-            id >> "$DIAG_LOG" 2>&1 || true
-            echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
-            TOOLCHAIN_DIR=$(ls -d "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain 2>/dev/null || true)
+            echo "CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG"
+            echo "--- id ---" >> "$DIAG_LOG" 2>&1
+            id >> "$DIAG_LOG" 2>&1
+            echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1
+            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1
+            TOOLCHAIN_DIR=$(ls -d "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain 2>/dev/null)
             if [ -n "$TOOLCHAIN_DIR" ]; then
-              echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1 || true
-              echo "--- bin listing ---" >> "$DIAG_LOG" 2>&1 || true
-              ls -l "$TOOLCHAIN_DIR/bin" >> "$DIAG_LOG" 2>&1 || true
+              echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1
+              echo "--- bin listing ---" >> "$DIAG_LOG" 2>&1
+              ls -l "$TOOLCHAIN_DIR/bin" >> "$DIAG_LOG" 2>&1
               for g in host-g++ aarch64-libreelec-linux-gnu-g++ g++; do
                 if [ -x "$TOOLCHAIN_DIR/bin/$g" ]; then
-                  echo "--- $g --version ---" >> "$DIAG_LOG" 2>&1 || true
-                  "$TOOLCHAIN_DIR/bin/$g" --version >> "$DIAG_LOG" 2>&1 || true
-                  echo "--- attempting link test with $g ---" >> "$DIAG_LOG" 2>&1 || true
+                  echo "--- $g --version ---" >> "$DIAG_LOG" 2>&1
+                  "$TOOLCHAIN_DIR/bin/$g" --version >> "$DIAG_LOG" 2>&1
+                  echo "--- attempting link test with $g ---" >> "$DIAG_LOG" 2>&1
                   printf "%s\n" "#include <iostream>" "int main(){ std::cout << \"ok\\n\"; return 0; }" > /tmp/test.cpp
                   if "$TOOLCHAIN_DIR/bin/$g" -o /tmp/test /tmp/test.cpp 2>>"$DIAG_LOG"; then
-                    echo "$g link: OK" >> "$DIAG_LOG" 2>&1 || true
+                    echo "$g link: OK" >> "$DIAG_LOG" 2>&1
                   else
-                    echo "$g link: FAILED" >> "$DIAG_LOG" 2>&1 || true
+                    echo "$g link: FAILED" >> "$DIAG_LOG" 2>&1
                   fi
                 fi
               done
-              echo "--- sysroot libgcc_s ---" >> "$DIAG_LOG" 2>&1 || true
-              ls -l "$TOOLCHAIN_DIR"/aarch64-libreelec-linux-gnu/sysroot/usr/lib*/libgcc_s* >>"$DIAG_LOG" 2>&1 || true
-              ls -l "$TOOLCHAIN_DIR"/lib/gcc/*/*/libgcc_s* >>"$DIAG_LOG" 2>&1 || true
+              echo "--- sysroot libgcc_s ---" >> "$DIAG_LOG" 2>&1
+              ls -l "$TOOLCHAIN_DIR"/aarch64-libreelec-linux-gnu/sysroot/usr/lib*/libgcc_s* >>"$DIAG_LOG" 2>&1
+              ls -l "$TOOLCHAIN_DIR"/lib/gcc/*/*/libgcc_s* >>"$DIAG_LOG" 2>&1
             fi
             # copy any existing glibc config.log from previous runs into diagnostics
-            find "${{ env.IMG_ROOT_BUILD_DIR }}" -type f -path "*${{ env.IMG_ROOT_BUILD_DIR }}/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR" \; 2>/dev/null || true
+            find "${{ env.IMG_ROOT_BUILD_DIR }}" -type f -path "*${{ env.IMG_ROOT_BUILD_DIR }}/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR" \; 2>/dev/null
           '
 
       - name: Upload CI diagnostics
@@ -420,8 +420,8 @@ jobs:
 
           id
           OUTFILE="${{ github.workspace }}/container_params.sh"
-          touch "$OUTFILE" 2>&1 || true
-          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}" "$OUTFILE" 2>&1 || true
+          touch "$OUTFILE" 2>&1
+          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}" "$OUTFILE" 2>&1
           test -w "${{ github.workspace }}" && echo "workspace writable" || echo "workspace not writable"
           test -w "$OUTFILE" && echo "output file writable" || echo "output file missing or not writable"
 
@@ -431,7 +431,7 @@ jobs:
           echo "#!/bin/bash" > "$OUTFILE"
           echo "# Generated by prepare-container-params" >> "$OUTFILE"
           echo "MEMORY_ARG='${MEMORY_ARG}'" >> "$OUTFILE"
-          sudo chmod +x "$OUTFILE" || true
+          sudo chmod +x "$OUTFILE"
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
             echo "[container_params.sh written]: $OUTFILE"
           fi
@@ -447,19 +447,19 @@ jobs:
           #!/bin/bash
           set -euo pipefail
           echo "=== MAKE-RELATED ENV ==="
-          env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE" || true
+          env | grep -E "MAKEFLAGS|THREAD|MTIMMEDIATE|ONELOG|LOGCOMBINE"
           echo "=== CONTAINER ID/UID/GID ==="
-          id || true
+          id
           echo "=== ${IMG_ROOT_BUILD_DIR} ownership (top-level) ==="
-          ls -ld ${IMG_ROOT_BUILD_DIR} || true
+          ls -ld ${IMG_ROOT_BUILD_DIR}
           echo "=== cache files ownership/perm ==="
-          stat -c "${{ env.STAT_SYNTAX }}" "${IMG_ROOT_BUILD_DIR}/.ccache" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_global" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_local" 2>/dev/null || true
+          stat -c "${{ env.STAT_SYNTAX }}" "${IMG_ROOT_BUILD_DIR}/.ccache" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_global" "${IMG_ROOT_BUILD_DIR}/build.*-13.0-devel/.cache_package_local" 2>/dev/null
           echo "=== THREAD_CONTROL / THREADCOUNT env ==="
-          env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT' || true
+          env | grep -E 'THREAD|THREAD_CONTROL|THREADCOUNT'
           echo "=== running pkgbuild / pkgbuilder processes ==="
-          ps -ef | egrep 'pkgbuild|pkgbuilder.py' || true
+          ps -ef | egrep 'pkgbuild|pkgbuilder.py'
           echo "=== CURRENT make PROCESSES ==="
-          ps -ef | grep "[m]ake" || true
+          ps -ef | grep "[m]ake"
           NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
           PER_JOB_MB=${PER_JOB_MB:-2000}
           RESERVE_MB=${RESERVE_MB:-2048}
@@ -542,7 +542,7 @@ jobs:
           set -euo pipefail
           IMAGE="${{ env.EE_DistroTag }}"
           echo "Running in-container diagnostics inside image: $IMAGE"
-          docker image pull "$IMAGE" || true
+          docker image pull "$IMAGE"
           docker run --rm \
             --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
             --group-add ${{ env.HOST_GID }} \
@@ -553,22 +553,22 @@ jobs:
             DIAG_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics
             DIAG_LOG="$DIAG_DIR/in-container-base-image.log"
             mkdir -p "$DIAG_DIR"
-            echo "BASE IMAGE CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG" || true
-            echo "--- id ---" >> "$DIAG_LOG" 2>&1 || true
-            id >> "$DIAG_LOG" 2>&1 || true
-            echo "--- ${{ env.IMG_ROOT_BUILD_DIR }} listing ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}" || true >> "$DIAG_LOG" 2>&1 || true
-            echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1 || true
-            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1 || true
-            TOOLCHAIN_DIR=$(ls -d "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain 2>/dev/null || true)
+            echo "BASE IMAGE CONTAINER DIAGNOSTIC: $(date -u)" > "$DIAG_LOG"
+            echo "--- id ---" >> "$DIAG_LOG" 2>&1
+            id >> "$DIAG_LOG" 2>&1
+            echo "--- ${{ env.IMG_ROOT_BUILD_DIR }} listing ---" >> "$DIAG_LOG" 2>&1
+            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}" >> "$DIAG_LOG" 2>&1
+            echo "--- toolchain dirs ---" >> "$DIAG_LOG" 2>&1
+            ls -ld "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain >>"$DIAG_LOG" 2>&1
+            TOOLCHAIN_DIR=$(ls -d "${{ env.IMG_ROOT_BUILD_DIR }}"/build.*-13.0-devel/toolchain 2>/dev/null)
             if [ -n "$TOOLCHAIN_DIR" ]; then
-              echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1 || true
-              ls -l "$TOOLCHAIN_DIR/bin" >> "$DIAG_LOG" 2>&1 || true
+              echo "Toolchain: $TOOLCHAIN_DIR" >> "$DIAG_LOG" 2>&1
+              ls -l "$TOOLCHAIN_DIR/bin" >> "$DIAG_LOG" 2>&1
             else
-              echo "No toolchain directory present" >> "$DIAG_LOG" 2>&1 || true
+              echo "No toolchain directory present" >> "$DIAG_LOG" 2>&1
             fi
             # copy any existing glibc config.log into diagnostics
-            find "${{ env.IMG_ROOT_BUILD_DIR }}" -type f -path "*${{ env.IMG_ROOT_BUILD_DIR }}/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR/" \; 2>/dev/null || true
+            find "${{ env.IMG_ROOT_BUILD_DIR }}" -type f -path "*${{ env.IMG_ROOT_BUILD_DIR }}/glibc-*/config.log" -maxdepth 6 -print -exec cp {} "$DIAG_DIR/" \; 2>/dev/null
           '
 
       - name: Upload CI diagnostics (base image)
@@ -628,12 +628,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: $PWD" || true
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
-          [ "${{ env.DEBUG }}" == "true" ] && ls -al $PWD || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: $PWD"
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[github.workspace]: ${{ github.workspace }}"
+          [ "${{ env.DEBUG }}" == "true" ] && ls -al $PWD
           # set some build performance flags
           NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[NB_CORES]: $NB_CORES" || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[NB_CORES]: $NB_CORES"
 
           # pull the image (authentication is handled by docker/login-action@v4)
           if [[ "${{ env.DEBUG }}" == "true" ]]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
@@ -733,13 +733,13 @@ jobs:
           DIAG_FILE="${RUNNER_TEMP:-/tmp}/diagnostic_pre_chown.txt"
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
             echo "Writing pre-chown diagnostic to ${DIAG_FILE}"
-            echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${DIAG_FILE}" || true
-            ls -al "${{ github.workspace }}" | sed -n '1,200p' >> "${DIAG_FILE}" || true
-            ls -alR "${{ github.workspace }}" | sed -n '1,500p' >> "${DIAG_FILE}" || true
-            echo "END DIAGNOSTIC" >> "${DIAG_FILE}" || true
+            echo "DIAGNOSTIC PRE-CHOWN: $(/bin/date -u)" > "${DIAG_FILE}"
+            ls -al "${{ github.workspace }}" | sed -n '1,200p' >> "${DIAG_FILE}"
+            ls -alR "${{ github.workspace }}" | sed -n '1,500p' >> "${DIAG_FILE}"
+            echo "END DIAGNOSTIC" >> "${DIAG_FILE}"
           else
             # create an empty diagnostic file for symmetry so later steps can reference it
-            : > "${DIAG_FILE}" || true
+            : > "${DIAG_FILE}"
           fi
 
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
@@ -773,13 +773,13 @@ jobs:
                   "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" || true
+                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
 
                 sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
                 sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
 
                 stat -c "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" || true
+                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
                   # exit 1
               fi
 
@@ -820,16 +820,16 @@ jobs:
       - name: Determine built ${{ env.EE_Distro }} image path
         id: determine-image-path
         run: |
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: ${{ github.workspace }}" || true
+          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: ${{ github.workspace }}"
           if [ -d ${{ github.workspace }}/target ]; then
             lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
-            [ "${{ env.DEBUG }}" == "true" ] && echo "[lines]: $lines" || true
+            [ "${{ env.DEBUG }}" == "true" ] && echo "[lines]: $lines"
             if [ $lines -ne 0 ]; then
               pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
               [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_pathfilename]: $pathfilename"
-              echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT || true
+              echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
               filename="${pathfilename##*/}"
-              [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_filename]: $filename" || true
+              [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_filename]: $filename"
               echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
             else
               echo "No built image found in target directory."
@@ -888,16 +888,16 @@ jobs:
           C="${{ env.BUILD_DIR }}"
           # Adjust ownership and permissions
           for dir in "$C"/{.ccache,.stamps}; do
-            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$dir" || true
-            sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$dir" || true
+            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "$dir"
+            sudo chmod -R ${{ env.CHMOD_SYNTAX }} "$dir"
           done
 
           # Ensure specific files exist
-          touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
-          sudo chmod ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local" || true
+          touch "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
+          sudo chmod ${{ env.CHMOD_SYNTAX }} "${{ env.BUILD_DIR }}/.cache_package_global" "${{ env.BUILD_DIR }}/.cache_package_local"
 
           # Handle workspace ownership for self-hosted runners
           if [ "${{ needs.resolve-runner.outputs.runner }}" == "self-hosted" ]; then
             echo "Adjusting workspace ownership to ${{ env.IMG_UID }}:${{ env.IMG_GID }}"
-            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}" || true
+            sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}"
           fi
