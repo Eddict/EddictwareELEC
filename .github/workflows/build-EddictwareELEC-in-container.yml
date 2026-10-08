@@ -477,8 +477,8 @@ jobs:
 
           VOLUME_ARG=(
             -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/.ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/files:${{ env.IMG_ROOT_BUILD_DIR }}/cachefiles"
           )
