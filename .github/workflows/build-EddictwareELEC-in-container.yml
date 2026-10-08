@@ -482,6 +482,10 @@ jobs:
             -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/files:${{ env.IMG_ROOT_BUILD_DIR }}/cachefiles"
           )
+          for path in "${VOLUME_ARG[@]#-v}"; do
+            [ -n "$path" ] && stat -c "${{ env.STAT_SYNTAX }}" "${path%%:*}"
+          done
+          exit 1
 
           # run the container (use debug env values when workflow input `debug` is 'true')
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
@@ -557,6 +561,7 @@ jobs:
             --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}" \
             ${WORKDIR_ARG} \
             "${VOLUME_ARG[@]}" \
+            -e VOLUME_STR="${VOLUME_ARG[*]}" \
             "${CCACHE_ARG[@]}" \
             ${USER_ARG} \
             ${GROUP_ARG} \
@@ -577,6 +582,9 @@ jobs:
 
               if (( 0 == 0 )) || [[ "${{ env.DEBUG }}" == "true" ]]; then
                 id
+                for path in ${VOLUME_STR//-v/}; do
+                  stat -c "${{ env.STAT_SYNTAX }}" "${path#*:}"
+                done
                 stat -c "${{ env.STAT_SYNTAX }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh" \
