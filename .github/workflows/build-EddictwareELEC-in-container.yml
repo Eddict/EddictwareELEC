@@ -480,12 +480,10 @@ jobs:
             -v "${{ env.LOCAL_BUILD_CACHE }}/.ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/files:${{ env.IMG_ROOT_BUILD_DIR }}/cachefiles"
           )
           for path in "${VOLUME_ARG[@]#-v}"; do
             [ -n "$path" ] && stat -c "${{ env.STAT_SYNTAX }}" "${path%%:*}"
           done
-          exit 1
 
           # run the container (use debug env values when workflow input `debug` is 'true')
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
@@ -591,17 +589,14 @@ jobs:
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
                   "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
-
-                chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
-                chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
-
-                stat -c "${{ env.STAT_SYNTAX }}" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
               fi
+
+              cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" || true
 
               . "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
               make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
+
+              cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" || true
             '\'''
           docker_exit_code=$?
 
@@ -663,7 +658,7 @@ jobs:
               if [ ! -d ${{ github.workspace }}/../target_archive ]; then
                 mkdir --parents "${{ github.workspace }}/../target_archive"
               fi
-              if [ "$(cp "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}" "${{ github.workspace }}/../target_archive")" ]; then # --update=older
+              if [ "$(cp --archive "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}" "${{ github.workspace }}/../target_archive")" ]; then # --update=older
                 echo "Copied built image to ${{ github.workspace }}/../target_archive"
               else
                 echo "No newer built image to copy to ${{ github.workspace }}/../target_archive"
