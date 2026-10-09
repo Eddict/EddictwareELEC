@@ -365,14 +365,17 @@ jobs:
             "${{ env.LOCAL_BUILD_CACHE }}/.cache_package"
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
         run: |
+          sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.BUILD_DIR_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_DIR_PATHS }}
           [[ "${{ env.DEBUG }}" == "true" ]] && stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_DIR_PATHS }}
 
+          sudo mkdir -p "${{ github.workspace }}"
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ github.workspace }}"
           [[ "${{ env.DEBUG }}" == "true" ]] && stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
 
+          sudo mkdir -p ${{ env.BUILD_CACHE_PATHS }}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.BUILD_CACHE_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
           [[ "${{ env.DEBUG }}" == "true" ]] && stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_CACHE_PATHS }}
