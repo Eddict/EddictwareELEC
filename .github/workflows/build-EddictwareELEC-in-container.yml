@@ -367,27 +367,27 @@ jobs:
         run: |
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.BUILD_DIR_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_DIR_PATHS }}
-          stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_DIR_PATHS }}
+          [[ "${{ env.DEBUG }}" == "true" ]] && stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_DIR_PATHS }}
 
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ github.workspace }}"
-          stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
+          [[ "${{ env.DEBUG }}" == "true" ]] && stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
 
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.BUILD_CACHE_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
-          stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_CACHE_PATHS }}
+          [[ "${{ env.DEBUG }}" == "true" ]] && stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_CACHE_PATHS }}
 
       - name: Build ${{ env.EE_Distro }} image
         id: build-image
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: $PWD"
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[github.workspace]: ${{ github.workspace }}"
-          [ "${{ env.DEBUG }}" == "true" ] && ls -al $PWD
+          [[ "${{ env.DEBUG }}" == "true" ]] && echo "[pwd]: $PWD"
+          [[ "${{ env.DEBUG }}" == "true" ]] && echo "[github.workspace]: ${{ github.workspace }}"
+          [[ "${{ env.DEBUG }}" == "true" ]] && ls -al $PWD
           # set some build performance flags
           NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[NB_CORES]: $NB_CORES"
+          [[ "${{ env.DEBUG }}" == "true" ]] && echo "[NB_CORES]: $NB_CORES"
 
           # pull the image (authentication is handled by docker/login-action@v4)
           if [[ "${{ env.DEBUG }}" == "true" ]]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
@@ -506,17 +506,10 @@ jobs:
             bash -c 'umask 0002 && exec bash -lc '\''
               git config --global --add safe.directory "${{ env.IMG_ROOT_BUILD_DIR }}"
 
-              if (( 0 == 0 )) || [[ "${{ env.DEBUG }}" == "true" ]]; then
-                id
+              if [[ "${{ env.DEBUG }}" == "true" ]]; then
                 for path in ${VOLUME_STR//-v/}; do
                   stat -c "${{ env.STAT_SYNTAX }}" "${path#*:}"
                 done
-                stat -c "${{ env.STAT_SYNTAX }}" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-                  "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps"
               fi
 
               cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" || true
@@ -536,14 +529,6 @@ jobs:
           key: ${{ steps.restore-build-caches.outputs.cache-primary-key }}
           path: ${{ env.LOCAL_BUILD_CACHE }}
 
-      - name: github-workspace
-        id: ls-ghws
-        continue-on-error: true
-        if: ${{ inputs.debug }}
-        run: |
-          echo "[github.workspace]: ${{ github.workspace }}"
-          ls -al ${{ github.workspace }}
-
       # Upload diagnostics on failure and the built image when available.
       - name: Upload build logs
         uses: actions/upload-artifact@v7
@@ -559,16 +544,16 @@ jobs:
       - name: Determine built ${{ env.EE_Distro }} image path
         id: determine-image-path
         run: |
-          [ "${{ env.DEBUG }}" == "true" ] && echo "[pwd]: ${{ github.workspace }}"
+          [[ "${{ env.DEBUG }}" == "true" ]] && echo "[pwd]: ${{ github.workspace }}"
           if [ -d ${{ github.workspace }}/target ]; then
             lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
-            [ "${{ env.DEBUG }}" == "true" ] && echo "[lines]: $lines"
+            [[ "${{ env.DEBUG }}" == "true" ]] && echo "[lines]: $lines"
             if [ $lines -ne 0 ]; then
               pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
-              [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_pathfilename]: $pathfilename"
+              [[ "${{ env.DEBUG }}" == "true" ]] && echo "[EE_image_pathfilename]: $pathfilename"
               echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
               filename="${pathfilename##*/}"
-              [ "${{ env.DEBUG }}" == "true" ] && echo "[EE_image_filename]: $filename"
+              [[ "${{ env.DEBUG }}" == "true" ]] && echo "[EE_image_filename]: $filename"
               echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
             else
               echo "No built image found in target directory."
