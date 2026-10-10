@@ -397,6 +397,13 @@ jobs:
           # Pull image best-effort
           docker image pull "${IMAGE}"
 
+          DIAG_LOG="${{ github.workspace }}/in-container.log"
+          echo "DIAG_LOG: ${DIAG_LOG}"
+          touch "${DIAG_LOG}"
+          sudo chown ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${DIAG_LOG}"
+          sudo chmod ${{ env.CHMOD_SYNTAX }} "${DIAG_LOG}"
+          sudo stat -c "${{ env.STAT_SYNTAX }}" "${DIAG_LOG}"
+
           # Run container with matched image user and supplementary host group
           . "${{ github.workspace }}/container_params.sh"
           docker run \
@@ -411,7 +418,7 @@ jobs:
               set -euo pipefail
               DIAG_LOG="${PWD}/in-container.log"
               echo "DIAG_LOG: ${DIAG_LOG}"
-              touch "${DIAG_LOG}"
+              stat -c "${{ env.STAT_SYNTAX }}" "${DIAG_LOG}"
               {
                 echo "CONTAINER DIAGNOSTIC: $(date -u)"
                 echo "--- id ---"
