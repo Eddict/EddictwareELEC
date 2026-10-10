@@ -99,6 +99,7 @@ jobs:
     #   && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
       BUILDKIT_PROGRESS: 'auto' # 'plain' 'quiet'
+      USE_KNOWN_UID_GID: 'true'
     # Expose step outputs as job outputs
     outputs:
       ee_distrotag: ${{ steps.compose-image-tag.outputs.EE_DistroTag }}
@@ -127,6 +128,8 @@ jobs:
           echo "EE_DistroTag=${dTag,,}" | tee -a $GITHUB_OUTPUT # for the job output / other jobs
 
       - name: Log in to registry
+        id: log-in-to-registry
+        if: ${{ env.USE_KNOWN_UID_GID != 'true' }}
         uses: docker/login-action@v4
         with:
           # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000
@@ -142,19 +145,25 @@ jobs:
           HOST_UID=$(id -u)
           HOST_GID=$(id -g)
 
-          if IDS=$(docker run --rm --pull=always --entrypoint sh ${{ env.EE_DistroTag }} -c 'echo "$(id -u) $(id -g)"'); then
-            read -r IMG_UID IMG_GID <<< "$IDS"
+          if [[ "${{ env.USE_KNOWN_UID_GID }}" == "true" ]]; then
+            # hardcode IMG_UID and IMG_GID to speed up the workflow by avoiding fetching from the image
+            IMG_UID=1000
+            IMG_GID=1000
           else
-            echo "::warning::Failed to fetch image UID/GID from ${{ env.EE_DistroTag }}. Falling back to host 'docker' user/group."
+            if IDS=$(docker run --rm --pull=always --entrypoint sh ${{ env.EE_DistroTag }} -c 'echo "$(id -u) $(id -g)"'); then
+              read -r IMG_UID IMG_GID <<< "$IDS"
+            else
+              echo "::warning::Failed to fetch image UID/GID from ${{ env.EE_DistroTag }}. Falling back to host 'docker' user/group."
 
-            if ! IMG_UID=$(id -u docker); then
-              echo "::warning::Failed to fetch UID for user docker on the host. Falling back to Host UID ($HOST_UID)."
-              IMG_UID=$HOST_UID
-            fi
+              if ! IMG_UID=$(id -u docker); then
+                echo "::warning::Failed to fetch UID for user docker on the host. Falling back to Host UID ($HOST_UID)."
+                IMG_UID=$HOST_UID
+              fi
 
-            if ! IMG_GID=$(id -g docker); then
-              echo "::warning::Failed to fetch GID for group docker on the host. Falling back to Host GID ($HOST_GID)."
-              IMG_GID=$HOST_GID
+              if ! IMG_GID=$(id -g docker); then
+                echo "::warning::Failed to fetch GID for group docker on the host. Falling back to Host GID ($HOST_GID)."
+                IMG_GID=$HOST_GID
+              fi
             fi
           fi
 
