@@ -370,10 +370,7 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail
-          DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
-          echo "DIAG_DIR: ${DIAG_DIR}"
-          mkdir --parents "${DIAG_DIR}"
-          DIAG_LOG="${DIAG_DIR}/host.log"
+          DIAG_LOG="${{ github.workspace }}/host.log"
           echo "DIAG_LOG: ${DIAG_LOG}"
           touch "${DIAG_LOG}"
           {
@@ -400,10 +397,6 @@ jobs:
           # Pull image best-effort
           docker image pull "${IMAGE}"
 
-          DIAG_DIR="${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics"
-          echo "DIAG_DIR: ${DIAG_DIR}"
-          sudo mkdir --parents "${DIAG_DIR}"
-
           # Run container with matched image user and supplementary host group
           . "${{ github.workspace }}/container_params.sh"
           docker run \
@@ -413,15 +406,10 @@ jobs:
             ${MEMORY_ARG} \
             -w "${{ env.IMG_ROOT_BUILD_DIR }}" \
             -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
-            -e DIAG_DIR="${DIAG_DIR}" \
             "$IMAGE" \
             bash -c 'umask 0002 && exec bash -lc '\''
               set -euo pipefail
-              echo "PWD: ${PWD}"
-              ls -al "${PWD}"
-              echo "DIAG_DIR: ${DIAG_DIR}"
-              ls -al "${DIAG_DIR}"
-              DIAG_LOG="${DIAG_DIR}/in-container.log"
+              DIAG_LOG="${PWD}/in-container.log"
               echo "DIAG_LOG: ${DIAG_LOG}"
               touch "${DIAG_LOG}"
               {
@@ -461,8 +449,8 @@ jobs:
         with:
           name: ci-diagnostics-${{ env.OS_Codename }}-${{ env.EE_Arch }}
           path: |
-            ci-diagnostics
-            ${{ env.BUILD_DIR }}/**/config.log
+            "${{ github.workspace }}/*.log"
+            "${{ env.BUILD_DIR }}/**/config.log"
           if-no-files-found: warn
 
       - name: Change ownership and permissions of build directories
