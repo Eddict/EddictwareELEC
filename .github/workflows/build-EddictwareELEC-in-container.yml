@@ -245,8 +245,6 @@ jobs:
 
       - name: Create build_recommend script
         id: create-build-recommend
-        env:
-          IMG_ROOT_BUILD_DIR: ${{ env.IMG_ROOT_BUILD_DIR }}
         run: |
           # create a small script in the workspace to compute a safe -j inside the container
           cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
@@ -298,7 +296,7 @@ jobs:
           set -euo pipefail
           DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
           DIAG_LOG="$DIAG_DIR/host.log"
-          mkdir -p "$DIAG_DIR"
+          mkdir --parents "$DIAG_DIR"
           {
             echo "HOST DIAGNOSTIC: $(date -u)"
             uname -a
@@ -312,6 +310,8 @@ jobs:
         id: in-container-diagnostics
         # if: ${{ inputs.debug }}
         # continue-on-error: true
+        env:
+          IMG_ROOT_BUILD_DIR: ${{ env.IMG_ROOT_BUILD_DIR }}
         run: |
           set -euo pipefail
           IMAGE="${{ env.EE_DistroTag }}"
@@ -319,6 +319,8 @@ jobs:
 
           # Pull image best-effort
           docker image pull "$IMAGE"
+
+          mkdir --parents "${{ env.IMG_ROOT_BUILD_DIR }}"
 
           # Run container with matched image user and supplementary host group
           . "${{ github.workspace }}/container_params.sh"
@@ -334,7 +336,7 @@ jobs:
               set -euo pipefail
               DIAG_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics
               DIAG_LOG="$DIAG_DIR/in-container.log"
-              mkdir -p "$DIAG_DIR"
+              mkdir --parents "$DIAG_DIR"
               {
                 echo "CONTAINER DIAGNOSTIC: $(date -u)"
                 echo "--- id ---"
@@ -434,11 +436,11 @@ jobs:
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
             "${{ env.LOCAL_BUILD_CACHE }}/toolchain"
         run: |
-          sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
+          sudo mkdir --parents ${{ env.BUILD_DIR_PATHS }}
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_DIR_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_DIR_PATHS }}
 
-          sudo mkdir -p ${{ env.BUILD_CACHE_PATHS }}
+          sudo mkdir --parents ${{ env.BUILD_CACHE_PATHS }}
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_CACHE_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
 
@@ -459,21 +461,21 @@ jobs:
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
             "${{ env.LOCAL_BUILD_CACHE }}/toolchain"
         run: |
-          sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
+          sudo mkdir --parents ${{ env.BUILD_DIR_PATHS }}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.BUILD_DIR_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_DIR_PATHS }}
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
             stat -c "${{ env.STAT_SYNTAX }}" ${{ env.BUILD_DIR_PATHS }}
           fi
 
-          sudo mkdir -p "${{ github.workspace }}"
+          sudo mkdir --parents "${{ github.workspace }}"
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} "${{ github.workspace }}"
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} "${{ github.workspace }}"
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
             stat -c "${{ env.STAT_SYNTAX }}" "${{ github.workspace }}"
           fi
 
-          sudo mkdir -p ${{ env.BUILD_CACHE_PATHS }}
+          sudo mkdir --parents ${{ env.BUILD_CACHE_PATHS }}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.BUILD_CACHE_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
