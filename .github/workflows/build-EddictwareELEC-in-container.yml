@@ -226,7 +226,7 @@ jobs:
         run: |
           # Check if all required cache dirs/files exist and are non-empty
           missing=0
-          for d in ${{ env.BUILD_DIR }}/.ccache ${{ env.BUILD_DIR }}/.stamps ${{ env.BUILD_DIR }}/.cache_package_global sources; do
+          for d in ${{ env.BUILD_DIR }}/.ccache ${{ env.BUILD_DIR }}/.cache_package_global sources; do
             if [ ! -e "$d" ] || [ "$(ls -A $d 2>/dev/null | wc -l)" -eq 0 ]; then
               echo "Cache missing or empty: $d"
               missing=1
@@ -267,7 +267,6 @@ jobs:
             "${{ env.LOCAL_BUILD_CACHE }}"
             "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
             # "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
-            "${{ env.LOCAL_BUILD_CACHE }}/.cache_package"
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
         run: |
           sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
@@ -361,7 +360,6 @@ jobs:
             "${{ env.LOCAL_BUILD_CACHE }}"
             "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
             # "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
-            "${{ env.LOCAL_BUILD_CACHE }}/.cache_package"
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
         run: |
           sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
@@ -560,45 +558,35 @@ jobs:
           overwrite: true
           include-hidden-files: true
 
-      - name: Determine built ${{ env.EE_Distro }} image path
+      - name: Determine ${{ env.EE_Distro }} image path
         id: determine-image-path
         run: |
-          [[ "${{ env.DEBUG }}" == "true" ]] && echo "[pwd]: ${{ github.workspace }}"
           if [ -d ${{ github.workspace }}/target ]; then
             lines=$(find ${{ github.workspace }}/target -maxdepth 1 -type f -iname "${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz" 2>/dev/null | wc -l)
-            [[ "${{ env.DEBUG }}" == "true" ]] && echo "[lines]: $lines"
             if [ $lines -ne 0 ]; then
               pathfilename=$(ls -t ${{ github.workspace }}/target/${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}*.img.gz | head --lines=1)
               [[ "${{ env.DEBUG }}" == "true" ]] && echo "[EE_image_pathfilename]: $pathfilename"
-              echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT
+              echo "EE_image_pathfilename=$pathfilename" >> $GITHUB_OUTPUT || true
               filename="${pathfilename##*/}"
-              [[ "${{ env.DEBUG }}" == "true" ]] && echo "[EE_image_filename]: $filename"
+              [[ "${{ env.DEBUG }}" == "true" ]] && echo "[EE_image_filename]: $filename" || true
               echo "EE_image_filename=$filename" >> $GITHUB_OUTPUT
-            else
-              echo "No built image found in target directory."
-            fi
-          else
-            echo "No target directory found."
-          fi
-
-      - name: Copy built ${{ env.EE_Distro }} image to archive
-        id: copy-image-to-archive
-        if: ${{ needs.resolve-runner.outputs.runner == 'self-hosted' }}
-        run: |
-          if [ -d ${{ github.workspace }}/target ]; then
-              if [ ! -d ${{ github.workspace }}/../target_archive ]; then
-                mkdir --parents "${{ github.workspace }}/../target_archive"
-              fi
-              if [ "$(cp --archive "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}" "${{ github.workspace }}/../target_archive")" ]; then # --update=older
-                echo "Copied built image to ${{ github.workspace }}/../target_archive"
-              else
-                echo "No newer built image to copy to ${{ github.workspace }}/../target_archive"
-              fi
             else
               echo "No built image found in target directory, skipping copy."
             fi
           else
             echo "No target directory found, skipping copy of built image."
+          fi
+
+      - name: Copy built ${{ env.EE_Distro }} image to archive
+        id: copy-image-to-archive
+        if: ${{ steps.determine-image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
+        run: |
+          dest_path="${{ github.workspace }}/../target_archive"
+          mkdir --parents "$dest_path"
+          if cp --archive --update=older "${{ steps.determine-image-path.outputs.EE_image_pathfilename }}" "$dest_path"; then
+            [[ "${{ env.DEBUG }}" == "true" ]] && echo "Copied built image to $dest_path"
+          else
+            echo "No newer built image to copy to $dest_path"
           fi
 
       - name: Upload built ${{ env.EE_Distro }} image
