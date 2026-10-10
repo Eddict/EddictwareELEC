@@ -142,17 +142,16 @@ jobs:
           HOST_UID=$(id -u)
           HOST_GID=$(id -g)
 
-          # If the image check fails, fall back to the actual runtime host user/group
-          if ! IMG_UID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -u); then
-            echo "::warning::Failed to fetch image UID from ${{ env.EE_DistroTag }}. Check for user docker on the host."
+          if IDS=$(docker run --rm --pull=always --entrypoint sh ${{ env.EE_DistroTag }} -c 'echo "$(id -u) $(id -g)"'); then
+            read -r IMG_UID IMG_GID <<< "$IDS"
+          else
+            echo "::warning::Failed to fetch image UID/GID from ${{ env.EE_DistroTag }}. Falling back to host 'docker' user/group."
+
             if ! IMG_UID=$(id -u docker); then
               echo "::warning::Failed to fetch UID for user docker on the host. Falling back to Host UID ($HOST_UID)."
               IMG_UID=$HOST_UID
             fi
-          fi
 
-          if ! IMG_GID=$(docker run --rm --pull=always --entrypoint id ${{ env.EE_DistroTag }} -g); then
-            echo "::warning::Failed to fetch image GID from ${{ env.EE_DistroTag }}. Check for group docker on the host."
             if ! IMG_GID=$(id -g docker); then
               echo "::warning::Failed to fetch GID for group docker on the host. Falling back to Host GID ($HOST_GID)."
               IMG_GID=$HOST_GID
@@ -492,8 +491,8 @@ jobs:
 
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
           . "${{ github.workspace }}/container_params.sh" && docker run \
-            --rm $MEMORY_ARG \
-            --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}" \
+            --rm \
+            --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}.${{ github.run_id }}.${{ github.run_attempt }}" \
             ${WORKDIR_ARG} \
             "${VOLUME_ARG[@]}" \
             -e VOLUME_STR="${VOLUME_ARG[*]}" \
