@@ -371,8 +371,11 @@ jobs:
         run: |
           set -euo pipefail
           DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
-          DIAG_LOG="${DIAG_DIR}/host.log"
+          echo "DIAG_DIR: ${DIAG_DIR}"
           mkdir --parents "${DIAG_DIR}"
+          DIAG_LOG="${DIAG_DIR}/host.log"
+          echo "DIAG_LOG: ${DIAG_LOG}"
+          touch "${DIAG_LOG}"
           {
             echo "HOST DIAGNOSTIC: $(date -u)"
             uname -a
@@ -398,6 +401,7 @@ jobs:
           docker image pull "${IMAGE}"
 
           DIAG_DIR="${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics"
+          echo "DIAG_DIR: ${DIAG_DIR}"
           sudo mkdir --parents "${DIAG_DIR}"
 
           # Run container with matched image user and supplementary host group
@@ -414,6 +418,8 @@ jobs:
             bash -c 'umask 0002 && exec bash -lc '\''
               set -euo pipefail
               DIAG_LOG="${DIAG_DIR}/in-container.log"
+              echo "DIAG_LOG: ${DIAG_LOG}"
+              touch "${DIAG_LOG}"
               {
                 echo "CONTAINER DIAGNOSTIC: $(date -u)"
                 echo "--- id ---"
