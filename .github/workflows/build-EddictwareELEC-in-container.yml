@@ -381,6 +381,7 @@ jobs:
             echo "--- workspace top files ---"
             ls -al "${PWD}" | sed -n '1,200p'
           } > "${DIAG_LOG}" 2>&1
+          cat "${DIAG_LOG}"
 
       - name: In-container diagnostics
         id: in-container-diagnostics
@@ -440,6 +441,7 @@ jobs:
                   fi
                 done
               } > "${DIAG_LOG}" 2>&1
+              cat "${DIAG_LOG}"
             '\'''
           exit 1
 
