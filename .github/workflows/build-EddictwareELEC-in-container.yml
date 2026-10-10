@@ -514,6 +514,17 @@ jobs:
             bash -c 'umask 0002 && exec bash -lc '\''
               git config --global --add safe.directory "${{ env.IMG_ROOT_BUILD_DIR }}"
 
+              # A present stamp and missing executable confirms the inconsistent cache
+              build="${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}"
+              echo "CMake build stamp:"
+              ls -l "$build/.stamps/cmake/build_host" || true
+              echo "Installed CMake executable:"
+              ls -l "$build/toolchain/bin/cmake" || true
+              echo "CMake lookup with toolchain on PATH:"
+              PATH="$build/toolchain/bin:$PATH" command -v cmake || true
+              echo "CMake execution:"
+              "$build/toolchain/bin/cmake" --version || true
+
               if [[ "${{ env.DEBUG }}" == "true" ]]; then
                 for path in ${VOLUME_STR//-v/}; do
                   stat -c "${{ env.STAT_SYNTAX }}" "${path#*:}"
