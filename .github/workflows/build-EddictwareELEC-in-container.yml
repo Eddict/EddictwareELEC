@@ -362,16 +362,16 @@ jobs:
         run: |
           set -euo pipefail
           DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
-          DIAG_LOG="$DIAG_DIR/host.log"
-          mkdir --parents "$DIAG_DIR"
+          DIAG_LOG="${DIAG_DIR}/host.log"
+          mkdir --parents "${DIAG_DIR}"
           {
             echo "HOST DIAGNOSTIC: $(date -u)"
             uname -a
             echo "--- docker --version ---"
             docker --version || echo "docker: not found"
             echo "--- workspace top files ---"
-            ls -al "$PWD" | sed -n '1,200p'
-          } >> "$DIAG_LOG" 2>&1
+            ls -al "${PWD}" | sed -n '1,200p'
+          } >> "${DIAG_LOG}" 2>&1
 
       - name: In-container diagnostics
         id: in-container-diagnostics
@@ -382,10 +382,13 @@ jobs:
         run: |
           set -euo pipefail
           IMAGE="${{ env.EE_DistroTag }}"
-          echo "Running in-container diagnostics inside image: $IMAGE"
+          echo "Running in-container diagnostics inside image: ${IMAGE}"
 
           # Pull image best-effort
-          docker image pull "$IMAGE"
+          docker image pull "${IMAGE}"
+
+          DIAG_DIR="${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics"
+          sudo mkdir --parents "${DIAG_DIR}"
 
           # Run container with matched image user and supplementary host group
           . "${{ github.workspace }}/container_params.sh"
@@ -396,12 +399,11 @@ jobs:
             ${MEMORY_ARG} \
             -w "${{ env.IMG_ROOT_BUILD_DIR }}" \
             -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
+            -e DIAG_DIR="${DIAG_DIR}" \
             "$IMAGE" \
             bash -c 'umask 0002 && exec bash -lc '\''
               set -euo pipefail
-              DIAG_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics
-              DIAG_LOG="$DIAG_DIR/in-container.log"
-              mkdir --parents "$DIAG_DIR"
+              DIAG_LOG="${DIAG_DIR}/in-container.log"
               {
                 echo "CONTAINER DIAGNOSTIC: $(date -u)"
                 echo "--- id ---"
@@ -428,7 +430,7 @@ jobs:
                     cat "$path"
                   fi
                 done
-              } >> "$DIAG_LOG" 2>&1
+              } >> "${DIAG_LOG}" 2>&1
             '\'''
           exit 1
 
