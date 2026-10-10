@@ -341,7 +341,7 @@ jobs:
                 id
                 echo "--- CPU ---"
                 echo "nproc: $(nproc 2>/dev/null || echo unavailable)"
-                echo "Visible processors: $(grep -c '^processor' /proc/cpuinfo || true)"
+                echo "Visible processors: $(grep -c "^processor" /proc/cpuinfo || true)"
                 echo "--- cgroup membership ---"
                 cat /proc/self/cgroup || true
 
@@ -357,7 +357,7 @@ jobs:
                   /sys/fs/cgroup/memory/memory.usage_in_bytes
                 do
                   if [[ -r "$path" ]]; then
-                    printf '%s: ' "$path"
+                    printf "%s: " "$path"
                     cat "$path"
                   fi
                 done
