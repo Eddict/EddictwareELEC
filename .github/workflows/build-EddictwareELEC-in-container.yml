@@ -266,7 +266,7 @@ jobs:
           BUILD_CACHE_PATHS: >-
             "${{ env.LOCAL_BUILD_CACHE }}"
             "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
-            "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
+            # "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
             "${{ env.LOCAL_BUILD_CACHE }}/.cache_package"
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
         run: |
@@ -360,7 +360,7 @@ jobs:
           BUILD_CACHE_PATHS: >-
             "${{ env.LOCAL_BUILD_CACHE }}"
             "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
-            "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
+            # "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
             "${{ env.LOCAL_BUILD_CACHE }}/.cache_package"
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
         run: |
@@ -431,7 +431,7 @@ jobs:
           VOLUME_ARG=(
             -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/.ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
+            # -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
           )
           # for path in "${VOLUME_ARG[@]#-v}"; do
@@ -514,16 +514,16 @@ jobs:
             bash -c 'umask 0002 && exec bash -lc '\''
               git config --global --add safe.directory "${{ env.IMG_ROOT_BUILD_DIR }}"
 
-              # A present stamp and missing executable confirms the inconsistent cache
-              build="${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}"
-              echo "CMake build stamp:"
-              ls -l "$build/.stamps/cmake/build_host" || true
-              echo "Installed CMake executable:"
-              ls -l "$build/toolchain/bin/cmake" || true
-              echo "CMake lookup with toolchain on PATH:"
-              PATH="$build/toolchain/bin:$PATH" command -v cmake || true
-              echo "CMake execution:"
-              "$build/toolchain/bin/cmake" --version || true
+              # # A present stamp and missing executable confirms the inconsistent cache
+              # build="${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}"
+              # echo "CMake build stamp:"
+              # ls -l "$build/.stamps/cmake/build_host" || true
+              # echo "Installed CMake executable:"
+              # ls -l "$build/toolchain/bin/cmake" || true
+              # echo "CMake lookup with toolchain on PATH:"
+              # PATH="$build/toolchain/bin:$PATH" command -v cmake || true
+              # echo "CMake execution:"
+              # "$build/toolchain/bin/cmake" --version || true
 
               if [[ "${{ env.DEBUG }}" == "true" ]]; then
                 for path in ${VOLUME_STR//-v/}; do
