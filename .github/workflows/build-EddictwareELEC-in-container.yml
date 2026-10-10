@@ -220,63 +220,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check for existing build cache (persistent runners)
-        id: check-build-cache
-        if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'self-hosted' }}
-        run: |
-          # Check if all required cache dirs/files exist and are non-empty
-          missing=0
-          for d in ${{ env.BUILD_DIR }}/.ccache ${{ env.BUILD_DIR }}/.cache_package_global sources; do
-            if [ ! -e "$d" ] || [ "$(ls -A $d 2>/dev/null | wc -l)" -eq 0 ]; then
-              echo "Cache missing or empty: $d"
-              missing=1
-            fi
-          done
-          if [ "$missing" -eq 0 ]; then
-            echo "build_cache_present=true" >> $GITHUB_OUTPUT
-          else
-            echo "build_cache_present=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Restore build caches
-        id: restore-build-caches
-        if: ${{ inputs.cache && ((needs.resolve-runner.outputs.runner != 'self-hosted' && inputs.runner == 'blacksmith') || steps.check-build-cache.outputs.build_cache_present != 'true') }}
-        uses: actions/cache/restore@v6
-        with:
-          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
-          path: ${{ env.LOCAL_BUILD_CACHE }}
-      - name: Restore build caches for blacksmith
-        id: restore-build-caches-blacksmith
-        if: ${{ inputs.cache && inputs.runner == 'blacksmith' }}
-        uses: useblacksmith/stickydisk@v1
-        with:
-          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
-          path: ${{ env.LOCAL_BUILD_CACHE }}
-
-      - name: Prepare (cache) dirs for container
-        id: prepare-cache-dirs
-        if: ${{ inputs.cache }}
-        env:
-          BUILD_DIR_PATHS: >-
-            "${{ env.BUILD_DIR }}"
-            "${{ env.BUILD_DIR }}/.ccache"
-            "${{ env.BUILD_DIR }}/.stamps"
-            sources 
-            target
-          BUILD_CACHE_PATHS: >-
-            "${{ env.LOCAL_BUILD_CACHE }}"
-            "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
-            # "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
-            "${{ env.LOCAL_BUILD_CACHE }}/sources"
-        run: |
-          sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
-          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_DIR_PATHS }}
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_DIR_PATHS }}
-
-          sudo mkdir -p ${{ env.BUILD_CACHE_PATHS }}
-          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_CACHE_PATHS }}
-          sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
-
       - name: Prepare container parameters
         id: prepare-container-params
         run: |
@@ -368,7 +311,7 @@ jobs:
       - name: In-container diagnostics
         id: in-container-diagnostics
         # if: ${{ inputs.debug }}
-        continue-on-error: true
+        # continue-on-error: true
         run: |
           set -euo pipefail
           IMAGE="${{ env.EE_DistroTag }}"
@@ -378,7 +321,9 @@ jobs:
           docker image pull "$IMAGE"
 
           # Run container with matched image user and supplementary host group
-          docker run --rm \
+          . "${{ github.workspace }}/container_params.sh"
+          docker run \
+            --rm \
             --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
             --group-add ${{ env.HOST_GID }} \
             ${MEMORY_ARG} \
@@ -430,6 +375,73 @@ jobs:
             ${{ env.BUILD_DIR }}/**/config.log
           if-no-files-found: warn
 
+      - name: Check for existing build cache (persistent runners)
+        id: check-build-cache
+        if: ${{ inputs.cache && needs.resolve-runner.outputs.runner == 'self-hosted' }}
+        env:
+          BUILD_DIR_PATHS: >-
+            "${{ env.BUILD_DIR }}/.ccache"
+            "${{ env.BUILD_DIR }}/.stamps"
+            "${{ env.BUILD_DIR }}/.cache_package_global"
+            "${{ env.BUILD_DIR }}/.cache_package_local"
+            sources 
+            toolchain
+        run: |
+          # Check if all required cache dirs/files exist and are non-empty
+          missing=0
+          for d in "${BUILD_DIR_PATHS[@]}"; do
+            if [ ! -e "$d" ] || [ "$(ls -A $d 2>/dev/null | wc -l)" -eq 0 ]; then
+              echo "Cache missing or empty: $d"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 0 ]; then
+            echo "build_cache_present=true" >> $GITHUB_OUTPUT
+          else
+            echo "build_cache_present=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Restore build caches
+        id: restore-build-caches
+        if: ${{ inputs.cache && ((needs.resolve-runner.outputs.runner != 'self-hosted' && inputs.runner == 'blacksmith') || steps.check-build-cache.outputs.build_cache_present != 'true') }}
+        uses: actions/cache/restore@v6
+        with:
+          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
+          path: ${{ env.LOCAL_BUILD_CACHE }}
+      - name: Restore build caches for blacksmith
+        id: restore-build-caches-blacksmith
+        if: ${{ inputs.cache && inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/stickydisk@v1
+        with:
+          key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
+          path: ${{ env.LOCAL_BUILD_CACHE }}
+
+      - name: Prepare (cache) dirs for container
+        id: prepare-cache-dirs
+        if: ${{ inputs.cache && !inputs.cache }}
+        env:
+          BUILD_DIR_PATHS: >-
+            "${{ env.BUILD_DIR }}"
+            "${{ env.BUILD_DIR }}/.ccache"
+            "${{ env.BUILD_DIR }}/.stamps"
+            sources 
+            target
+            toolchain
+          BUILD_CACHE_PATHS: >-
+            "${{ env.LOCAL_BUILD_CACHE }}"
+            "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
+            "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
+            "${{ env.LOCAL_BUILD_CACHE }}/sources"
+            "${{ env.LOCAL_BUILD_CACHE }}/toolchain"
+        run: |
+          sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_DIR_PATHS }}
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_DIR_PATHS }}
+
+          sudo mkdir -p ${{ env.BUILD_CACHE_PATHS }}
+          sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_CACHE_PATHS }}
+          sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
+
       - name: Change ownership and permissions of build directories
         id: change-ownership-permissions
         env:
@@ -439,11 +451,13 @@ jobs:
             "${{ env.BUILD_DIR }}/.stamps"
             sources 
             target
+            toolchain
           BUILD_CACHE_PATHS: >-
             "${{ env.LOCAL_BUILD_CACHE }}"
             "${{ env.LOCAL_BUILD_CACHE }}/.ccache"
-            # "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
+            "${{ env.LOCAL_BUILD_CACHE }}/.stamps"
             "${{ env.LOCAL_BUILD_CACHE }}/sources"
+            "${{ env.LOCAL_BUILD_CACHE }}/toolchain"
         run: |
           sudo mkdir -p ${{ env.BUILD_DIR_PATHS }}
           sudo chown -R ${{ env.IMG_UID }}:${{ env.IMG_GID }} ${{ env.BUILD_DIR_PATHS }}
@@ -512,8 +526,9 @@ jobs:
           VOLUME_ARG=(
             -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/.ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-            # -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
             -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
+            -v "${{ env.LOCAL_BUILD_CACHE }}/toolchain:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/toolchain" \
           )
           # for path in "${VOLUME_ARG[@]#-v}"; do
           #   [ -n "$path" ] && stat -c "${{ env.STAT_SYNTAX }}" "${path%%:*}"
@@ -571,7 +586,8 @@ jobs:
           fi
 
           # Source host-side container params (MEMORY_ARG etc) before invoking docker
-          . "${{ github.workspace }}/container_params.sh" && docker run \
+          . "${{ github.workspace }}/container_params.sh"
+          docker run \
             --rm \
             --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}.${{ github.run_id }}.${{ github.run_attempt }}" \
             ${MEMORY_ARG} \
