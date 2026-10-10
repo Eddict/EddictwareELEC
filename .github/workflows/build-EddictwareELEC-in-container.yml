@@ -371,7 +371,7 @@ jobs:
             docker --version || echo "docker: not found"
             echo "--- workspace top files ---"
             ls -al "${PWD}" | sed -n '1,200p'
-          } >> "${DIAG_LOG}" 2>&1
+          } > "${DIAG_LOG}" 2>&1
 
       - name: In-container diagnostics
         id: in-container-diagnostics
@@ -430,7 +430,7 @@ jobs:
                     cat "$path"
                   fi
                 done
-              } >> "${DIAG_LOG}" 2>&1
+              } > "${DIAG_LOG}" 2>&1
             '\'''
           exit 1
 
