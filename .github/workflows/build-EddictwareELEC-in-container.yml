@@ -347,6 +347,89 @@ jobs:
       # Repeat the check-repo-folder step to ensure the repository folder is still valid before building the image
       - *check-repo-folder
 
+      - name: Host diagnostics
+        id: host-diagnostics
+        if: ${{ inputs.debug }}
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          DIAG_DIR="${{ github.workspace }}/ci-diagnostics"
+          DIAG_LOG="$DIAG_DIR/host.log"
+          mkdir -p "$DIAG_DIR"
+          {
+            echo "HOST DIAGNOSTIC: $(date -u)"
+            uname -a
+            echo "--- docker --version ---"
+            docker --version || echo "docker: not found"
+            echo "--- workspace top files ---"
+            ls -al "$PWD" | sed -n '1,200p'
+          } >> "$DIAG_LOG" 2>&1
+
+      - name: In-container diagnostics
+        id: in-container-diagnostics
+        # if: ${{ inputs.debug }}
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          IMAGE="${{ env.EE_DistroTag }}"
+          echo "Running in-container diagnostics inside image: $IMAGE"
+
+          # Pull image best-effort
+          docker image pull "$IMAGE"
+
+          # Run container with matched image user and supplementary host group
+          docker run --rm \
+            --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
+            --group-add ${{ env.HOST_GID }} \
+            ${MEMORY_ARG} \
+            -w "${{ env.IMG_ROOT_BUILD_DIR }}" \
+            -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
+            "$IMAGE" \
+            bash -c 'umask 0002 && exec bash -lc '\''
+              set -euo pipefail
+              DIAG_DIR=${{ env.IMG_ROOT_BUILD_DIR }}/ci-diagnostics
+              DIAG_LOG="$DIAG_DIR/in-container.log"
+              mkdir -p "$DIAG_DIR"
+              {
+                echo "CONTAINER DIAGNOSTIC: $(date -u)"
+                echo "--- id ---"
+                id
+                echo "--- CPU ---"
+                echo "nproc: $(nproc 2>/dev/null || echo unavailable)"
+                echo "Visible processors: $(grep -c '^processor' /proc/cpuinfo || true)"
+                echo "--- cgroup membership ---"
+                cat /proc/self/cgroup || true
+
+                for path in \
+                  /sys/fs/cgroup/cpu.max \
+                  /sys/fs/cgroup/cpuset.cpus.effective \
+                  /sys/fs/cgroup/memory.max \
+                  /sys/fs/cgroup/memory.current \
+                  /sys/fs/cgroup/cpu/cpu.cfs_quota_us \
+                  /sys/fs/cgroup/cpu/cpu.cfs_period_us \
+                  /sys/fs/cgroup/cpuset/cpuset.cpus \
+                  /sys/fs/cgroup/memory/memory.limit_in_bytes \
+                  /sys/fs/cgroup/memory/memory.usage_in_bytes
+                do
+                  if [[ -r "$path" ]]; then
+                    printf '%s: ' "$path"
+                    cat "$path"
+                  fi
+                done
+              } >> "$DIAG_LOG" 2>&1
+            '\'''
+          exit 1
+
+      - name: Upload CI diagnostics
+        if: ${{ always() && !cancelled() && inputs.debug }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-diagnostics-${{ env.OS_Codename }}-${{ env.EE_Arch }}
+          path: |
+            ci-diagnostics
+            ${{ env.BUILD_DIR }}/**/config.log
+          if-no-files-found: warn
+
       - name: Change ownership and permissions of build directories
         id: change-ownership-permissions
         env:
@@ -491,6 +574,7 @@ jobs:
           . "${{ github.workspace }}/container_params.sh" && docker run \
             --rm \
             --name "build${{ env.EE_Distro }}.${{ env.OS_Codename }}.${{ github.run_id }}.${{ github.run_attempt }}" \
+            ${MEMORY_ARG} \
             ${WORKDIR_ARG} \
             "${VOLUME_ARG[@]}" \
             -e VOLUME_STR="${VOLUME_ARG[*]}" \
