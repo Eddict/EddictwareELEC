@@ -296,75 +296,83 @@ jobs:
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} ${{ env.BUILD_CACHE_PATHS }}
           sudo chmod -R ${{ env.CHMOD_SYNTAX }} ${{ env.BUILD_CACHE_PATHS }}
 
-      - name: Create build_recommend script
+      - name: Create resource recommendation scripts
         id: create-build-recommend
         run: |
-          # create a small script in the workspace to compute a safe -j inside the container
-          cat > "${{ github.workspace }}/build_recommend.sh" <<'EOF'
-          #!/bin/bash
+          cat > "${{ github.workspace }}/host_memory.sh" <<'HOST_SCRIPT'
           set -euo pipefail
-          NB_CORES=$(grep -c '^processor' /proc/cpuinfo || nproc)
+          HOST_MEM_BYTES=0
+
+          if [[ -r /sys/fs/cgroup/memory.max ]]; then
+            value=$(< /sys/fs/cgroup/memory.max)
+            if [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+              HOST_MEM_BYTES=$value
+            fi
+          fi
+
+          if (( HOST_MEM_BYTES == 0 )) && [[ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]]; then
+            value=$(< /sys/fs/cgroup/memory/memory.limit_in_bytes)
+            if [[ "$value" =~ ^[1-9][0-9]*$ ]] && (( value < 9223372036854771712 )); then
+              HOST_MEM_BYTES=$value
+            fi
+          fi
+
+          if (( HOST_MEM_BYTES == 0 )); then
+            mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+            HOST_MEM_BYTES=$((mem_kb * 1024))
+          fi
+          HOST_SCRIPT
+
+          source "${{ github.workspace }}/host_memory.sh"
+          echo "host_mem_bytes=$HOST_MEM_BYTES" >> "$GITHUB_OUTPUT"
+
+          cat > "${{ github.workspace }}/build_recommend.sh" <<'CONTAINER_SCRIPT'
+          set -euo pipefail
+          NB_CORES=$(nproc)
+          CPU_RESERVE=1
           PER_JOB_MB=${PER_JOB_MB:-2000}
           RESERVE_MB=${RESERVE_MB:-2048}
           mem_bytes=0
-          if [ -f /sys/fs/cgroup/memory.max ]; then
-            memmax=$(cat /sys/fs/cgroup/memory.max)
-            if [ "$memmax" != "max" ]; then
-              mem_bytes=$memmax
+
+          if [[ -r /sys/fs/cgroup/memory.max ]]; then
+            value=$(< /sys/fs/cgroup/memory.max)
+            if [[ "$value" =~ ^[1-9][0-9]*$ ]]; then
+              mem_bytes=$value
             fi
           fi
-          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-            if [ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]; then
-              memlim=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
-              if [ "$memlim" -lt 9223372036854771712 ] 2>/dev/null; then
-                mem_bytes=$memlim
-              fi
+
+          if (( mem_bytes == 0 )) && [[ -r /sys/fs/cgroup/memory/memory.limit_in_bytes ]]; then
+            value=$(< /sys/fs/cgroup/memory/memory.limit_in_bytes)
+            if [[ "$value" =~ ^[1-9][0-9]*$ ]] && (( value < 9223372036854771712 )); then
+              mem_bytes=$value
             fi
           fi
-          if [ "$mem_bytes" -eq 0 ] 2>/dev/null; then
-            mem_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-            mem_bytes=$((mem_kb*1024))
+
+          if (( mem_bytes == 0 )); then
+            mem_kb=$(awk '/MemAvailable/ {print $2}' /proc/meminfo)
+            mem_bytes=$((mem_kb * 1024))
           fi
-          TOTAL_MB=$((mem_bytes/1024/1024))
-          USABLE_MB=$((TOTAL_MB-RESERVE_MB))
-          if [ "$USABLE_MB" -lt 256 ]; then
-            USABLE_MB=256;
+
+          TOTAL_MB=$((mem_bytes / 1024 / 1024))
+          USABLE_MB=$((TOTAL_MB - RESERVE_MB))
+          (( USABLE_MB < 256 )) && USABLE_MB=256
+          MAX_J_BY_RAM=$((USABLE_MB / PER_JOB_MB))
+          (( MAX_J_BY_RAM < 1 )) && MAX_J_BY_RAM=1
+
+          MAKE_LOAD_LIMIT=$((NB_CORES - CPU_RESERVE))
+          (( MAKE_LOAD_LIMIT < 1 )) && MAKE_LOAD_LIMIT=1
+          RECOMMENDED_J=$MAKE_LOAD_LIMIT
+          (( MAX_J_BY_RAM < RECOMMENDED_J )) && RECOMMENDED_J=$MAX_J_BY_RAM
+          CONTAINER_SCRIPT
+
+          if [[ "${{ env.DEBUG }}" == "true" ]]; then
+            echo "Host memory bytes: $HOST_MEM_BYTES"
+            echo "Generated host_memory.sh and build_recommend.sh"
           fi
-          MAX_J_BY_RAM=$((USABLE_MB/PER_JOB_MB))
-          if [ "$MAX_J_BY_RAM" -lt 1 ]; then
-            MAX_J_BY_RAM=1;
-          fi
-          CANDIDATE_J=$((NB_CORES+2))
-          if [ "$NB_CORES" -lt "$MAX_J_BY_RAM" ]; then
-            RECOMMENDED_J=$NB_CORES
-          else
-            RECOMMENDED_J=$MAX_J_BY_RAM
-          fi
-          EOF
 
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
             echo "========== build_recommend.sh =========="
             cat "${{ github.workspace }}/build_recommend.sh"
-          fi
-
-          . "${{ github.workspace }}/build_recommend.sh"
-          echo "host_mem_bytes=$mem_bytes" >> "$GITHUB_OUTPUT"
-
-          if [[ "${{ env.DEBUG }}" == "true" ]]; then
-            echo "========== exec build_recommend.sh =========="
-            printf 'NB_CORES=%s\nPER_JOB_MB=%s\nRESERVE_MB=%s\nmem_bytes=%s\nmemmax=%s\nmemlim=%s\nmem_kb=%s\nTOTAL_MB=%s\nUSABLE_MB=%s\nMAX_J_BY_RAM=%s\nCANDIDATE_J=%s\nRECOMMENDED_J=%s\n' \
-              "$NB_CORES" \
-              "$PER_JOB_MB" \
-              "$RESERVE_MB" \
-              "$mem_bytes" \
-              "${memmax:-not-read}" \
-              "${memlim:-not-read}" \
-              "${mem_kb:-not-read}" \
-              "$TOTAL_MB" \
-              "$USABLE_MB" \
-              "$MAX_J_BY_RAM" \
-              "$CANDIDATE_J" \
-              "$RECOMMENDED_J"
           fi
 
       - name: Prepare container parameters
@@ -373,14 +381,20 @@ jobs:
           HOST_MEM_BYTES="${{ steps.create-build-recommend.outputs.host_mem_bytes }}"
           MEMORY_ARG=""
 
-          # on self-hosted runners request a larger container memory
-          if [[ "${{ needs.resolve-runner.outputs.runner }}" == "self-hosted" ]]; then
-            if [[ "$HOST_MEM_BYTES" =~ ^[1-9][0-9]*$ ]]; then
-              MEMORY_LIMIT_BYTES=$((HOST_MEM_BYTES * 80 / 100))
-              MEMORY_ARG="--memory=${MEMORY_LIMIT_BYTES}b"
-            else
-              echo "::warning::Host memory output is invalid; running without a Docker memory limit."
-            fi
+          # # on self-hosted runners request a larger container memory
+          # if [[ "${{ needs.resolve-runner.outputs.runner }}" == "self-hosted" ]]; then
+          #   if [[ "$HOST_MEM_BYTES" =~ ^[1-9][0-9]*$ ]]; then
+          #     MEMORY_LIMIT_BYTES=$((HOST_MEM_BYTES * 80 / 100))
+          #     MEMORY_ARG="--memory=${MEMORY_LIMIT_BYTES}b"
+          #   else
+          #     echo "::warning::Host memory output is invalid; running without a Docker memory limit."
+          #   fi
+          # fi
+          if [[ "$HOST_MEM_BYTES" =~ ^[1-9][0-9]*$ ]]; then
+            MEMORY_LIMIT_BYTES=$((HOST_MEM_BYTES * 80 / 100))
+            MEMORY_ARG="--memory=${MEMORY_LIMIT_BYTES}b"
+          else
+            echo "::warning::Host memory output is invalid; running without a Docker memory limit."
           fi
 
           OUTFILE="${{ github.workspace }}/container_params.sh"
@@ -477,6 +491,23 @@ jobs:
                 done
               } > "${DIAG_LOG}" 2>&1
               cat "${DIAG_LOG}"
+
+              if [[ "${{ env.DEBUG }}" == "true" ]]; then
+                source "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
+                echo "========== exec build_recommend.sh =========="
+                printf 'NB_CORES=%s\nPER_JOB_MB=%s\nRESERVE_MB=%s\nmem_bytes=%s\nmem_kb=%s\nTOTAL_MB=%s\nUSABLE_MB=%s\nMAX_J_BY_RAM=%s\nMAKE_LOAD_LIMIT=%s\nRECOMMENDED_J=%s\n' \
+                  "$NB_CORES" \
+                  "$PER_JOB_MB" \
+                  "$RESERVE_MB" \
+                  "$mem_bytes" \
+                  "${mem_kb:-not-read}" \
+                  "$TOTAL_MB" \
+                  "$USABLE_MB" \
+                  "$MAX_J_BY_RAM" \
+                  "$MAKE_LOAD_LIMIT" \
+                  "$RECOMMENDED_J"
+              fi
+
             '\'''
           exit 1
 
@@ -614,11 +645,6 @@ jobs:
             -e SHOW_STDERR=${SHOW_STDERR_VAL}
           )
 
-          BASH_SCRIPT_ENV_VARS=(
-            -e RECOMMENDED_J="${RECOMMENDED_J}" \
-            -e NB_CORES="${NB_CORES}"
-          )
-
           if (( 0 == 0 )) || [[ "${{ env.DEBUG }}" == "true" ]]; then
             echo "WORKDIR_ARG: ${WORKDIR_ARG}"
             echo "VOLUME_ARG: ${VOLUME_ARG[@]}"
@@ -626,7 +652,6 @@ jobs:
             echo "USER_ARG: $USER_ARG"
             echo "GROUP_ARG: $GROUP_ARG"
             echo "DOCKER_ENV_FLAGS: ${DOCKER_ENV_FLAGS[@]}"
-            echo "BASH_SCRIPT_ENV_VARS: ${BASH_SCRIPT_ENV_VARS[@]}"
             echo "HOST_UID: $HOST_UID"
             echo "HOST_GID: $HOST_GID"
             echo "IMG_UID: $IMG_UID"
@@ -646,7 +671,6 @@ jobs:
             ${USER_ARG} \
             ${GROUP_ARG} \
             "${DOCKER_ENV_FLAGS[@]}" \
-            "${BASH_SCRIPT_ENV_VARS[@]}" \
             -e DISABLE_COLORS=no \
             -e MTCOLORS=auto \
             -e DISTRO=${{ env.EE_Distro }} \
@@ -680,7 +704,8 @@ jobs:
               cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" || true
 
               . "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
-              make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
+              # make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
+              make -j"${RECOMMENDED_J}" -l"${MAKE_LOAD_LIMIT}" image
 
               cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" || true
             '\'''
