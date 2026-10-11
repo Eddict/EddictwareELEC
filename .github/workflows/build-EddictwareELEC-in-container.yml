@@ -704,9 +704,10 @@ jobs:
 
               cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" || true
 
+              stat "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
               . "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
-              # make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
               make -j"${RECOMMENDED_J}" -l"${MAKE_LOAD_LIMIT}" image
+              # make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
 
               cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" || true
             '\'''
