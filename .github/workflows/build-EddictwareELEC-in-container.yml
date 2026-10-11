@@ -496,7 +496,7 @@ jobs:
               cat "${DIAG_LOG}"
 
               if [[ "${{ env.DEBUG }}" == "true" ]]; then
-                source "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
+                source "./build_recommend.sh"
                 echo "========== exec build_recommend.sh =========="
                 printf 'NB_CORES=%s\nPER_JOB_MB=%s\nRESERVE_MB=%s\nmem_bytes=%s\nmem_kb=%s\nTOTAL_MB=%s\nUSABLE_MB=%s\nMAX_J_BY_RAM=%s\nMAKE_LOAD_LIMIT=%s\nRECOMMENDED_J=%s\n' \
                   "$NB_CORES" \
@@ -510,9 +510,7 @@ jobs:
                   "$MAKE_LOAD_LIMIT" \
                   "$RECOMMENDED_J"
               fi
-
             '\'''
-          exit 1
 
       - name: Upload CI diagnostics
         if: ${{ always() && !cancelled() && inputs.debug }}
