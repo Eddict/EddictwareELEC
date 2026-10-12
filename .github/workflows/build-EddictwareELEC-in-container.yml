@@ -362,7 +362,9 @@ jobs:
           MAKE_LOAD_LIMIT=$((NB_CORES - CPU_RESERVE))
           (( MAKE_LOAD_LIMIT < 1 )) && MAKE_LOAD_LIMIT=1
           RECOMMENDED_J=$MAKE_LOAD_LIMIT
-          (( MAX_J_BY_RAM < RECOMMENDED_J )) && RECOMMENDED_J=$MAX_J_BY_RAM
+          if (( MAX_J_BY_RAM < RECOMMENDED_J )); then
+            RECOMMENDED_J=$MAX_J_BY_RAM
+          fi
           CONTAINER_SCRIPT
 
           if [[ "${{ env.DEBUG }}" == "true" ]]; then
@@ -457,7 +459,7 @@ jobs:
             --rm \
             --user ${{ env.IMG_UID }}:${{ env.IMG_GID }} \
             --group-add ${{ env.HOST_GID }} \
-            ${MEMORY_ARG} \
+            "${MEMORY_ARG}" \
             -w "${{ env.IMG_ROOT_BUILD_DIR }}" \
             -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
             "$IMAGE" \
@@ -493,7 +495,7 @@ jobs:
                   fi
                 done
               } > "${DIAG_LOG}" 2>&1
-              cat "${DIAG_LOG}"
+              # cat "${DIAG_LOG}"
 
               if [[ "${{ env.DEBUG }}" == "true" ]]; then
                 source "./build_recommend.sh"
