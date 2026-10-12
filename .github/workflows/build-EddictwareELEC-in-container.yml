@@ -607,11 +607,15 @@ jobs:
 
           VOLUME_ARG=(
             -v "${{ github.workspace }}:${{ env.IMG_ROOT_BUILD_DIR }}" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/.ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
-            -v "${{ env.LOCAL_BUILD_CACHE }}/toolchain:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/toolchain" \
           )
+          if [ "${{ inputs.cache }}" = "true" ]; then
+            VOLUME_ARG+=(
+              -v "${{ env.LOCAL_BUILD_CACHE }}/.ccache:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" \
+              -v "${{ env.LOCAL_BUILD_CACHE }}/.stamps:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.stamps" \
+              -v "${{ env.LOCAL_BUILD_CACHE }}/sources:${{ env.IMG_ROOT_BUILD_DIR }}/sources" \
+              -v "${{ env.LOCAL_BUILD_CACHE }}/toolchain:${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/toolchain" \
+            )
+          fi
           # for path in "${VOLUME_ARG[@]#-v}"; do
           #   [ -n "$path" ] && stat -c "${{ env.STAT_SYNTAX }}" "${path%%:*}"
           # done
@@ -704,14 +708,18 @@ jobs:
                 done
               fi
 
-              cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" || true
+              if [[ "${{ env.DEBUG }}" == "true" ]]; then
+                cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}" || true
+              fi
 
               stat "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
               . "${{ env.IMG_ROOT_BUILD_DIR }}/build_recommend.sh"
               make -j"${RECOMMENDED_J}" -l"${MAKE_LOAD_LIMIT}" image
               # make -j"${RECOMMENDED_J}" -l"${NB_CORES}" image
 
-              cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" || true
+              if [[ "${{ env.DEBUG }}" == "true" ]]; then
+                cp --archive "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.cache_package_*" "${{ env.IMG_ROOT_BUILD_DIR }}/${{ env.BUILD_DIR }}/.ccache" || true
+              fi
             '\'''
           docker_exit_code=$?
 
