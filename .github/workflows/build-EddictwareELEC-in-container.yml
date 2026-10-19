@@ -259,7 +259,8 @@ jobs:
         id: restore-build-caches
         # if: ${{ inputs.cache && ((needs.resolve-runner.outputs.runner != 'self-hosted' && inputs.runner == 'blacksmith') || steps.check-build-cache.outputs.build_cache_present != 'true') }}
         # if: inputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true'
-        if: ${{ inputs.cache && ((inputs.runner != 'self-hosted' &&inputs.runner != 'blacksmith') || steps.check-build-cache.outputs.build_cache_present != 'true') }}
+        # if: ${{ inputs.cache && ((inputs.runner != 'self-hosted' &&inputs.runner != 'blacksmith') || steps.check-build-cache.outputs.build_cache_present != 'true') }}
+        if: ${{ inputs.cache }}
         uses: actions/cache/restore@v6
         with:
           key: "${{ runner.os }}-${{ github.actor }}-${{ env.OS_Codename }}-${{ env.EE_Arch }}-build-cache"
@@ -727,7 +728,8 @@ jobs:
 
       - name: Save build caches
         id: save-build-caches
-        if: ${{ steps.restore-build-caches.conclusion == 'success' }}
+        # if: ${{ steps.restore-build-caches.conclusion == 'success' }}
+        if: ${{ inputs.cache }}
         uses: actions/cache/save@v6
         with:
           key: ${{ steps.restore-build-caches.outputs.cache-primary-key }}
