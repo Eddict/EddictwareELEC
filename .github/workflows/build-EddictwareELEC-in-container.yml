@@ -764,7 +764,7 @@ jobs:
 
       - name: Copy built ${{ env.EE_Distro }} image to archive
         id: copy-image-to-archive
-        if: ${{ steps.determine-image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
+        if: ${{ needs.resolve-runner.outputs.runner == 'self-hosted' &&steps.determine-image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
         run: |
           dest_path="${{ github.workspace }}/../target_archive"
           mkdir --parents "$dest_path"
